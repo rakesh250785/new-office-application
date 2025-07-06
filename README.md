@@ -41,3 +41,39 @@ auth.php
         'provider' => 'users',
     ],
 ],
+
+
+# Octane
+
+composer require laravel/octane
+php artisan octane:install
+Choose swool
+npm install -g chokidar-cli
+php artisan octane:reload
+
+php artisan octane:start --port=8080 --watch
+
+# Swool
+git clone -b v5.1.0 --depth=1 https://github.com/swoole/swoole-src.git
+cd swoole-src
+
+phpize
+./configure --enable-sockets --enable-openssl --enable-mysqlnd \
+  --enable-swoole-curl --enable-cares --enable-brotli --enable-zstd \
+  --enable-swoole-thread --enable-iouring
+
+make -j$(nproc)
+
+ls -l modules/
+
+sudo make install
+
+echo "extension=swoole.so" | sudo tee /etc/php/8.3/cli/conf.d/20-swoole.ini
+
+php -m | grep swoole
+php --ri swoole
+
+php artisan octane:start --server=swoole --port=8001 --watch
+
+
+
