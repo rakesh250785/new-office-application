@@ -14,6 +14,8 @@ use Exception, Log;
 
 class ParameterController extends Controller
 {
+    public function __construct() {
+    }
     public function addUpdateParameter(Request $request)
     {
         try {

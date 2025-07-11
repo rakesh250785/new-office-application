@@ -14,8 +14,7 @@ use Exception;
 use SebastianBergmann\CodeCoverage\Util\Percentage;
 class PrincipalController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(){
     }
 
     public function addUpdatePrincipal(Request $request)

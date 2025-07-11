@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Auth;
 class CategoryController extends Controller
 {
-    public function __construct()
-    {
-
+    public function __construct(){
     }
 
     public function addUpdateCategory(Request $request)
