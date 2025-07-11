@@ -131,7 +131,7 @@ class ProductController extends Controller
     {
         try {
             # Request specific fields
-            $data = $request->only(['search', 'per_page']);
+            $data = $request->only(['search', 'per_page', 'principal_id', 'brand_id', 'category_id']);
 
             # Get product
             $query = Product::whereNull('deleted_at')->orderByDesc('id');
@@ -139,6 +139,17 @@ class ProductController extends Controller
             # Search fields is not empty
             if (!empty($data['search'])) {
                 $query->where('part_no', 'like', "%{$data['search']}%");
+            }
+
+            # Filter condition
+            if (!empty($data['category_id'])) {
+                $query->where('category_id', $data['category_id']);
+            }
+            if (!empty($data['principal_id'])) {
+                $query->where('principal_id', $data['principal_id']);
+            }
+            if (!empty($data['brand_id'])) {
+                $query->where('brand_id', $data['brand_id']);
             }
 
             # Pagination set
