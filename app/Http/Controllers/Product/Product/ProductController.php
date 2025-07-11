@@ -13,8 +13,7 @@ use Exception, Log;
 
 class ProductController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(){
     }
 
     /**

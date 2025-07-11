@@ -17,7 +17,7 @@ class SourceController extends Controller
     public function __construct() {
     }
 
-    public function addUpdteSource(Request $request)
+    public function addUpdateSource(Request $request)
     {
         try {
             # Request specific fields
