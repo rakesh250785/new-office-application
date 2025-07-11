@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dropdown;
 
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Currency;
 use App\Models\Principal;
 use App\Models\Product;
@@ -60,7 +61,16 @@ class DropdownController extends Controller
 
     public function getBranchDD()
     {
+        try {
+            # Get source
+            $brands = Brand::whereNull('deleted_at')->pluck('name', 'id');
 
+            # Return response
+            return Utility::apiSuccess('DD brands', $brands, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in     public function getBranchDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getStatusDD()

@@ -117,7 +117,7 @@ class SupplierController extends Controller
             $data = $request->only(['part_no']);
 
             # Validation rule
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make($data, [
                 'part_no' => 'required|string'
             ]);
 
@@ -127,7 +127,7 @@ class SupplierController extends Controller
             }
 
             # Delete supplier
-            $deleted = Supplier::where('s_partno', $request->part_no)->delete();
+            $deleted = Supplier::where('part_no', $data['part_no'])->delete();
 
             # Return if fail to delete
             if (!$deleted) {
@@ -135,7 +135,7 @@ class SupplierController extends Controller
             }
 
             # Return response
-            return Utility::apiSuccess('Supplier deleted successfully');
+            return Utility::apiSuccess('Supplier deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Error while deleting supplier', ['exception' => $ex->getMessage()]);
@@ -149,10 +149,10 @@ class SupplierController extends Controller
             $data = $request->only([
                 'page',
                 'per_page',
-                'principal_select',
-                'product_select',
-                'source_select',
-                'currency_select'
+                'principal_id',
+                'part_no',
+                'source_id',
+                'currency_id'
             ]);
 
             # Set per page
@@ -162,17 +162,17 @@ class SupplierController extends Controller
             $query = Supplier::whereNull('deleted_at')->orderByDesc('id');
 
             # Filter condition
-            if (!empty($data['principal_select'])) {
-                $query->where('s_make', $data['principal_select']);
+            if (!empty($data['principal_id'])) {
+                $query->where('principal_id', $data['principal_id']);
             }
-            if (!empty($data['product_select'])) {
-                $query->where('s_partno', $data['product_select']);
+            if (!empty($data['part_no'])) {
+                $query->where('part_no', $data['part_no']);
             }
-            if (!empty($data['source_select'])) {
-                $query->where('s_source', $data['source_select']);
+            if (!empty($data['source_id'])) {
+                $query->where('source_id', $data['source_id']);
             }
-            if (!empty($data['currency_select'])) {
-                $query->where('s_currency', $data['currency_select']);
+            if (!empty($data['currency_id'])) {
+                $query->where('currency_id', $data['currency_id']);
             }
 
             # Get result
