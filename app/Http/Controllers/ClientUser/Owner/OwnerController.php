@@ -68,7 +68,7 @@ class OwnerController extends Controller
                 $owner->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhereDate('dt_created', $search);
+                        ->orWhereRaw("DATE_FORMAT(created_at, '%d-%m-%Y') LIKE ?", [$search]);
                 });
             }
 
