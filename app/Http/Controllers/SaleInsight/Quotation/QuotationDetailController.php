@@ -103,7 +103,7 @@ class QuotationDetailController extends Controller
                 'reference_date' => $quotationDate,
                 'login_id' => $adminId,
                 'branch_id' => $branchId,
-                'stn_pdf_name' => $pdfFilePath,
+                'pdf_name' => $pdfFilePath,
                 'currency_id' => $data['currency_id'],
                 'updated_at' => Carbon::now(),
             ];

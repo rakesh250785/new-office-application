@@ -5,21 +5,24 @@ namespace App\Http\Controllers\SaleInsight\Order;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Order;
+use App\Models\PaymentTerm;
 use App\Models\Quotation;
+use App\Models\QuotationDetail;
+use App\Models\QuotationFormat;
+use App\Models\States;
 use Illuminate\Support\Facades\Validator;
-use App\Jobs\Order as Orders;
+use App\Jobs\ProcessOrder;
 use Illuminate\Support\Facades\Auth;
-use App\Models\QoutationDetails;
 use App\Models\PendingQuotation;
-use App\Models\PartialOrder;
-use App\Models\PartialOrderDetails;
 use Illuminate\Http\Request;
 use App\Models\QuatationAdd;
 use App\Models\OrderDetails;
 use App\Models\Customer;
 use App\Jobs\CloseOrder;
 use Exception, Log;
-use App\Models\Order;
 use App\Models\Courier;
 use Carbon\Carbon;
 use DataTables;
@@ -44,7 +47,7 @@ class FullOrderController extends Controller
 
             # Validation rule
             $validator = Validator::make($data, [
-                'quotation_id' => 'required',
+                'quotation_id',
             ]);
 
             # Return validation error
@@ -84,137 +87,292 @@ class FullOrderController extends Controller
             ];
 
             # Return response
-            return Utility::apiSuccess('Order data fetched successfully.', [
-                'data' => $data,
-            ]);
+            return Utility::apiSuccess('Order data fetched successfully', $data, 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed fetching getQuotationOrder server error', ['exception' => $ex->getMessage()]);
         }
     }
 
-    public function storeUpdatedOrder(Request $request)
+    public function addUpdateOrder(Request $request)
     {
         try {
-            $data = $request->validate([
-                'quotation_info.in_quot_num' => 'required|string',
-                'quotation_info.in_quot_id' => 'required|integer|exists:quotations,id',
-                'quotation_info.*' => 'nullable',
-                'customer_info.cust_id' => 'required|integer|exists:customers,in_cust_id',
-                'customer_info.*' => 'nullable',
-                'sel_prods_details' => 'required|array|min:1',
-                'sel_prods_details.*.in_product_id' => 'required|integer',
-                'sel_prods_details.*.in_pro_qty' => 'required|numeric',
-                'sel_prods_details.*.*' => 'nullable',
+            # Extract request
+            $data = $request->only([
+                'order_id',
+                'customer_id',
+                'quotation_id',
+                'unique_quotation_id',
+                'lead_from',
+                'order_date',
+                'order_number',
+                'quotation_date',
+                'order_prepared_by',
+                'contact_persion',
+                'billing_info',
+                'courier_id',
+                'notes',
+                'term_condition_notes',
+                'shipment_invoice_id',
+                'overdue_number',
+                'overdue_value',
+                'product_details',
+                'shipping_info',
+                'quotation_type',
+                'enquiry_refefence_number',
+                'net_total_amount',
+                'sales_tax_amount',
+                'order_total_amount',
+                'updated_company_name',
+                'currency_id',
+                'quotation_created_date'
             ]);
 
-            $adminId = auth()->id();
-            $branchId = auth()->user()->branch_id;
-            $branchName = config('constant.branch_wise')[$branchId];
-            $quotationDate = now()->format('Y-m-d');
+            # Auth + Branch
+            $admin = Auth::user();
+            $branchId = $admin->branch_id;
 
-            $quotationInfo = $data['quotation_info'];
-            $customerInfo = $data['customer_info'];
-            $products = $data['sel_prods_details'];
+            # Fetch master data
+            $customerInfo = Customer::find($data['customer_id']);
+            $branch = Branch::find($branchId);
+            $country = Country::find(optional($customerInfo)->country_id);
+            $state = States::find(optional($customerInfo)->state_id);
+            $paymentTerm = PaymentTerm::find($data['shipment_invoice_id']);
+            $courier = Courier::find($data['courier_id']);
+            $currency = Currency::find($data['currency_id']);
+            $branchAddress = QuotationFormat::whereNull('deleted_at')->where('branch_id', $branchId)->first();
 
-            $orderNumber = $this->generateOrderNumber($branchName, $branchId, $quotationDate);
-            $pdfFile = 'order_' . time() . '_' . date('dmy') . '.pdf';
-
-            $order = Order::create([
-                'in_uniq_order_id' => $orderNumber,
-                'in_qoute_uniqu_id' => $quotationInfo['in_quot_num'],
-                'in_cust_id' => $customerInfo['cust_id'],
-                'dt_cust_order_date' => now(),
-                'flt_ord_net_total' => $quotationInfo['fl_nego_amt'] ?? 0,
-                'flt_ord_total' => $quotationInfo['fl_nego_amt'] ?? 0,
-                'st_currency_applied' => $quotationInfo['currency'] ?? '',
-                'log_in_id' => $adminId,
-                'stn_pdf_name' => $pdfFile,
-                'quotation_type' => $products[0]['quotation_type'] ?? '',
-                'tnc' => $products[0]['term_condition'] ?? '',
-                'in_branch_id' => $branchId,
-                'dt_created' => now(),
-                'dt_modify' => now(),
-            ]);
-
-            Customer::where('in_cust_id', $customerInfo['cust_id'])->update([
-                'st_com_address' => $customerInfo['auto_pop_addr'] ?? '',
-                'st_cust_city' => $customerInfo['auto_pop_city'] ?? '',
-                'st_con_person1' => $customerInfo['auto_pop_cust_name'] ?? '',
-                'in_pincode' => $customerInfo['auto_pop_pincod'] ?? '',
-                'st_cust_state' => $customerInfo['auto_pop_state'] ?? '',
-                'st_cust_mobile' => $customerInfo['auto_pop_phone'] ?? '',
-                'st_cust_email' => $customerInfo['auto_pop_email'] ?? '',
-            ]);
-
-            foreach ($products as $prod) {
-                $order->details()->create([
-                    'in_ord_prod_id' => $prod['in_product_id'],
-                    'in_ord_pro_qty' => $prod['in_pro_qty'],
-                    'flt_ord_pro_price' => $prod['fl_pro_unitprice'],
-                    'flt_ord_pro_disct' => $prod['fl_discount'],
-                    'flt_ord_pro_net_price' => $prod['fl_net_price'],
-                    'flt_ord_pro_row_total' => $prod['fl_row_total'],
-                    'in_ord_pro_bal_qty' => $prod['in_pro_qty'],
-                    'in_ord_delivery_period' => $prod['in_pro_deli_period'],
-                    'product_comments' => $prod['prod_comments'] ?? '',
-                    'st_part_no' => $prod['st_part_no'],
-                    'st_hsn_no' => $prod['stn_hsn_no'],
-                    'in_igst_rate' => $prod['in_igst_rate'],
-                    'quotation_type' => $prod['quotation_type'],
-                    'term_condition' => $prod['term_condition'],
-                    'uom' => $prod['uom'],
-                    'moc' => $prod['moc'],
-                    'specifications' => $prod['specifications'],
-                    'prod_head' => $prod['prod_head'],
-                    'in_ord_pro_status' => 0,
-                    'flg_partord_status' => 0,
-                ]);
+            # Validate lookups
+            if (!$customerInfo || !$branch || !$country || !$state || !$paymentTerm || !$courier || !$currency || !$branchAddress) {
+                return Utility::apiError('Master data missing', [], 221);
             }
 
-            QoutationDetails::where('in_quot_id', $quotationInfo['in_quot_id'])->delete();
-            QoutationDetails::insert(array_map(function ($prod) use ($quotationInfo, $customerInfo) {
-                return array_merge($prod, [
-                    'in_quot_id' => $quotationInfo['in_quot_id'],
-                    'in_cust_id' => $customerInfo['cust_id']
-                ]);
-            }, $products));
+            # Parse shipping/billing
+            $shipping = $data['shipping_info'] ?? [];
+            $billing = $data['billing_info'] ?? [];
 
-            QuatationAdd::where('in_quot_id', $quotationInfo['in_quot_id'])
-                ->update(['is_order_pending' => 1]);
+            # Determine state
+            $withingState = ($country->code === 'in') ? $customerInfo->state_id : null;
+            $otherState = $customerInfo->other_state;
 
-            dispatch(new Orders([
-                'order_id' => $order->id,
-                'email' => auth()->user()->email,
-                'cc_email' => auth()->user()->cc_email,
-                'file_path' => $pdfFile,
-                'quot_type' => $products[0]['quotation_type'],
-                'multiProdCal' => $this->calculateProductTotals($products),
-                'totalcalc' => $this->calculateTotal($products),
-            ]));
+            # Generate file name
+            $pdfFilePath = 'order_' . time() . '_' . now()->format('dmy') . '.pdf';
 
-            return response()->json([
-                'code' => 200,
-                'message' => 'Order created successfully.',
-                'order_id' => $order->id,
+            # Core order data
+            $orderData = [
+                'unique_quotation_id' => $data['unique_quotation_id'],
+                'customer_id' => $data['customer_id'],
+                'order_number' => $data['order_number'],
+                'order_date' => $data['order_date'],
+                'shipping_address' => $shipping['address'] ?? null,
+                'state_id' => $shipping['state_id'] ?? null,
+                'state' => $withingState,
+                'other_state' => $otherState,
+                'pincode' => $shipping['pincode'] ?? null,
+                'city' => $shipping['city'] ?? null,
+                'mobile' => $shipping['mobile'] ?? null,
+                'landline' => $shipping['landline'] ?? null,
+                'email' => $shipping['email'] ?? null,
+                'same_as_billing' => $shipping['same_as_billing'] ?? null,
+                'delivery_period' => 30,
+                'lead_from' => $data['lead_from'],
+                'branch_id' => $branchId,
+                'term_condition_notes' => $data['term_condition_notes'],
+                'order_prepared_by' => $data['order_prepared_by'],
+                'quotation_type' => $data['quotation_type'],
+                'user_id' => $admin->id,
+                'pdf_name' => $pdfFilePath,
+                'order_status' => 0,
+                'currency_id' => $data['currency_id'],
+                'contact_for_payment' => $shipping['mobile'] ?? null,
+                'contact_person_for_payment' => $billing['mobile'] ?? null,
+                'enquiry_refefence_number' => $data['enquiry_refefence_number'],
+                'net_total_amount' => $data['net_total_amount'],
+                'tax_branch_id' => 0,
+                'sales_tax_amount' => $data['sales_tax_amount'],
+                'order_fridge_package' => 0,
+                'order_total_amount' => $data['order_total_amount'],
+            ];
+
+            # Add mode
+            if (empty($data['order_id'])) {
+                $orderData['unique_order_id'] = $this->generateOrderNumber($branch->name, $branchId, now()->toDateString());
+                $order = Order::create($orderData);
+            } else {
+                $order = Order::find($data['order_id']);
+                if (!$order)
+                    return Utility::apiError('Order not found for update', [], 221);
+                $order->update($orderData);
+            }
+
+            # Update customer info
+            $customerUpdate = Customer::where('id', $customerInfo->id)->update([
+                'address' => $billing['address'] ?? null,
+                'city' => $billing['city'] ?? null,
+                'contact_person' => $billing['name'] ?? null,
+                'pincode' => $billing['pincode'] ?? null,
+                'state_id' => $withingState,
+                'other_state' => $otherState,
+                'mobile' => $billing['mobile'] ?? null,
+                'email' => $billing['email'] ?? null,
             ]);
 
-        } catch (\Exception $e) {
-            \Log::error("Order Create Error: " . $e->getMessage());
-            return response()->json(['code' => 500, 'error' => 'Order creation failed.']);
+            # Return if fail
+            if (!$customerUpdate) {
+                return Utility::apiError('Fail to update customer info', [], 221);
+            }
+
+            # Sync order details
+            $orderDetailDeleteStatus = OrderDetails::where('order_id', $order->id)->delete();
+
+            # Return if fail
+            if (!$orderDetailDeleteStatus) {
+                return Utility::apiError('Fail to delete exiting order details', [], 221);
+            }
+
+            # Define product
+            $productData = [];
+            $quotationData = [];
+
+            foreach ($data['product_details'] as $prod) {
+                unset($prod['balance_quantity']);
+                $quotationData[] = array_merge($prod, [
+                    'quotation_id' => $data['quotation_id'],
+                    'customer_id' => $data['customer_id'],
+                ]);
+                $productData[] = [
+                    'order_id' => $order->id,
+                    'product_id' => $prod['product_id'],
+                    'description' => $prod['description'],
+                    'principal_id' => $prod['principal_id'],
+                    'order_quantity' => $prod['quantity'],
+                    'price' => $prod['price'],
+                    'discount' => $prod['discount'],
+                    'net_price' => $prod['net_price'],
+                    'total' => $prod['total'],
+                    'balance_quantity' => $prod['balance_quantity'] ?? 0,
+                    'order_type' => 1,
+                    'delevery_period' => $prod['delevery_period'],
+                    'comments' => $prod['comments'],
+                    'part_number' => $prod['part_number'],
+                    'hsn_number' => $prod['hsn_number'],
+                    'igst_rate' => $prod['igst_rate'],
+                    'quotation_type' => $data['quotation_type'],
+                    'term_condition_notes' => $data['term_condition_notes'],
+                    'uom' => $prod['uom'],
+                    'moc' => $prod['moc'],
+                    'specification' => $prod['specification'],
+                    'product_head' => $prod['product_head'],
+                    'status' => 0,
+                    'partial_order_status' => 0,
+                ];
+            }
+
+            # Insert order details
+            $orderDetailInsert = OrderDetails::insert($productData);
+
+            # Return if fail
+            if (!$orderDetailInsert) {
+                return Utility::apiError('Fail to insert updated order details', [], 221);
+            }
+
+            # Refresh quotation product details
+            $quotationDetailDelete = QuotationDetail::where('quotation_id', $data['quotation_id'])->delete();
+
+            # Return if fail
+            if (!$quotationDetailDelete) {
+                return Utility::apiError('Fail to delete quotation details', [], 221);
+            }
+
+            # Insert quotation details
+            $insertStatus = QuotationDetail::insert($quotationData);
+
+            # Return if fail
+            if (!$insertStatus) {
+                return Utility::apiError('Fail to delete quotation details', [], 221);
+            }
+
+            # Update quotation flags
+            $quotationFilter = [
+                'id' => $data['quotation_id'],
+                'customer_id' => $data['customer_id']
+            ];
+            if (!$admin->hasPermission('branch_all'))
+                $quotationFilter['branch_id'] = $branchId;
+
+            # Update quotation status
+            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => 1]);
+
+            # Return if fail
+            if (!$updateQuotationStatus) {
+                return Utility::apiError('Fail to update quotation status', [], 221);
+            }
+
+            # Mark pending quotation deleted
+            $pendingFilter = ['unique_quotation_id' => $data['unique_quotation_id']];
+            if (!$admin->hasPermission('branch_all'))
+                $pendingFilter['branch_id'] = $branchId;
+            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['deleted_at' => now()]);
+
+            # Return if fail
+            if (!$updatePendingQuotation) {
+                return Utility::apiError('Fail to update pending quotation', [], 221);
+            }
+
+            # Update quotation status
+            $updateQuotationSatatus = Quotation::where($pendingFilter)->update(['order_pending' => 1]);
+
+            # Return if fail
+            if (!$updateQuotationSatatus) {
+                return Utility::apiError('Fail to update quotation status', [], 221);
+            }
+
+            # Prepare PDF
+            $pdfInfo = [
+                'state' => $country->code === 'in' ? ($state->name ?? null) : null,
+                'customer_info' => $customerInfo->toArray(),
+                'country' => $country->name ?? null,
+                'date' => $data['order_date'] ?? null,
+                'payment_term' => $paymentTerm->payment_type ?? null,
+                'courier' => $courier->name ?? null,
+                'update_company_name' => $data['updated_company_name'] ?? null,
+                'overdue_no' => $data['overdue_number'] ?? null,
+                'overdue_name' => $data['overdue_value'] ?? null,
+                'ext_note' => $data['notes'] ?? null,
+                'quotation_created_date' => $data['quotation_created_date'] ?? null,
+                'currency' => $currency->code ?? null,
+                'order_info' => $orderData,
+                'order_details' => $productData,
+                'branch_adddress' => $branchAddress['address'] ?? $branchAddress['branch_address'] ?? null,
+                'order_created_at' => now()->format('Y-m-d'),
+                'order_prepared_by' => $data['order_prepared_by'] ?? null,
+                'file_path' => $pdfFilePath,
+                'email' => $admin->email ?? null,
+                'cc_email' => $admin->cc_email ?? null,
+                'quotation_type' => $data['quotation_type'] ?? null,
+                'multi_prod_cal' => $this->calculateProductTotals($request->sel_prods_details),
+                'total_cal' => $this->calculateTotal($request->sel_prods_details),
+            ];
+
+            # Dispatch job for pdf
+            dispatch(new ProcessOrder($pdfInfo));
+
+            return Utility::apiSuccess($data['order_id'] ? 'Order updated successfully' : 'Order created successfully', [], 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Failed to process order', ['exception' => $ex->getMessage()]);
         }
     }
 
-
-    public function update_pending_order($id)
+    public function deletePendingQuotation($id)
     {
         try {
             if (Auth::user()->hasPermission('branch_all')) {
-                $update_pending_status = QuatationAdd::where('in_quot_num', $id)->update(['is_order_pending' => 1]);
+                $update_pending_infog = PendingQuotation::where('stn_qtn_ord_no', $id)->update(['is_deleted' => 1]);
             } else {
-                $update_pending_status = QuatationAdd::where(['in_quot_num' => $id, 'in_branch_id' => Auth::user()->branch_id])->update(['is_order_pending' => 1]);
+                $update_pending_infog = PendingQuotation::where(['stn_qtn_ord_no' => $id, 'int_branch_id' => Auth::user()->branch_id])->update(['is_deleted' => 1]);
             }
-            if (!empty($update_pending_status)) {
+            if (!empty($update_pending_infog)) {
                 return true;
             }
             return false;
@@ -233,7 +391,7 @@ class FullOrderController extends Controller
 
             # Get exsting order id
             $latestOrder = Order::where('branch_id', $branchId)
-                ->where('deleted_at', 0)
+                ->whereNull('deleted_at')
                 ->whereDate('created_at', $date)
                 ->orderByDesc('id')
                 ->first();
@@ -254,241 +412,6 @@ class FullOrderController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed generating order info', ['exception' => $ex->getMessage()]);
-        }
-    }
-
-    public function get_oeder_details($oeder_id)
-    {
-        try {
-            $order_details = OrderDetails::where(['in_order_id' => $oeder_id])->where('flg_deleted', 0)->get();
-            if (!empty($order_details)) {
-                $order_details = $order_details->toArray();
-                return $order_details;
-            } else {
-                $order_details = [];
-            }
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function chek_partially_order_status($in_order_id)
-    {
-        try {
-
-            if (Auth::user()->hasPermission('branch_all')) {
-                $query = OrderDetails::where('in_order_id', $in_order_id)->where('flg_deleted', 0)->get();
-            } else {
-                $query = OrderDetails::where(['in_order_id' => $in_order_id, 'branch_id' => \Auth::user()->branch_id])->where('flg_deleted', 0)->get();
-            }
-            if (!empty($query)) {
-                if (Auth::user()->hasPermission('branch_all')) {
-                    $query1 = OrderDetails::where('in_order_id', $in_order_id)->where('flg_deleted', 0)->where('flg_partord_status', 0)->get();
-                } else {
-                    $query1 = OrderDetails::where(['in_order_id' => $in_order_id, 'branch_id' => \Auth::user()->branch_id])->where('flg_deleted', 0)->where('flg_partord_status', 0)->get();
-                }
-                if (!empty($query1)) {
-                    return false;
-                } elseif (empty($query1)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-
-    public function generate_partially_order_no($branchname, $in_branch_id, $generate_No_for = "")
-    {
-        try {
-            $initial3latters = substr($branchname, 0, 3);
-            if (Auth::user()->hasPermission('branch_all')) {
-                $partialOrder = PartialOrder::whereDate('dt_created', '>=', Carbon::now()->format('Y-m-d'))->get();
-            } else {
-                $partialOrder = PartialOrder::where('in_branch_id', $in_branch_id)->whereDate('dt_created', '>=', Carbon::now()->format('Y-m-d'))->get();
-            }
-            $flg_type = '';
-            if ($generate_No_for != "") {
-                $flg_type = "Part-";
-            }
-            if (!empty($partialOrder)) {
-                $number = count($partialOrder) + 1;
-                $unique_quote_no = $initial3latters . "/" . $flg_type . $number;
-            } else {
-                $unique_quote_no = $initial3latters . "/" . $flg_type . "1";
-            }
-            return $unique_quote_no;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function isert_orders($insert_array)
-    {
-        try {
-            $insert = PartialOrder::insertGetId($insert_array);
-            if (!empty($insert)) {
-                return $insert;
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-
-    public function update_order_detail_tbl($in_ord_detail_id, $update_array)
-    {
-        try {
-
-            if (Auth::user()->hasPermission('branch_all')) {
-                $orderDetails = OrderDetails::where('in_ord_detail_id', $in_ord_detail_id)->update($update_array);
-            } else {
-                $orderDetails = OrderDetails::where(['in_ord_detail_id' => $in_ord_detail_id, 'branch_id' => Auth::user()->branch_id])->update($update_array);
-            }
-            if ($orderDetails) {
-                return true;
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function isert_orders_details($insert_array, $in_ord_detail_id = "")
-    {
-        try {
-            $insert = PartialOrderDetails::insert($insert_array);
-            if ($in_ord_detail_id != "") {
-                $updated_ord_pro_bal_qty = $insert_array['in_balance_pro_qty'];
-                if ($updated_ord_pro_bal_qty < 0)
-                    $updated_ord_pro_bal_qty = 0;
-                $update_in_ord_pro_sent_qty = array(
-                    'in_ord_pro_sent_qty' => 0,
-                    'in_ord_pro_bal_qty' => $updated_ord_pro_bal_qty
-                );
-                $this->update_order_detail_tbl($in_ord_detail_id, $update_in_ord_pro_sent_qty);
-            }
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function update_part_order_detail_status($in_order_id, $update_array)
-    {
-        try {
-            if (Auth::user()->hasPermission('branch_all')) {
-                $orderDetails = OrderDetails::where('in_order_id', $in_order_id)->where('in_order_id', $in_order_id)->where('in_ord_pro_bal_qty', '<=', 0)->update($update_array);
-
-            } else {
-                $orderDetails = OrderDetails::where(['in_order_id' => $in_order_id, 'branch_id' => Auth::user()->branch_id])->where('in_order_id', $in_order_id)->where('in_ord_pro_bal_qty', '<=', 0)->update($update_array);
-            }
-            $flt_ord_pro_row_total_array = array('flt_ord_pro_row_total' => 0);
-            if (Auth::user()->hasPermission('branch_all')) {
-                $orderDetails = OrderDetails::where('in_order_id', $in_order_id)->where('in_ord_pro_bal_qty', '>', 0)->update($flt_ord_pro_row_total_array);
-            } else {
-                $orderDetails = OrderDetails::where(['in_order_id' => $in_order_id, 'branch_id' => Auth::user()->branch_id])->where('in_ord_pro_bal_qty', '>', 0)->update($flt_ord_pro_row_total_array);
-            }
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-    public function update_order($in_order_id, $update_order_info)
-    {
-        try {
-            if (Auth::user()->hasPermission('branch_all')) {
-                $order = Order::where('in_order_id', $in_order_id)->update($update_order_info);
-            } else {
-                $order = Order::where(['in_order_id' => $in_order_id, 'in_branch_id' => Auth::user()->branch_id])->update($update_order_info);
-            }
-            if ($order) {
-                return true;
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function delete_pending_quotation_by_id($id)
-    {
-        try {
-            $pending = PendingQuotation::where('stn_qtn_ord_no', $id)->update(['is_deleted' => 1]);
-            if ($$pending) {
-                return true;
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function update_shipment_order($id)
-    {
-        try {
-            if (Auth::user()->hasPermission('branch_all')) {
-                $order = Order::where('in_uniq_order_id', $id)->update(['is_shipment_pending' => 1]);
-            } else {
-                $order = Order::where(['in_uniq_order_id' => $id, 'in_order_id' => Auth::user()->branch_id])->update(['is_shipment_pending' => 1]);
-            }
-            if ($order) {
-                return true;
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function get_order_details_data($order_id, $in_cust_id)
-    {
-        try {
-            if (Auth::user()->hasPermission('branch_all')) {
-                $partial_order_details = PartialOrderDetails::where('in_partparaint_ord_id', $order_id)->where('flg_deleted', 0)->get();
-            } else {
-                $partial_order_details = PartialOrderDetails::where(['in_partparaint_ord_id' => $order_id, 'branch_id' => Auth::user()->branch_id])->where('flg_deleted', 0)->get();
-            }
-            return $partial_order_details;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-
-    public function get_partial_order_info($order_id, $in_cust_id)
-    {
-        try {
-            $result = [];
-            if (Auth::user()->hasPermission('branch_all')) {
-                $query = PartialOrder::where('in_partparaint_ord_id', $order_id)->where('in_cust_id', $in_cust_id)->where('flg_deleted', 0)->first();
-            } else {
-                $query = PartialOrder::where(['in_partparaint_ord_id' => $order_id, 'in_branch_id' => Auth::user()->branch_id])->where('in_cust_id', $in_cust_id)->where('flg_deleted', 0)->first();
-            }
-            if (!empty($query)) {
-                $result = $query->toArray();
-            }
-            return $result;
-        } catch (Exception $ex) {
-            Log::debug($ex);
-        }
-    }
-    public function update_quot_status($in_quot_id, $status_quotation)
-    {
-        try {
-            if (Auth::user()->hasPermission('branch_all')) {
-                $quote = QuatationAdd::where('in_quot_num', $in_quot_id)->update($status_quotation);
-            } else {
-                $quote = QuatationAdd::where(['in_quot_num' => $in_quot_id, 'in_branch_id' => Auth::user()->branch_id])->update($status_quotation);
-            }
-            if ($quote) {
-                return true;
-            }
-            return false;
-        } catch (Exception $ex) {
-            Log::debug($ex);
         }
     }
 
@@ -718,24 +641,24 @@ class FullOrderController extends Controller
             $sel_prods_details = $request->sel_prods_details;
             if (!empty($sel_prods_details)) {
                 $validator = Validator::make($sel_prods_details[0], [
-                    'in_cust_id' => 'required',
+                    'in_cust_id',
                 ]);
             }
             $msg1 = $validator->getMessageBag()->toArray();
             $quotation_info = $request->quotation_info;
             if (!empty($quotation_info)) {
                 $val = [
-                    "st_shiping_add" => 'required',
-                    "st_shiping_city" => 'required',
-                    "st_shiping_state" => 'required',
-                    "st_shiping_pincode" => 'required',
-                    "st_shipping_email" => 'required',
-                    "st_shipping_phone" => 'required',
-                    "st_enq_ref_number" => 'required',
-                    'shipping_lanline' => 'required',
-                    "st_landline" => 'required',
-                    'product_search' => 'required',
-                    'prod_qty' => 'required',
+                    "st_shiping_add",
+                    "st_shiping_city",
+                    "st_shiping_state",
+                    "st_shiping_pincode",
+                    "st_shipping_email",
+                    "st_shipping_phone",
+                    "st_enq_ref_number",
+                    'shipping_lanline',
+                    "st_landline",
+                    'product_search',
+                    'prod_qty',
                 ];
                 if (isset($quotation_info['in_quot_id']) && !empty($quotation_info['in_quot_id'])) {
                     unset($val['product_search']);
@@ -747,21 +670,21 @@ class FullOrderController extends Controller
             $customer_info = $request->customer_info;
             if (!empty($customer_info)) {
                 $validator2 = Validator::make($customer_info, [
-                    "st_com_name" => 'required',
-                    'order_no' => 'required',
-                    'order_date' => 'required',
-                    "auto_pop_cust_name" => 'required',
-                    "st_cust_mobile" => 'required',
-                    "auto_pop_state" => 'required',
-                    "preparing_by" => 'required',
-                    "lead_from" => 'required',
-                    'auto_pop_addr' => 'required',
-                    'auto_pop_state' => 'required',
-                    'auto_pop_city' => 'required',
-                    'auto_pop_pincod' => 'required',
-                    'auto_pop_phone' => 'required',
-                    'auto_pop_email' => 'required',
-                    'auto_pop_landline' => 'required',
+                    "st_com_name",
+                    'order_no',
+                    'order_date',
+                    "auto_pop_cust_name",
+                    "st_cust_mobile",
+                    "auto_pop_state",
+                    "preparing_by",
+                    "lead_from",
+                    'auto_pop_addr',
+                    'auto_pop_state',
+                    'auto_pop_city',
+                    'auto_pop_pincod',
+                    'auto_pop_phone',
+                    'auto_pop_email',
+                    'auto_pop_landline',
                 ]);
             }
             $msg3 = $validator2->getMessageBag()->toArray();
@@ -1036,7 +959,7 @@ class FullOrderController extends Controller
 
                 $this->update_part_order_detail_status($order_id, $update_orderDetail_status);
                 $this->update_order($order_id, $update_order_info);
-                $this->delete_pending_quotation($data['order_info']['in_uniq_order_id']);
+                $this->deletePendingQuotation($data['order_info']['in_uniq_order_id']);
                 $this->update_shipment_order($data['order_info']['in_uniq_order_id']);
                 $pdfFilePath = "order_" . time() . "_" . date('dmy') . ".pdf";
                 $data['order_details'] = $this->get_order_details_data($inserted_order_id, $in_cust_id);
