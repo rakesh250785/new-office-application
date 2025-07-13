@@ -23,10 +23,26 @@ class Order extends Model
     }
     public function quotation()
     {
-        return $this->belongsTo(Quotation::class, 'qoute_unique_id', 'id');
+        return $this->belongsTo(Quotation::class, 'unique_quotation_id', 'id');
     }
     public function owner()
     {
         return $this->belongsTo(Owner::class, 'owner_id', 'id');
     }
+    public function pendingQuotation()
+    {
+        return $this->hasOne(PendingQuotation::class, 'order_no', 'unique_order_id');
+    }
+
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetails::class, 'order_id');
+    }
+
+    public function branchAddress()
+    {
+        return $this->belongsTo(QuotationFormat::class, 'quotation_format_id', 'id')
+            ->whereNull('deleted_at');
+    }
+
 }
