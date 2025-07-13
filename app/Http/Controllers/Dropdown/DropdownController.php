@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Dropdown;
 
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
 use App\Models\Currency;
+use App\Models\Owner;
 use App\Models\Principal;
 use App\Models\Product;
 use App\Models\Source;
@@ -20,9 +22,26 @@ class DropdownController extends Controller
     }
 
 
-    public function getOwnerDDDD()
+    public function getOwnerDD()
     {
+        try {
+            # Get owner list
+            $query = Owner::whereNull('deleted_at')->orderBy('name', 'ASC');
 
+            # Permission condition
+            if (!Auth::user()->hasPermission('branch_all')) {
+                $query->where('branch_id', Auth::user()->branch_id);
+            }
+
+            # Get records
+            $owners = $query->get()->toArray();
+
+            # Return response
+            return Utility::apiSuccess('DD Owner', $owners, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getOwnerDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getSourceDD()
@@ -174,6 +193,21 @@ class DropdownController extends Controller
     }
 
     public function getPrincipalTypeDD()
+    {
+
+    }
+
+    public function getRoleDD()
+    {
+
+    }
+
+    public function getPermissionDD()
+    {
+
+    }
+
+    public function getModuleDD()
     {
 
     }
