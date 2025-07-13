@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Office;
+namespace App\Http\Controllers\SaleInsight\Order;
 
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
