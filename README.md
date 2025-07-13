@@ -75,5 +75,6 @@ php --ri swoole
 
 php artisan octane:start --server=swoole --port=8001 --watch
 
-
-
+# Install 
+  "barryvdh/laravel-dompdf": "*",
+  "spatie/laravel-permission": "^6.20",
