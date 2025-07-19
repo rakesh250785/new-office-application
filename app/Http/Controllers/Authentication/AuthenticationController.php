@@ -32,7 +32,7 @@ class AuthenticationController extends Controller
             # Attempt login
             $credentials = $request->only('email', 'password');
             if (!$token = JWTAuth::attempt($credentials)) {
-                return Utility::apiError('Invalid credentials', [], 221);
+                return Utility::apiError('Invalid credentials', [], 401);
             }
 
             # Return response

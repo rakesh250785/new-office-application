@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Authentication\AuthenticationController;
 
 # Public route
@@ -9,7 +10,12 @@ Route::prefix('admin')->group(function () {
 });
 
 # Aiuth route
-Route::prefix('admin')->middleware('auth::api')->group(function () {
+Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthenticationController::class, 'apiLogout']);
+
+    # Vendor Inside
+    Route::post('/addUpdateCourier', [CourierController::class, 'addUpdateCourier']);
+
+
 });
 

@@ -19,6 +19,7 @@ class CourierController extends Controller
     public function addUpdateCourier(Request $request)
     {
         try {
+
             # Get specific fields
             $data = $request->only(['courier_name', 'branch_name', 'branch_id', 'update_status', 'courier_id']);
 
@@ -32,7 +33,7 @@ class CourierController extends Controller
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
             # Get branch id
