@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Vendor\Courier;
 
 use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use App\Helpers\Utility;
 use App\Models\Courier;
+use App\Exports\Export;
 use App\Models\Branch;
+use Carbon\Carbon;
 use Exception;
 use Auth;
 
@@ -98,7 +101,10 @@ class CourierController extends Controller
                 'page',
                 'per_page',
                 'branch_id',
-                'courier_name'
+                'courier_name',
+                'start_date',
+                'end_date',
+                'download',
             ]);
 
             # Validate fields
@@ -123,11 +129,27 @@ class CourierController extends Controller
                 $query->where('branch_id', $branchId);
             }
 
+            # Courier name filter
             if (!empty($data['courier_name'])) {
                 $query->where('name', 'like', '%' . $data['courier_name'] . '%');
             }
 
+            # Date range filter
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
             # Get data
+
+            if (!empty($data['download'])) {
+                $columns = ['id', 'name', 'created_at'];
+                $filename = strtolower('Courier') . '_' . now()->format('Ymd_His') . '.xlsx';
+                return Excel::download(new Export($query, $columns), $filename);
+            }
+
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $courierData = $query->orderBy('id', 'desc')->paginate($perPage);
 
