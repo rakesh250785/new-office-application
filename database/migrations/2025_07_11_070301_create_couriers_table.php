@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('couriers', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->integer('branch_id');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

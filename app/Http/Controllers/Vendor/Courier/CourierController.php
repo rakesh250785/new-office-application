@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Vendor\Courier;
 
-use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+use Illuminate\Http\Request;
+use App\Helpers\Utility;
 use App\Models\Courier;
 use App\Models\Branch;
 use Exception;
+use Auth;
 
 class CourierController extends Controller
 {
@@ -23,9 +25,19 @@ class CourierController extends Controller
             # Get specific fields
             $data = $request->only(['courier_name', 'branch_name', 'branch_id', 'update_status', 'courier_id']);
 
+            # Get branch id
+            $branchId = Auth::user()['branch_id'] ?? $data['branch_id'] ?? null;
+
             # Validate fields
             $validator = Validator::make($data, [
-                'courier_name' => 'required|string|max:255',
+                'courier_name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('couriers', 'name')
+                        ->where(fn($query) => $query->where('branch_id', $branchId ?? null))
+                        ->ignore($data['courier_id'] ?? null),
+                ],
                 'branch_id' => 'nullable|integer|exists:branches,id',
                 'courier_id' => 'nullable|integer|exists:couriers,id',
                 'update_status' => 'nullable|sometimes|boolean'
@@ -36,43 +48,41 @@ class CourierController extends Controller
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Get branch id
-            $branchId = $data['branch_id'] ?? auth()->user()->branch_id;
-
             # Get branch name
             $branch = Branch::find($branchId);
-            $branchName = $branch->name ?? null;
+            $branchCode = $branch['code'] ?? null;
 
             # Return if branch not found
-            if (!$branchName) {
-                return Utility::apiSuccess('Branch not found', [], 404);
+            if (!$branchCode) {
+                return Utility::apiSuccess('Branch not found', [], 221);
             }
 
-            # Prepare arr
-            $addUpdate = [];
-            $status = false;
-            $message = 'Courier created successfully!';
+            # Prepare input
+            $addUpdate = [
+                'name' => $data['courier_name'],
+                'branch_id' => $branchId,
+            ];
 
-            # Create courier if update_status is not set
-            if (empty($data['update_status'])) {
-                $addUpdate['courier_name'] = $data['courier_name'];
-                $addUpdate['branch_id'] = $branchId;
-                $status = Courier::create($addUpdate);
-            }
+            # Decide condition
+            $where = [];
 
-            # Update courier if branch_id and update_status exist
-            if (!empty($data['branch_id']) && !empty($data['update_status'])) {
-                $addUpdate['courier_name'] = $data['courier_name'];
-                $status = Courier::where('id', $data['courier_id'])->update($addUpdate);
+            if (!empty($data['update_status']) && !empty($data['courier_id'])) {
+                $where = ['id' => $data['courier_id']];
                 $message = 'Courier updated successfully!';
+            } else {
+                $where = ['name' => $data['courier_name'], 'branch_id' => $branchId];
+                $message = 'Courier created successfully!';
             }
 
-            # Return if fail
+            # Execute updateOrCreate
+            $status = Courier::updateOrCreate($where, $addUpdate);
+
+            # Return error if failed
             if (!$status) {
-                return Utility::apiError('Fail to create courier');
+                return Utility::apiError('Fail to create courier', [], 221);
             }
 
-            # Return response
+            # Return success
             return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error('Courier creation error: ' . $ex->getMessage());
@@ -97,6 +107,9 @@ class CourierController extends Controller
                 'per_page' => 'nullable|integer|min:1|max:100',
             ]);
 
+            # Branch info
+            $branchId = Auth::user()['branch_id'] ?? $data['branch_id'] ?? null;
+
             # Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
@@ -105,14 +118,13 @@ class CourierController extends Controller
             # Get courier data
             $query = Courier::whereNull('deleted_at');
 
-            if (!empty($data['branch_id'])) {
-                $query->where('branch_id', $data['branch_id']);
+            if (!empty($branchId)) {
+                $query->where('branch_id', $branchId);
             }
 
             # Get data
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $courierData = $query->orderBy('in_courier_id', 'desc')
-                ->paginate($perPage);
+            $courierData = $query->orderBy('id', 'desc')->paginate($perPage);
 
             # Return response
             return Utility::apiSuccess('Courier data fetched', $courierData);
