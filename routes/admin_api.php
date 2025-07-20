@@ -16,5 +16,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     # Vendor Inside
     Route::post('/addUpdateCourier', [CourierController::class, 'addUpdateCourier']);
     Route::post('/getCourier', [CourierController::class, 'getCourier']);
+    Route::post('/deleteCourier', [CourierController::class, 'deleteCourier']);
+
 });
 

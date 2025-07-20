@@ -68,10 +68,10 @@ class CourierController extends Controller
 
             if (!empty($data['update_status']) && !empty($data['courier_id'])) {
                 $where = ['id' => $data['courier_id']];
-                $message = 'Courier updated successfully!';
+                $message = 'updated successfully!';
             } else {
                 $where = ['name' => $data['courier_name'], 'branch_id' => $branchId];
-                $message = 'Courier created successfully!';
+                $message = 'created successfully!';
             }
 
             # Execute updateOrCreate
@@ -97,7 +97,8 @@ class CourierController extends Controller
             $data = $request->only([
                 'page',
                 'per_page',
-                'branch_id'
+                'branch_id',
+                'courier_name'
             ]);
 
             # Validate fields
@@ -120,6 +121,10 @@ class CourierController extends Controller
 
             if (!empty($branchId)) {
                 $query->where('branch_id', $branchId);
+            }
+
+            if (!empty($data['courier_name'])) {
+                $query->where('name', 'like', '%' . $data['courier_name'] . '%');
             }
 
             # Get data
@@ -147,17 +152,17 @@ class CourierController extends Controller
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
             # Delete courier
             $records = Courier::where('id', $data['id'])->delete();
             if (!$records) {
-                return Utility::apiError('Fail to delete Courier !');
+                return Utility::apiError('Fail to delete Courier !', [], 221);
             }
 
             # Return response
-            return Utility::apiSuccess('Courier deleted successfully!', [], 200);
+            return Utility::apiSuccess('deleted successfully!', [], 200);
         } catch (Exception $ex) {
             Log::debug('Courier delete error: ' . $ex->getMessage());
             return Utility::apiError('Something went wrong while deleting courier.', ['exception' => $ex->getMessage()], 500);
