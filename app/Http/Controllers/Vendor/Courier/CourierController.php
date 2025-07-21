@@ -105,6 +105,7 @@ class CourierController extends Controller
                 'start_date',
                 'end_date',
                 'download',
+                'branch_list'
             ]);
 
             # Validate fields
@@ -114,9 +115,7 @@ class CourierController extends Controller
                 'per_page' => 'nullable|integer|min:1|max:100',
             ]);
 
-            # Branch info
-            $branchId = Auth::user()['branch_id'] ?? $data['branch_id'] ?? null;
-
+        
             # Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
@@ -125,8 +124,8 @@ class CourierController extends Controller
             # Get courier data
             $query = Courier::whereNull('deleted_at');
 
-            if (!empty($branchId)) {
-                $query->where('branch_id', $branchId);
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
             }
 
             # Courier name filter

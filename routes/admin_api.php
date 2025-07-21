@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cofiguration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Dropdown\DropdownController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
@@ -22,6 +23,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     # Dropdown route
     Route::post('/getBranchDD', [DropdownController::class, 'getBranchDD']);
 
+    # Quotation format
+    Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
+    Route::post('/getQuotationFormat', [QuotationFormatController::class, 'getQuotationFormat']);
+    Route::post('/deleteQuotationFormat', [QuotationFormatController::class, 'deleteQuotationFormat']);
+    
 
 
 });

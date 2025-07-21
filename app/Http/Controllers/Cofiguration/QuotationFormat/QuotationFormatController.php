@@ -10,78 +10,72 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Exception;
 
 class QuotationFormatController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
     }
 
-    public function addUpdateQuatationFormat(Request $request)
+    public function addUpdateQuotationFormat(Request $request)
     {
         try {
-            # Get selected fields
+            # Extract fields
             $data = $request->only([
                 'billing_address',
                 'branch_address',
                 'branch_id',
-                'billing_notes',
-                'mobile_no',
-                'email_address',
-                'city_name',
+                'notes',
+                'mobile',
+                'email',
                 'quotation_format_id',
+                'update_status'
             ]);
 
-            # Validation rule
+            # Validation rules
             $validator = Validator::make($data, [
                 'branch_id' => 'required',
                 'billing_address' => 'required',
                 'branch_address' => 'required',
-                'billing_notes' => 'required',
-                'mobile_no' => 'required',
-                'email_address' => 'required|email',
-                'city_name' => 'required|string',
-                'quotation_format_id' => 'nullable|sometimes'
+                'notes' => 'required',
+                'mobile' => 'required',
+                'email' => 'required|email',
+                'quotation_format_id' => 'nullable|sometimes|numeric|exists:quatation_formats,id',
             ]);
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Prepare arr
+            # Data mapping
             $arr = [
-                'billing_address' => $data['billing_address'] ?? null,
-                'branch_address' => $data['branch_address'] ?? null,
-                'branch_email' => $data['email_address'] ?? null,
-                'branch_phnumber' => $data['mobile_no'] ?? null,
-                'stn_billing_note' => $data['billing_notes'] ?? null,
+                'billing_address' => $data['billing_address'],
+                'branch_address' => $data['branch_address'],
+                'branch_email' => $data['email'],
+                'branch_phnumber' => $data['mobile'],
+                'stn_billing_note' => $data['notes'],
                 'user_id' => Auth::id(),
-                'branch_id' => Auth::user()->branch_id,
+                'branch_id' => $data['branch_id'],
                 'city_name' => $data['city_name'] ?? null,
-                'created_at' => Carbon::now(),
             ];
 
-            # Default message
-            $message = 'Quotaion format created successfully';
+            # Update or create
+            $format = QuatationFormat::updateOrCreate(
+                ['id' => $data['quotation_format_id'] ?? null],
+                $arr
+            );
 
-            # Update quotaion format
-            if (!empty($data['quotation_format_id'])) {
-                $status = QuatationFormat::where('id', $data['quotation_format_id'])->update($arr);
-                if (!$status) {
-                    return Utility::apiError('Fail to update quotation format', [], 221);
-                }
-                $message = 'Quotaion format updated successfully';
+            # Return if fail
+            if (!$format) {
+                return Utility::apiError('Failed to save quotation format', [], 221);
             }
 
-            # Create quotation format
-            $status = QuatationFormat::create($arr);
-
-            # Retun if fail
-            if (!$status) {
-                return Utility::apiError('Fail to create courier', [], 221);
-            }
+            # Message define
+            $message = $data['quotation_format_id']
+                ? 'format updated successfully'
+                : 'format created successfully';
 
             # Return response
             return Utility::apiSuccess($message, [], 200);
@@ -90,6 +84,7 @@ class QuotationFormatController extends Controller
             return Utility::apiError('Something went wrong in quotation format', ['exception' => $ex->getMessage()]);
         }
     }
+
 
     public function getQuatationFormat(Request $request)
     {
