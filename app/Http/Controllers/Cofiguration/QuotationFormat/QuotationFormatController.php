@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Cofiguration\QuotationFormat;
 
-use App\Helpers\Utility;
-use App\Http\Controllers\Controller;
-use App\Models\Branch;
-use App\Models\QuatationFormat;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Models\QuotationFormat;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use App\Exports\Export;
+use App\Helpers\Utility;
+use Carbon\Carbon;
 use Exception;
 
 class QuotationFormatController extends Controller
@@ -17,7 +20,6 @@ class QuotationFormatController extends Controller
     public function __construct()
     {
     }
-
     public function addUpdateQuotationFormat(Request $request)
     {
         try {
@@ -40,8 +42,13 @@ class QuotationFormatController extends Controller
                 'branch_address' => 'required',
                 'notes' => 'required',
                 'mobile' => 'required',
-                'email' => 'required|email',
-                'quotation_format_id' => 'nullable|sometimes|numeric|exists:quatation_formats,id',
+                'email' => [
+                    'required',
+                    'email',
+                    Rule::unique('quatation_formats', 'email')
+                        ->ignore($data['quotation_format_id'] ?? null)
+                ],
+                'quotation_format_id' => 'nullable|integer|exists:quotation_formats,id',
             ]);
 
             # Return validation error
@@ -53,16 +60,15 @@ class QuotationFormatController extends Controller
             $arr = [
                 'billing_address' => $data['billing_address'],
                 'branch_address' => $data['branch_address'],
-                'branch_email' => $data['email'],
-                'branch_phnumber' => $data['mobile'],
-                'stn_billing_note' => $data['notes'],
+                'email' => $data['email'],
+                'mobile' => $data['mobile'],
+                'notes' => $data['notes'],
                 'user_id' => Auth::id(),
                 'branch_id' => $data['branch_id'],
-                'city_name' => $data['city_name'] ?? null,
             ];
 
             # Update or create
-            $format = QuatationFormat::updateOrCreate(
+            $format = QuotationFormat::updateOrCreate(
                 ['id' => $data['quotation_format_id'] ?? null],
                 $arr
             );
@@ -74,8 +80,8 @@ class QuotationFormatController extends Controller
 
             # Message define
             $message = $data['quotation_format_id']
-                ? 'format updated successfully'
-                : 'format created successfully';
+                ? ' updated successfully'
+                : ' created successfully';
 
             # Return response
             return Utility::apiSuccess($message, [], 200);
@@ -85,69 +91,112 @@ class QuotationFormatController extends Controller
         }
     }
 
-
-    public function getQuatationFormat(Request $request)
+    public function getQuotationFormat(Request $request)
     {
         try {
-            # Get fields
+            # Get specific fields
             $data = $request->only([
-                'search'
+                'page',
+                'per_page',
+                'start_date',
+                'end_date',
+                'download',
+                'branch_list',
+                'search',
             ]);
 
-            # Get branch info
-            $query = QuatationFormat::whereNull('deleted_at')->orderByDesc('id');
-            $branchInfo = Branch::get()->pluck('name', 'id');
-
-            # Optional branch search    
-            if (!empty($data['search'])) {
-                if (isset($flp_branch[$request->search])) {
-                    $query->where('int_branch_id', (int) $branchInfo[$data['search']]);
+            # Load query with branch relationship
+            $query = QuotationFormat::with([
+                'branch' => function ($q) {
+                    $q->select('id', 'name');
                 }
+            ])->whereNull('deleted_at');
+
+            # Global free-text search
+            if (!empty($data['search'])) {
+                $search = $data['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('email', 'like', "%$search%")
+                        ->orWhere('mobile', 'like', "%$search%")
+                        ->orWhere('billing_address', 'like', "%$search%")
+                        ->orWhere('branch_address', 'like', "%$search%")
+                        ->orWhere('notes', 'like', "%$search%")
+                        ->orWhereHas('branch', function ($b) use ($search) {
+                            $b->where('name', 'like', "%$search%");
+                        });
+                });
             }
 
-            # Get records
-            $getREc = $query->paginate();
+            # Branch filter
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
+            }
 
-            # Response 
-            return Utility::apiSuccess('List quotation format', $getREc, 200);
+            # Date filter
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            # Export logic
+            if (!empty($data['download'])) {
+                $columns = [
+                    'email' => 'Email',
+                    'mobile' => 'Mobile',
+                    'billing_address' => 'Billing Address',
+                    'branch_address' => 'Branch Address',
+                    'notes' => 'Notes',
+                    'branch.name' => 'Branch Name',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'quotation_format_' . now()->format('Ymd_His') . '.xlsx';
+                return Excel::download(new Export($query, $columns), $filename);
+            }
+
+            # Pagination
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+            $quotationFormatData = $query->orderByDesc('id')->paginate($perPage);
+
+            # Retunr response
+            return Utility::apiSuccess('List Quotation Format', $quotationFormatData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Something went wrong quotaion format', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Something went wrong in quotation format', [
+                'exception' => $ex->getMessage()
+            ]);
         }
     }
 
-    public function deleteQuatationFormat(Request $request, $id)
+    public function deleteQuotationFormat(Request $request)
     {
         try {
+            # Get requested fields
+            $data = $request->only(['id']);
 
-            # Get selected fields
-            $data = $request->only([
-                'id',
-            ]);
-
-            # Validation rule
+            # Validate fields
             $validator = Validator::make($data, [
-                'id' => 'required',
+                'id' => 'required|integer|exists:quotation_formats,id',
             ]);
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Delete quotaion format
-            $status = QuatationFormat::where('id', $id)->delete();
-
-            # Return if fail
-            if (!$status) {
-                return Utility::apiError('Fail to deleted quotaion format', [], 221);
+            # Delete courier
+            $records = QuotationFormat::where('id', $data['id'])->delete();
+            if (!$records) {
+                return Utility::apiError('Fail to delete quotaion format !', [], 221);
             }
 
             # Return response
-            return Utility::apiSuccess('Quotation format deleted successfully', [], 221);
+            return Utility::apiSuccess('deleted successfully!', [], 200);
         } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Error occurred while deleting quotaion format', ['exception' => $ex->getMessage()]);
+            Log::debug('Quiotation delete error: ' . $ex->getMessage());
+            return Utility::apiError('Something went wrong while deleting quotation format.', ['exception' => $ex->getMessage()], 500);
         }
     }
 }

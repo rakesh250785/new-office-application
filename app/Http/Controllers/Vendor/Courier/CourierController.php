@@ -115,7 +115,7 @@ class CourierController extends Controller
                 'per_page' => 'nullable|integer|min:1|max:100',
             ]);
 
-        
+
             # Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
@@ -144,7 +144,11 @@ class CourierController extends Controller
             # Get data
 
             if (!empty($data['download'])) {
-                $columns = ['id', 'name', 'created_at'];
+                $columns = [
+                    'name' => 'Name',
+                    'created_at' => 'Date',
+                ];
+
                 $filename = strtolower('Courier') . '_' . now()->format('Ymd_His') . '.xlsx';
                 return Excel::download(new Export($query, $columns), $filename);
             }

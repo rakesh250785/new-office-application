@@ -2,135 +2,184 @@
 
 namespace App\Http\Controllers\Cofiguration\Principal;
 
-use App\Helpers\Utility;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Principal;
-use App\Models\PrincipalType;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Auth;
+use App\Exports\Export;
+use App\Helpers\Utility;
+use Carbon\Carbon;
 use Exception;
-use SebastianBergmann\CodeCoverage\Util\Percentage;
+
 class PrincipalController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
     }
-
     public function addUpdatePrincipal(Request $request)
     {
         try {
-            # Request specific fields
-            $data = $request->only(['principal_name', 'principal_type_id']);
-
-            # Validation rule
-            $validator = Validator::make($data, [
-                'principal_name' => 'required',
-                'principal_type_id' => 'required',
-                'principal_id' => 'nullable||sometimes'
+            # Extract fields
+            $data = $request->only([
+                'type',
+                'type_id',
+                'update_status',
+                'principal_id',
             ]);
 
-            # Return validation error 
+            # Validation rules
+            $validator = Validator::make($data, [
+                'type' => 'required',
+                'type_id' => 'required|exists:principal_types,id',
+                'principal_id' => 'nullable|integer|exists:principals,id',
+
+            ]);
+
+            # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Get principal type
-            $principalType = PrincipalType::where('id', $data['principal_type_id'])->first();
-
-            # Return if not found
-            if (!$principalType) {
-                return Utility::apiError('Principal type not found', [], 221);
-            }
-
-            # Check type & status
-            $status = false;
-            $isAuthorized = 0;
-            $fnStatus = false;
-            $message = 'Principal added successfully';
-            if ($principalType['name'] == 'Authorised') {
-                $isAuthorized = 1;
-                $status = 1;
-            }
-
-            # Prepare array
+            # Data mapping
             $arr = [
-                'name' => $data['principal_name'] ?? null,
-                'type' => $data['type'] ?? null,
-                'is_authorized' => $isAuthorized,
-                'small_logo_image' => 'no image',
-                'branch_id' => Auth::user()->branch_id,
-                'status' => $status,
-                'deleted_at' => null,
+                'type' => $data['type'],
+                'type_id' => $data['type_id'],
+                'user_id' => Auth::id(),
+                'branch_id' => Auth::user()['branch_id']
             ];
 
-            # Update principal
-            if (!empty($data['principal_id'])) {
-                $message = 'Principal updated successfully';
-                $fnStatus = Principal::where('id', $data['principal_id'])->update($arr);
+            # Update or create
+            $principal = Principal::updateOrCreate(
+                ['id' => $data['principal_id'] ?? null],
+                $arr
+            );
+
+            # Return if fail
+            if (!$principal) {
+                return Utility::apiError('Failed to save principal ', [], 221);
             }
 
-            # Add principal
-            $fnStatus = Principal::create($arr);
-            if (!$fnStatus) {
-                return Utility::apiError('Fail to add principal', [], 221);
-            }
+            # Message define
+            $message = $data['principal_id']
+                ? ' updated successfully'
+                : ' created successfully';
 
             # Return response
             return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error occurred while action on addUpdatePrincipal', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Something went wrong in principal ', ['exception' => $ex->getMessage()]);
         }
     }
 
     public function getPrincipal(Request $request)
     {
         try {
-            # Request specific fields
-            $data = $request->only(['page', 'per_page', 'search']);
+            # Get specific fields
+            $data = $request->only([
+                'page',
+                'per_page',
+                'start_date',
+                'end_date',
+                'download',
+                'branch_list',
+                'search',
+            ]);
 
-            # Get principal
-            $principal = Principal::whereNull('deleted_at')->orderBy('id', 'desc')->paginate(10);
+            # Load query with branch relationship
+            $query = Principal::with([
+                'branch' => function ($q) {
+                    $q->select('id', 'name');
+                },
+                'principalType' => function ($q) {
+                    $q->select('id', 'type');
+                }
+            ])->whereNull('deleted_at');
 
-            # Return response
-            return Utility::apiSuccess('List principal', $principal, 200);
+            # Global free-text search
+            if (!empty($data['search'])) {
+                $search = $data['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('type', 'like', "%$search%")
+                        ->orWhereHas('branch', function ($b) use ($search) {
+                            $b->where('name', 'like', "%$search%");
+                        })
+                        ->orWhereHas('principal_type', function ($b) use ($search) {
+                            $b->where('type', 'like', "%$search%");
+                        });
+                });
+            }
 
+            # Branch filter
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
+            }
+
+            # Date filter
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            # Export logic
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Principal Name',
+                    'principal.type' => 'Principal Type',
+                    'branch.name' => 'Branch Name',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = strtolower('principal') . '_' . now()->format('Ymd_His') . '.xlsx';
+                return Excel::download(new Export($query, $columns), $filename);
+            }
+
+            # Pagination
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+            $PrincipalData = $query->orderByDesc('id')->paginate($perPage);
+
+            # Retunr response
+            return Utility::apiSuccess('List principal ', $PrincipalData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error occurred while action on getPrincipal', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Something went wrong in principal ', [
+                'exception' => $ex->getMessage()
+            ]);
         }
     }
 
-    public function deletePrincipals(Request $request, $id)
+    public function deletePrincipal(Request $request)
     {
         try {
+            # Get requested fields
+            $data = $request->only(['id']);
 
-            # Request specific fields
-            $data = $request->only(['principal_id']);
-
-            # Validation rule
+            # Validate fields
             $validator = Validator::make($data, [
-                'principal_id' => 'required',
+                'id' => 'required|integer|exists:principals,id',
             ]);
 
-            # Return validation error 
+            # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Delete principal
-            $status = Principal::where('id', $data['principal_id'])->delete();
-            if (!$status) {
-                return Utility::apiError('Fail to delete principal', [], 221);
+            # Delete courier
+            $records = Principal::where('id', $data['id'])->delete();
+            if (!$records) {
+                return Utility::apiError('Fail to delete principal  !', [], 221);
             }
 
             # Return response
-            return Utility::apiSuccess('Principal deleted successfully', [], 200);
-
+            return Utility::apiSuccess('deleted successfully!', [], 200);
         } catch (Exception $ex) {
-            Log::debug($ex);
-            return Utility::apiError('Error occurred while action on deletePrincipals', ['exception' => $ex->getMessage()]);
+            Log::debug('Principal delete error: ' . $ex->getMessage());
+            return Utility::apiError('Something went wrong while deleting principal .', ['exception' => $ex->getMessage()], 500);
         }
     }
 }

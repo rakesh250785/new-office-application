@@ -11,9 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('principal_types', function (Blueprint $table) {
+        Schema::create('quotation_formats', function (Blueprint $table) {
             $table->id();
-            $table->string('type')->nullable();
+            $table->text('billing_address')->nullable();
+            $table->text('branch_address')->nullable();
+            $table->integer('branch_id');
+            $table->string('email');
+            $table->string('mobile');
+            $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -24,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('principal_types');
+        Schema::dropIfExists('quotation_formats');
     }
 };

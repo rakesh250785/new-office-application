@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dropdown;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\PrincipalType;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
 use App\Models\Currency;
@@ -195,7 +196,16 @@ class DropdownController extends Controller
 
     public function getPrincipalTypeDD()
     {
+        try {
+            # Get principal
+            $principal = PrincipalType::whereNull('deleted_at')->pluck('type', 'id');
 
+            # Return response
+            return Utility::apiSuccess('DD PrincipalType', $principal, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getPartNumberDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getRoleDD()

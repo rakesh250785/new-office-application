@@ -6,5 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class PrincipalType extends Model
 {
-    //
+    protected $fillable = [
+        'type'
+    ];
+
 }
