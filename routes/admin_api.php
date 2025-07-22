@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Cofiguration\Notification\NotificationController;
 use App\Http\Controllers\Cofiguration\Principal\PrincipalController;
 use App\Http\Controllers\Cofiguration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Dropdown\DropdownController;
@@ -31,9 +32,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/deleteQuotationFormat', [QuotationFormatController::class, 'deleteQuotationFormat']);
 
     # Quotation format
-    Route::post('/addUpdatePrincipal', [PrincipalController::class, 'addUpdatePrincipal']);
-    Route::post('/getPrincipal', [PrincipalController::class, 'getPrincipal']);
-    Route::post('/deletePrincipal', [PrincipalController::class, 'deletePrincipal']);
+    Route::post('/addUpdateNotification', [NotificationController::class, 'addUpdateNotification']);
+    Route::post('/getNotification', [NotificationController::class, 'getNotification']);
+    Route::post('/deleteNotification', [NotificationController::class, 'deleteNotification']);
     
 
     
