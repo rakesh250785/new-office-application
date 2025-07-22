@@ -4,6 +4,7 @@ use App\Http\Controllers\Cofiguration\Notification\NotificationController;
 use App\Http\Controllers\Cofiguration\Principal\PrincipalController;
 use App\Http\Controllers\Cofiguration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Dropdown\DropdownController;
+use App\Http\Controllers\Product\Category\CategoryController;
 use App\Http\Controllers\Product\Parameter\ParameterController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
@@ -26,6 +27,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     # Dropdown route
     Route::post('/getBranchDD', [DropdownController::class, 'getBranchDD']);
     Route::post('/getPrincipalTypeDD', [DropdownController::class, 'getPrincipalTypeDD']);
+    Route::post('/getParameterFieldDD', [DropdownController::class, 'getParameterFieldDD']);
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -46,6 +48,12 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateParameter', [ParameterController::class, 'addUpdateParameter']);
     Route::post('/getParameter', [ParameterController::class, 'getParameter']);
     Route::post('/deleteParameter', [ParameterController::class, 'deleteParameter']);
+
+    # Category
+    Route::post('/addUpdateCategory', [CategoryController::class, 'addUpdateCategory']);
+    Route::post('/getCategory', [CategoryController::class, 'getCategory']);
+    Route::post('/deleteCategory', [CategoryController::class, 'deleteCategory']);
+
 
 });
 

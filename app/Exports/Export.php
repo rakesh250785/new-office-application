@@ -2,24 +2,24 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class Export implements FromQuery, WithMapping, WithHeadings
+class Export implements FromCollection, WithMapping, WithHeadings
 {
-    protected $query;
+    protected $data;
     protected $columns;
 
-    public function __construct($query, $columns)
+    public function __construct($data, $columns)
     {
-        $this->query = $query;
+        $this->data = $data;
         $this->columns = $columns;
     }
 
-    public function query()
+    public function collection()
     {
-        return $this->query;
+        return collect($this->data);
     }
 
     public function map($row): array

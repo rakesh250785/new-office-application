@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dropdown;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Parameter;
 use App\Models\PrincipalType;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
@@ -189,8 +190,18 @@ class DropdownController extends Controller
 
     }
 
-    public function getProductFieldDD()
+    public function getParameterFieldDD()
     {
+        try {
+            # Get principal
+            $parameterFields = Parameter::whereNull('deleted_at')->pluck('parameter_name', 'id');
+
+            # Return response
+            return Utility::apiSuccess('DD getParameterFieldDD', $parameterFields, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getPartNumberDD', ['exception' => $ex->getMessage()], 500);
+        }
 
     }
 
