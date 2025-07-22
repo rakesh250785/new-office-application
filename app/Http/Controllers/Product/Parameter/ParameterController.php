@@ -2,77 +2,86 @@
 
 namespace App\Http\Controllers\Product\Parameter;
 
-use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use App\Exports\Export;
 use App\Models\Parameter;
 use App\Helpers\Utility;
-use Exception, Log;
+use Exception;
+use Log;
 
 class ParameterController extends Controller
 {
-    public function __construct() {
-    }
     public function addUpdateParameter(Request $request)
     {
         try {
             # Request specific fields
-            $data = $request->only(['id', 'name', 'column_name', 'old_column_name']);
+            $data = $request->only([
+                'parameter_id',
+                'parameter_name',
+                'column_name',
+                'old_column_name',
+                'update_status',
+            ]);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'name' => 'required|string',
+                'parameter_name' => 'required|string',
                 'column_name' => 'required|string',
-                'id' => 'nullable|numeric',
-                'old_column_name' => 'nullable|sometimes'
+                'parameter_id' => 'nullable|numeric',
+                'update_status' => 'nullable|boolean',
             ]);
 
-            # Retunr validation error
+            # Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Payload info
+            # Payload
             $payload = [
-                'name' => $data['name'],
+                'parameter_name' => $data['parameter_name'],
                 'column_name' => $data['column_name'],
-                'branch_id' => Auth::user()->branch_id,
+                'branch_id' => Auth::user()['branch_id'],
+                'user_id' => Auth::user()['id'],
             ];
 
-            # Update or create
+            # Add /update parameter
             $parameter = Parameter::updateOrCreate(
-                ['id' => $data['id'] ?? null],
+                ['id' => $data['parameter_id'] ?? null],
                 $payload
             );
 
-            # Return if fail
+            # Return if error 
             if (!$parameter) {
                 return Utility::apiError('Failed to save parameter.', [], 221);
             }
 
-            # Update column info
-            if (!empty($data['id']) && !empty($data['old_column_name']) && $data['old_column_name'] !== $data['column_name']) {
-                if (Schema::hasColumn('product', $data['old_column_name'])) {
-                    Schema::table('product', function (Blueprint $table) use ($data) {
-                        $table->dropColumn($data['old_column_name']);
-                    });
-                }
-            }
+            # Update schema
+            // if (!empty($data['parameter_id']) && !empty($data['old_column_name']) && $data['old_column_name'] !== $data['column_name']) {
+            //     if (Schema::hasColumn('product', $data['old_column_name'])) {
+            //         Schema::table('product', function (Blueprint $table) use ($data) {
+            //             $table->dropColumn($data['old_column_name']);
+            //         });
+            //     }
+            // }
 
-            # Update if not exist
-            if (!Schema::hasColumn('product', $data['column_name'])) {
-                Schema::table('product', function (Blueprint $table) use ($data) {
-                    $table->string($data['column_name'], 200)->after('hsn_no')->nullable();
-                });
-            }
+            // # Added new column
+            // if (!Schema::hasColumn('product', $data['column_name'])) {
+            //     Schema::table('product', function (Blueprint $table) use ($data) {
+            //         $table->string($data['column_name'], 200)->after('hsn_no')->nullable();
+            //     });
+            // }
 
             # Prepare message
-            $message = !empty($data['id']) ? 'Parameter updated successfully.' : 'Parameter created successfully.';
+            $message = $data['parameter_id'] ? 'updated successfully.' : 'created successfully.';
 
-            # Return response
+            # Return column
             return Utility::apiSuccess($message, $parameter, 200);
 
         } catch (Exception $ex) {
@@ -81,30 +90,82 @@ class ParameterController extends Controller
         }
     }
 
-    public function getParameterList(Request $request)
+    public function getParameter(Request $request)
     {
         try {
-            # Get specif fields
-            $data = $request->only(['per_page', 'search']);
+            # Get specific fields
+            $data = $request->only([
+                'page',
+                'per_page',
+                'start_date',
+                'end_date',
+                'download',
+                'branch_list',
+                'search',
+            ]);
 
-            # Set pagination
-            $perPage = $data['per_page'] ?? 10;
+            # Base query with branch relationship
+            $query = Parameter::with('branch:id,name')->whereNull('deleted_at');
 
-            # Get records
-            $data = Parameter::whereNull('deleted_at')->orderByDesc('id')->paginate($perPage);
+            # Apply free-text search
+            if (!empty($data['search'])) {
+                $search = $data['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('parameter_name', 'like', "%$search%")
+                        ->orWhere('column_name', 'like', "%$search%")
+                        ->orWhereHas('branch', function ($b) use ($search) {
+                            $b->where('name', 'like', "%$search%");
+                        });
+                });
+            }
+
+            # Filter by branches
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
+            }
+
+            # Filter by date range
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            # Export as Excel if requested
+            if (!empty($data['download'])) {
+                $columns = [
+                    'parameter_name' => 'Parameter Name',
+                    'column_name' => 'Column Name',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+                $filename = 'parameter' . now()->format('Ymd_His') . '.xlsx';
+                return Excel::download(new Export($query, $columns), $filename);
+            }
+
+            # Paginate results
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+            $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
             # Return response
-            return Utility::apiSuccess('Parameter list fetched.', $data, 200);
+            return Utility::apiSuccess('Notification list fetched successfully', $notificationData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error fetching parameters', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Failed to fetch notifications', [
+                'exception' => $ex->getMessage()
+            ]);
         }
     }
 
+    /**
+     * Delete a parameter.
+     */
     public function deleteParameter(Request $request)
     {
         try {
-            # Get sepcific fields
+
+            # Get specific fields
             $data = $request->only(['id']);
 
             # Validation rule
@@ -112,28 +173,35 @@ class ParameterController extends Controller
                 'id' => 'required|numeric'
             ]);
 
-            # Validation rule
+            # Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Delete parameter
-            $parameter = Parameter::find($data['id'])->delete();
+            # Get existing parameter
+            $parameter = Parameter::find($data['id']);
 
-            # Return if fail
+            # Return if not found
             if (!$parameter) {
-                return Utility::apiError('Fail to  delete parameter.', [], 404);
+                return Utility::apiError('Parameter not found.', [], 404);
             }
 
-            # Delete colomn schema
-            if (Schema::hasColumn('product', $parameter['column_name'])) {
-                Schema::table('product', function (Blueprint $table) use ($parameter) {
-                    $table->dropColumn($parameter['column_name']);
+            # Get column info
+            $columnName = $parameter['column_name'];
+
+            # Delete param
+            $parameter->delete();
+
+            # Update schema of product
+            if (Schema::hasColumn('product', $columnName)) {
+                Schema::table('product', function (Blueprint $table) use ($columnName) {
+                    $table->dropColumn($columnName);
                 });
             }
 
             # Return response
-            return Utility::apiSuccess('Parameter deleted successfully.', [], 200);
+            return Utility::apiSuccess('deleted successfully.', [], 200);
+
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Error deleting parameter', ['exception' => $ex->getMessage()]);

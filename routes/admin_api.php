@@ -4,6 +4,7 @@ use App\Http\Controllers\Cofiguration\Notification\NotificationController;
 use App\Http\Controllers\Cofiguration\Principal\PrincipalController;
 use App\Http\Controllers\Cofiguration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Dropdown\DropdownController;
+use App\Http\Controllers\Product\Parameter\ParameterController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Authentication\AuthenticationController;
@@ -31,14 +32,20 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getQuotationFormat', [QuotationFormatController::class, 'getQuotationFormat']);
     Route::post('/deleteQuotationFormat', [QuotationFormatController::class, 'deleteQuotationFormat']);
 
-    # Quotation format
+    # Notification
     Route::post('/addUpdateNotification', [NotificationController::class, 'addUpdateNotification']);
     Route::post('/getNotification', [NotificationController::class, 'getNotification']);
     Route::post('/deleteNotification', [NotificationController::class, 'deleteNotification']);
-    
 
-    
+    # Principal
+    Route::post('/addUpdatePrincipal', [PrincipalController::class, 'addUpdatePrincipal']);
+    Route::post('/getPrincipal', [PrincipalController::class, 'getPrincipal']);
+    Route::post('/deletePrincipal', [PrincipalController::class, 'deletePrincipal']);
 
+    # Parameter
+    Route::post('/addUpdateParameter', [ParameterController::class, 'addUpdateParameter']);
+    Route::post('/getParameter', [ParameterController::class, 'getParameter']);
+    Route::post('/deleteParameter', [ParameterController::class, 'deleteParameter']);
 
 });
 
