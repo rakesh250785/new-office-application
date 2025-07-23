@@ -2,93 +2,143 @@
 
 namespace App\Http\Controllers\Vendor\Source;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use App\Models\Source;
+use Illuminate\Http\Request;
+use App\Exports\Export;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
 
 class SourceController extends Controller
 {
-    public function __construct() {
-    }
 
     public function addUpdateSource(Request $request)
     {
         try {
-            # Request specific fields
-            $data = $request->only(['name', 'id']);
-
-            # Validation rule
-            $validator = Validator::make($request->all(), [
-                'source_name' => 'required|string|max:255',
-                'id' => 'nullable|integer|exists:sources,id',
+            # Extract and validate input
+            $data = $request->only([
+                'name',
+                'branch_id',
+                'source_id',
+                'update_status'
             ]);
 
             # Validation rule
+            $validator = Validator::make($data, [
+                'name' => 'required|string|max:255',
+            ]);
+
+            # Return validation error 
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Check for update condition
-            $isUpdate = !empty($data['id']);
-
-            # Prepare data
-            $data = [
-                'name' => $data['name'] ?? null,
+            # Map validated data
+            $payload = [
+                'name' => $data['name'],
+                'branch_id' => Auth::user()['branch_id'],
                 'user_id' => Auth::id(),
             ];
 
-            if ($isUpdate) {
-                $data['updated_at'] = Carbon::now();
-            } else {
-                $data['branch_id'] = Auth::user()->branch_id;
-                $data['created_at'] = Carbon::now();
-                $data['deleted_at'] = null;
-            }
-
-            # Update or create 
+            # Create or update record
             $source = Source::updateOrCreate(
-                ['id' => $data['id']],
-                $data
+                ['id' => $data['source_id'] ?? null],
+                $payload
             );
 
+            # Return if fail
+            if (!$source) {
+                return Utility::apiError('Failed to save source', [], 221);
+            }
+
             # Prepare message
-            $msg = $isUpdate ? 'Source updated successfully' : 'Source created successfully';
+            $message = isset($data['source_id']) ? 'Updated successfully' : 'Created successfully';
 
             # Return response
-            return Utility::apiSuccess($msg, $source, $isUpdate ? 200 : 221);
+            return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error saving source', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()]);
         }
     }
 
-    public function getSources(Request $request)
+    public function getSource(Request $request)
     {
         try {
-            # Get specific fields
-            $perPage = $request->only(['per_page', 'page', 'search']);
 
-            # Get list
-            $sources = Source::whereNull('deleted_at')->orderByDesc('id')->paginate($perPage);
+            # Get specific fields
+            $data = $request->only([
+                'page',
+                'per_page',
+                'start_date',
+                'end_date',
+                'download',
+                'branch_list',
+                'search',
+            ]);
+
+            # Base query with branch relationship
+            $query = Source::with('branch:id,name')->whereNull('deleted_at');
+
+            # Apply free-text search
+            if (!empty($data['search'])) {
+                $search = $data['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhereHas('branch', function ($b) use ($search) {
+                            $b->where('name', 'like', "%$search%");
+                        });
+                });
+            }
+
+            # Filter by branches
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
+            }
+
+            # Filter by date range
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            # Export as Excel if requested
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Name',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+                $filename = 'source' . now()->format('Ymd_His') . '.xlsx';
+                return Excel::download(new Export($query, $columns), $filename);
+            }
+
+            # Paginate results
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+            $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
             # Return response
-            return Utility::apiSuccess('Source list fetched', $sources, 200);
+            return Utility::apiSuccess('Source list fetched successfully', $notificationData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error fetching getSources', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Failed to fetch notifications', [
+                'exception' => $ex->getMessage()
+            ]);
         }
     }
 
     public function deleteSource(Request $request)
     {
         try {
-            # Get specific fields
+
+            # Request id
             $data = $request->only(['id']);
 
             # Validation rule
@@ -96,24 +146,24 @@ class SourceController extends Controller
                 'id' => 'required|integer|exists:sources,id',
             ]);
 
-            # Validation rule
+            # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Delete source
+            # Soft delete record
             $deleted = Source::where('id', $data['id'])->delete();
 
-            # Return if fail
+            # Retunr if fail
             if (!$deleted) {
-                return Utility::apiError('Failed to delete source', [], 400);
+                return Utility::apiError('Failed to delete source', [], 221);
             }
 
             # Return response
-            return Utility::apiSuccess('Source deleted successfully');
+            return Utility::apiSuccess('Deleted successfully', [], 200);
         } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Error deleting source', ['exception' => $ex->getMessage()]);
+            Log::error('Source delete error: ' . $ex->getMessage());
+            return Utility::apiError('Something went wrong while deleting source.', ['exception' => $ex->getMessage()], 500);
         }
     }
 }

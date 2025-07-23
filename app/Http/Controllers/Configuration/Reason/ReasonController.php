@@ -1,30 +1,30 @@
 <?php
 
-namespace App\Http\Controllers\Product\Brand;
+namespace App\Http\Controllers\Configuration\Reason;
 
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Models\Brand;
+use App\Models\Reason;
 use Illuminate\Http\Request;
 use App\Exports\Export;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
 
-class BrandController extends Controller
+class ReasonController extends Controller
 {
 
-    public function addUpdateBrand(Request $request)
+    public function addUpdateReason(Request $request)
     {
         try {
             # Extract and validate input
             $data = $request->only([
                 'name',
                 'branch_id',
-                'source_id',
+                'reason_id',
                 'update_status'
             ]);
 
@@ -46,8 +46,8 @@ class BrandController extends Controller
             ];
 
             # Create or update record
-            $brand = Brand::updateOrCreate(
-                ['id' => $data['source_id'] ?? null],
+            $brand = Reason::updateOrCreate(
+                ['id' => $data['reason_id'] ?? null],
                 $payload
             );
 
@@ -57,7 +57,7 @@ class BrandController extends Controller
             }
 
             # Prepare message
-            $message = isset($data['source_id']) ? 'Updated successfully' : 'Created successfully';
+            $message = isset($data['reason_id']) ? 'Updated successfully' : 'Created successfully';
 
             # Return response
             return Utility::apiSuccess($message, [], 200);
@@ -67,7 +67,7 @@ class BrandController extends Controller
         }
     }
 
-    public function getBrand(Request $request)
+    public function getReason(Request $request)
     {
         try {
 
@@ -83,7 +83,7 @@ class BrandController extends Controller
             ]);
 
             # Base query with branch relationship
-            $query = Brand::with('branch:id,name')->whereNull('deleted_at');
+            $query = Reason::with('branch:id,name')->whereNull('deleted_at');
 
             # Apply free-text search
             if (!empty($data['search'])) {
@@ -125,7 +125,7 @@ class BrandController extends Controller
             $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
             # Return response
-            return Utility::apiSuccess('Brand list fetched successfully', $notificationData, 200);
+            return Utility::apiSuccess('Reason list fetched successfully', $notificationData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed to fetch notifications', [
@@ -134,7 +134,7 @@ class BrandController extends Controller
         }
     }
 
-    public function deleteBrand(Request $request)
+    public function deleteReason(Request $request)
     {
         try {
 
@@ -143,7 +143,7 @@ class BrandController extends Controller
 
             # Validation rule
             $validator = Validator::make($data, [
-                'id' => 'required|integer|exists:brands,id',
+                'id' => 'required|integer|exists:reasons,id',
             ]);
 
             # Return validation error
@@ -152,7 +152,7 @@ class BrandController extends Controller
             }
 
             # Soft delete record
-            $deleted = Brand::where('id', $data['id'])->delete();
+            $deleted = Reason::where('id', $data['id'])->delete();
 
             # Retunr if fail
             if (!$deleted) {
@@ -162,7 +162,7 @@ class BrandController extends Controller
             # Return response
             return Utility::apiSuccess('Deleted successfully', [], 200);
         } catch (Exception $ex) {
-            Log::error('Brand delete error: ' . $ex->getMessage());
+            Log::error('Reason delete error: ' . $ex->getMessage());
             return Utility::apiError('Something went wrong while deleting brand.', ['exception' => $ex->getMessage()], 500);
         }
     }

@@ -1,8 +1,11 @@
 <?php
 
-use App\Http\Controllers\Cofiguration\Notification\NotificationController;
-use App\Http\Controllers\Cofiguration\Principal\PrincipalController;
-use App\Http\Controllers\Cofiguration\QuotationFormat\QuotationFormatController;
+use App\Http\Controllers\Configuration\Notification\NotificationController;
+use App\Http\Controllers\Configuration\Principal\PrincipalController;
+use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
+use App\Http\Controllers\Configuration\Reason\ReasonController;
+use App\Http\Controllers\Product\Brand\BrandController;
+use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Dropdown\DropdownController;
 use App\Http\Controllers\Product\Category\CategoryController;
 use App\Http\Controllers\Product\Parameter\ParameterController;
@@ -54,6 +57,19 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getCategory', [CategoryController::class, 'getCategory']);
     Route::post('/deleteCategory', [CategoryController::class, 'deleteCategory']);
 
+    # Source
+    Route::post('/addUpdateSource', [SourceController::class, 'addUpdateSource']);
+    Route::post('/getSource', [SourceController::class, 'getSource']);
+    Route::post('/deleteSource', [SourceController::class, 'deleteSource']);
 
+    # Brand
+    Route::post('/addUpdateBrand', [BrandController::class, 'addUpdateBrand']);
+    Route::post('/getBrand', [BrandController::class, 'getBrand']);
+    Route::post('/deleteBrand', [BrandController::class, 'deleteBrand']);
+
+    # Reason
+    Route::post('/addUpdateReason', [ReasonController::class, 'addUpdateReason']);
+    Route::post('/getReason', [ReasonController::class, 'getReason']);
+    Route::post('/deleteReason', [ReasonController::class, 'deleteReason']);
 });
 

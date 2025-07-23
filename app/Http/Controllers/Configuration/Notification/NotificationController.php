@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Cofiguration\Notification;
+namespace App\Http\Controllers\Configuration\Notification;
 
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;

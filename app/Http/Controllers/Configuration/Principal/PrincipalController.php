@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Cofiguration\Principal;
+namespace App\Http\Controllers\Configuration\Principal;
 
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;

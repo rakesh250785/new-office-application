@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Cofiguration\QuotationFormat;
+namespace App\Http\Controllers\Configuration\QuotationFormat;
 
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
