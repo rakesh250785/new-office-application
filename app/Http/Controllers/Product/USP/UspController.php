@@ -123,7 +123,7 @@ class UspController extends Controller
                         ->orWhereHas('principal', function ($b) use ($search) {
                             $b->where('type', 'like', "%$search%");
                         })
-                        ->orWhereHas('category_type', function ($b) use ($search) {
+                        ->orWhereHas('categoryType', function ($b) use ($search) {
                             $b->where('type', 'like', "%$search%");
                         });
                 });
@@ -166,7 +166,7 @@ class UspController extends Controller
             return Utility::apiSuccess('List Quotation Format', $usp, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Something went wrong in quotation format', [
+            return Utility::apiError('Something went wrong in usp', [
                 'exception' => $ex->getMessage()
             ]);
         }

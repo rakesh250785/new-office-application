@@ -24,13 +24,15 @@ class BrandController extends Controller
             $data = $request->only([
                 'name',
                 'branch_id',
-                'source_id',
+                'brand_id',
                 'update_status'
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
                 'name' => 'required|string|max:255',
+                'brand_id' => 'nullable|integer|exists:brands,id',
+
             ]);
 
             # Return validation error 
@@ -47,7 +49,7 @@ class BrandController extends Controller
 
             # Create or update record
             $brand = Brand::updateOrCreate(
-                ['id' => $data['source_id'] ?? null],
+                ['id' => $data['brand_id'] ?? null],
                 $payload
             );
 
@@ -57,7 +59,7 @@ class BrandController extends Controller
             }
 
             # Prepare message
-            $message = isset($data['source_id']) ? 'Updated successfully' : 'Created successfully';
+            $message = isset($data['brand_id']) ? 'Updated successfully' : 'Created successfully';
 
             # Return response
             return Utility::apiSuccess($message, [], 200);

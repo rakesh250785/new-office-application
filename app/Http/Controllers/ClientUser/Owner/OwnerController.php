@@ -2,118 +2,174 @@
 
 namespace App\Http\Controllers\ClientUser\Owner;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use App\Models\Owner;
 use Illuminate\Http\Request;
-use Exception, Log;
+use App\Exports\Export;
 use App\Helpers\Utility;
+use Carbon\Carbon;
+use Exception;
+
 class OwnerController extends Controller
 {
-    public function __construct()
-    {
-    }
 
     public function addUpdateOwner(Request $request)
     {
         try {
-            # Get specific fields
-            $data = $request->only(['id', 'name', 'desciption']);
+            # Extract and validate input
+            $data = $request->only([
+                'name',
+                'description',
+                'owner_id',
+                'update_status'
+            ]);
 
             # Validation rule
             $validator = Validator::make($data, [
                 'name' => 'required|string|max:255',
-                'desciption' => 'required|string|max:500',
+                'description' => 'required',
+                'owner_id' => 'nullable|integer|exists:owners,id',
+
             ]);
 
-            # Return validation error
+            # Return validation error 
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Perform insert or update
-            $owner = Owner::updateOrCreate(
-                ['id' => $data['id'] ?? null],
-                [
-                    'name' => $data['name'],
-                    'desciption' => $data['desciption'],
-                    'branch_id' => Auth::user()->branch_id,
-                ]
+            # Map validated data
+            $payload = [
+                'name' => $data['name'],
+                'description' => $data['description'],
+                'branch_id' => Auth::user()['branch_id'],
+                'user_id' => Auth::id(),
+            ];
+
+            # Create or update record
+            $brand = Owner::updateOrCreate(
+                ['id' => $data['owner_id'] ?? null],
+                $payload
             );
 
-            # Manage message
-            $message = $data['id'] ? 'Owner updated successfully.' : 'Owner created successfully.';
+            # Return if fail
+            if (!$brand) {
+                return Utility::apiError('Failed to save brand', [], 221);
+            }
 
-            # Return api response
-            return Utility::apiSuccess($message, ['owner_id' => $owner->id], 200);
+            # Prepare message
+            $message = isset($data['owner_id']) ? 'Updated successfully' : 'Created successfully';
+
+            # Return response
+            return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error occurred while saving owner.', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()]);
         }
     }
 
     public function getOwner(Request $request)
     {
         try {
-            $data = $request->only(['search', 'per_page']);
-            $perPage = $data['per_page'] ?? 10;
 
-            # Base query with branch relation
-            $owner = Owner::query();
+            # Get specific fields
+            $data = $request->only([
+                'page',
+                'per_page',
+                'start_date',
+                'end_date',
+                'download',
+                'branch_list',
+                'search',
+            ]);
 
-            # Search across multiple fields
+            # Base query with branch relationship
+            $query = Owner::with('branch:id,name')->whereNull('deleted_at');
+
+            # Apply free-text search
             if (!empty($data['search'])) {
                 $search = $data['search'];
-                $owner->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%")
-                        ->orWhereRaw("DATE_FORMAT(created_at, '%d-%m-%Y') LIKE ?", [$search]);
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhere('description', 'like', "%$search%")
+                        ->orWhereHas('branch', function ($b) use ($search) {
+                            $b->where('name', 'like', "%$search%");
+                        });
                 });
             }
 
-            # Get paginated result
-            $owner = $owner->orderByDesc('id')->paginate($perPage);
+            # Filter by branches
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
+            }
+
+            # Filter by date range
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            # Export as Excel if requested
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Name',
+                    'description' => 'Description',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+                $filename = 'owner' . now()->format('Ymd_His') . '.xlsx';
+                return Excel::download(new Export($query, $columns), $filename);
+            }
+
+            # Paginate results
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+            $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
             # Return response
-            return Utility::apiSuccess('Owner list', $owner, 200);
+            return Utility::apiSuccess('Owner list fetched successfully', $notificationData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed to fetch getOwner.', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Failed to fetch notifications', [
+                'exception' => $ex->getMessage()
+            ]);
         }
     }
 
     public function deleteOwner(Request $request)
     {
         try {
-            # Extract relevant fields
-            $data = $request->only([
-                'id',
-            ]);
 
-            #  Validation rule
+            # Request id
+            $data = $request->only(['id']);
+
+            # Validation rule
             $validator = Validator::make($data, [
-                'id' => 'required'
+                'id' => 'required|integer|exists:owners,id',
             ]);
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Delete user
-            $records = Owner::where('id', $data['id'])->delete();
+            # Soft delete record
+            $deleted = Owner::where('id', $data['id'])->delete();
 
-            # Return if fail
-            if (!$records) {
-                return Utility::apiError('Failed to owner user', [], 221);
+            # Retunr if fail
+            if (!$deleted) {
+                return Utility::apiError('Failed to delete brand', [], 221);
             }
 
             # Return response
-            return Utility::apiSuccess('Owner deleted successfully', [], 200);
+            return Utility::apiSuccess('Deleted successfully', [], 200);
         } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Error in  deleteOwner.', ['exception' => $ex->getMessage()], 500);
+            Log::error('Owner delete error: ' . $ex->getMessage());
+            return Utility::apiError('Something went wrong while deleting brand.', ['exception' => $ex->getMessage()], 500);
         }
     }
 }

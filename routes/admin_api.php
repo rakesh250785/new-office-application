@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClientUser\Owner\OwnerController;
 use App\Http\Controllers\Configuration\Notification\NotificationController;
 use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
@@ -34,7 +35,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getParameterFieldDD', [DropdownController::class, 'getParameterFieldDD']);
     Route::post('/getUpsCategoryDD', [DropdownController::class, 'getUpsCategoryDD']);
     Route::post('/getPrincipalDD', [DropdownController::class, 'getPrincipalDD']);
-    
+
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
     Route::post('/getQuotationFormat', [QuotationFormatController::class, 'getQuotationFormat']);
@@ -75,10 +76,15 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getReason', [ReasonController::class, 'getReason']);
     Route::post('/deleteReason', [ReasonController::class, 'deleteReason']);
 
-      # Reason
-      Route::post('/addUpdateUSP', [UspController::class, 'addUpdateUSP']);
-      Route::post('/getUSP', [UspController::class, 'getUSP']);
-      Route::post('/deleteUSP', [UspController::class, 'deleteUSP']);
+    # USP
+    Route::post('/addUpdateUSP', [UspController::class, 'addUpdateUSP']);
+    Route::post('/getUSP', [UspController::class, 'getUSP']);
+    Route::post('/deleteUSP', [UspController::class, 'deleteUSP']);
+
+    # Owner
+    Route::post('/addUpdateOwner', [OwnerController::class, 'addUpdateOwner']);
+    Route::post('/getOwner', [OwnerController::class, 'getOwner']);
+    Route::post('/deleteOwner', [OwnerController::class, 'deleteOwner']);
 
 });
 
