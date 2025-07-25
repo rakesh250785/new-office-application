@@ -11,15 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('usps', function (Blueprint $table) {
+        Schema::create('category_types', function (Blueprint $table) {
             $table->id();
-            $table->string('usp_type');
-            $table->text('packing_details');
-            $table->string('usp_brand');
-            $table->integer('category_id');
-            $table->integer('principal_id');
-            $table->integer('branch_id');
-            $table->integer('user_id');
+            $table->string('type')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -30,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('usps');
+        Schema::dropIfExists('category_types');
     }
 };

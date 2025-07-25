@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Dropdown;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\CategoryType;
 use App\Models\Parameter;
 use App\Models\PrincipalType;
+use App\Models\Usp;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
 use App\Models\Currency;
@@ -104,7 +106,7 @@ class DropdownController extends Controller
     {
         try {
             # Get principal
-            $principal = Principal::pluck('name', 'id')->toArray();
+            $principal = Principal::pluck('type', 'id')->toArray();
 
             # Return response
             return Utility::apiSuccess('DD principal', $principal, 200);
@@ -180,14 +182,25 @@ class DropdownController extends Controller
 
     }
 
-    public function getUpsTypeDD()
-    {
-
-    }
-
     public function getUpsCategoryDD()
     {
+        try {
+            # Get type
+            $type = CategoryType::pluck('type', 'id')->toArray();
 
+            # Return response
+            return Utility::apiSuccess('DD Usp Type', $type, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getUpsCategoryDD', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    
+    public function getUpsTypeDD()
+    {
+        
     }
 
     public function getParameterFieldDD()

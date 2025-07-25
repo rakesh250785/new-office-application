@@ -5,6 +5,7 @@ use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Configuration\Reason\ReasonController;
 use App\Http\Controllers\Product\Brand\BrandController;
+use App\Http\Controllers\Product\USP\UspController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Dropdown\DropdownController;
 use App\Http\Controllers\Product\Category\CategoryController;
@@ -31,7 +32,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getBranchDD', [DropdownController::class, 'getBranchDD']);
     Route::post('/getPrincipalTypeDD', [DropdownController::class, 'getPrincipalTypeDD']);
     Route::post('/getParameterFieldDD', [DropdownController::class, 'getParameterFieldDD']);
-
+    Route::post('/getUpsCategoryDD', [DropdownController::class, 'getUpsCategoryDD']);
+    Route::post('/getPrincipalDD', [DropdownController::class, 'getPrincipalDD']);
+    
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
     Route::post('/getQuotationFormat', [QuotationFormatController::class, 'getQuotationFormat']);
@@ -71,5 +74,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateReason', [ReasonController::class, 'addUpdateReason']);
     Route::post('/getReason', [ReasonController::class, 'getReason']);
     Route::post('/deleteReason', [ReasonController::class, 'deleteReason']);
+
+      # Reason
+      Route::post('/addUpdateUSP', [UspController::class, 'addUpdateUSP']);
+      Route::post('/getUSP', [UspController::class, 'getUSP']);
+      Route::post('/deleteUSP', [UspController::class, 'deleteUSP']);
+
 });
 
