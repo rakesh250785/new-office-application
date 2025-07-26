@@ -17,7 +17,10 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             BranchSeeder::class,
             PrincipalTypeSeeder::class,
-            CategoryTypeSeeder::class   
+            CategoryTypeSeeder::class,
+            ClassificationSeeder::class,
+            CountrySeeder::class,
+            StateSeeder::class,
         ]);
     }
 }

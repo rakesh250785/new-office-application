@@ -6,6 +6,7 @@ use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\CategoryType;
+use App\Models\Classification;
 use App\Models\Parameter;
 use App\Models\PrincipalType;
 use App\Models\Usp;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
 use App\Models\Currency;
 use App\Models\Owner;
+use App\Models\Country;
+use App\Models\States;
 use App\Models\Principal;
 use App\Models\Product;
 use App\Models\Source;
@@ -31,15 +34,7 @@ class DropdownController extends Controller
     {
         try {
             # Get owner list
-            $query = Owner::whereNull('deleted_at')->orderBy('name', 'ASC');
-
-            # Permission condition
-            if (!Auth::user()->hasPermission('branch_all')) {
-                $query->where('branch_id', Auth::user()->branch_id);
-            }
-
-            # Get records
-            $owners = $query->get()->toArray();
+            $owners = Owner::whereNull('deleted_at')->orderBy('name', 'asc')->pluck('name', 'id');;
 
             # Return response
             return Utility::apiSuccess('DD Owner', $owners, 200);
@@ -70,17 +65,35 @@ class DropdownController extends Controller
 
     public function getCountryDD()
     {
+        try {
+            # Get source
+            $source = Country::pluck('name', 'id')->toArray();
 
+            # Return response
+            return Utility::apiSuccess('DD Country', $source, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getCountryDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
-    public function getStateDD()
+    public function getStatusDD()
     {
 
     }
 
-    public function getCustomerClassificationDD()
+    public function getClassificationDD()
     {
+        try {
+            # Get source
+            $brands = Classification::whereNull('deleted_at')->pluck('name', 'id');
 
+            # Return response
+            return Utility::apiSuccess('DD classification', $brands, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in public function getClassificationDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getBranchDD()
@@ -97,9 +110,20 @@ class DropdownController extends Controller
         }
     }
 
-    public function getStatusDD()
+    public function getStateDD()
     {
+        try {
 
+            # Get principal
+            $states = States::pluck('name', 'id')->toArray();
+
+            # Return response
+            return Utility::apiSuccess('DD state', $states, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getStatusDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getPrincipalDD()
@@ -197,10 +221,10 @@ class DropdownController extends Controller
         }
     }
 
-    
+
     public function getUpsTypeDD()
     {
-        
+
     }
 
     public function getParameterFieldDD()

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClientUser\Customer\CustomerController;
 use App\Http\Controllers\ClientUser\Owner\OwnerController;
 use App\Http\Controllers\Configuration\Notification\NotificationController;
 use App\Http\Controllers\Configuration\Principal\PrincipalController;
@@ -35,6 +36,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getParameterFieldDD', [DropdownController::class, 'getParameterFieldDD']);
     Route::post('/getUpsCategoryDD', [DropdownController::class, 'getUpsCategoryDD']);
     Route::post('/getPrincipalDD', [DropdownController::class, 'getPrincipalDD']);
+    Route::post('/getCountryDD', [DropdownController::class, 'getCountryDD']);
+    Route::post('/getStateDD', [DropdownController::class, 'getStateDD']);
+    Route::post('/getOwnerDD', [DropdownController::class, 'getOwnerDD']);
+    Route::post('/getClassificationDD', [DropdownController::class, 'getClassificationDD']);
+    
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -85,6 +91,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateOwner', [OwnerController::class, 'addUpdateOwner']);
     Route::post('/getOwner', [OwnerController::class, 'getOwner']);
     Route::post('/deleteOwner', [OwnerController::class, 'deleteOwner']);
+
+    # Customer
+    Route::post('/addUpdateCustomer', [CustomerController::class, 'addUpdateCustomer']);
+    Route::post('/getCustomer', [CustomerController::class, 'getCustomer']);
+    Route::post('/deleteCustomer', [CustomerController::class, 'deleteCustomer']);
 
 });
 
