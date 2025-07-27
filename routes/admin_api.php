@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClientUser\Customer\CustomerController;
 use App\Http\Controllers\ClientUser\Owner\OwnerController;
+use App\Http\Controllers\ClientUser\User\UserController;
 use App\Http\Controllers\Configuration\Notification\NotificationController;
 use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
@@ -103,6 +104,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateProduct', [ProductController::class, 'addUpdateProduct']);
     Route::post('/getProduct', [ProductController::class, 'getProduct']);
     Route::post('/deleteProduct', [ProductController::class, 'deleteProduct']);
+
+    # Users
+    Route::post('/addUpdateUser', [UserController::class, 'addUpdateUser']);
+    Route::post('/getUser', [UserController::class, 'getUser']);
+    Route::post('/deleteUser', [UserController::class, 'deleteUser']);
 
 });
 

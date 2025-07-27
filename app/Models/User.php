@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,11 +22,7 @@ class User extends Authenticatable implements JWTSubject
         'password',
         'branch_id',
         'cc_email',
-        'dt_created',
         'remember_token',
-        'created_at',
-        'updated_at',
-        'deleted_at',
         'token'
     ];
 
@@ -38,8 +35,13 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            // 'password' => 'hashed',
         ];
+    }
+
+    public function getMaskedPasswordAttribute()
+    {
+        return '**********';
     }
 
     public function getJWTIdentifier()
@@ -50,6 +52,15 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims(): array
     {
         return [];
+    }
+
+    public function getCreatedAtAttribute($value)
+    {
+        return Carbon::parse($value)->format('d-m-Y');
+    }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 }
 
