@@ -6,6 +6,7 @@ use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\CategoryType;
+use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Parameter;
 use App\Models\PrincipalType;
@@ -34,7 +35,8 @@ class DropdownController extends Controller
     {
         try {
             # Get owner list
-            $owners = Owner::whereNull('deleted_at')->orderBy('name', 'asc')->pluck('name', 'id');;
+            $owners = Owner::whereNull('deleted_at')->orderBy('name', 'asc')->pluck('name', 'id');
+            ;
 
             # Return response
             return Utility::apiSuccess('DD Owner', $owners, 200);
@@ -198,12 +200,32 @@ class DropdownController extends Controller
 
     public function getBrandDD()
     {
+        try {
+            # Get type
+            $brand = Brand::pluck('name', 'id')->toArray();
 
+            # Return response
+            return Utility::apiSuccess('DD brand', $brand, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getBrandDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getCategoryDD()
     {
+        try {
+            # Get type
+            $category = Category::pluck('name', 'id')->toArray();
 
+            # Return response
+            return Utility::apiSuccess('DD brand', $category, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getCategoryDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getUpsCategoryDD()

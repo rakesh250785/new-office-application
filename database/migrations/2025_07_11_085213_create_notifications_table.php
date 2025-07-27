@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email');
             $table->text('email_list');
-            $table->integer('branch_id');
+            $table->unsignedBigInteger('branch_id');
             $table->softDeletes();
             $table->timestamps();
         });

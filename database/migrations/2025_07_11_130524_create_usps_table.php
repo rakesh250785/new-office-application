@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('usp_type');
             $table->text('packing_details');
             $table->string('usp_brand');
-            $table->integer('category_id');
-            $table->integer('principal_id');
-            $table->integer('branch_id');
-            $table->integer('user_id');
+            $table->unsignedBigInteger('category_id');
+            $table->unsignedBigInteger('principal_id');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
             $table->softDeletes();
             $table->timestamps();
         });

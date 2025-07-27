@@ -15,8 +15,8 @@ return new class extends Migration {
             $table->string('name');
             $table->string('description');
             $table->text('parameter_field');
-            $table->integer('branch_id');
-            $table->integer('user_id');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
             $table->softDeletes();
             $table->timestamps();
         });

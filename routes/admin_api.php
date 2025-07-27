@@ -7,6 +7,7 @@ use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Configuration\Reason\ReasonController;
 use App\Http\Controllers\Product\Brand\BrandController;
+use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Dropdown\DropdownController;
@@ -40,7 +41,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getStateDD', [DropdownController::class, 'getStateDD']);
     Route::post('/getOwnerDD', [DropdownController::class, 'getOwnerDD']);
     Route::post('/getClassificationDD', [DropdownController::class, 'getClassificationDD']);
-    
+    Route::post('/getBrandDD', [DropdownController::class, 'getBrandDD']);
+    Route::post('/getCategoryDD', [DropdownController::class, 'getCategoryDD']);
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -96,6 +98,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateCustomer', [CustomerController::class, 'addUpdateCustomer']);
     Route::post('/getCustomer', [CustomerController::class, 'getCustomer']);
     Route::post('/deleteCustomer', [CustomerController::class, 'deleteCustomer']);
+
+    # Product
+    Route::post('/addUpdateProduct', [ProductController::class, 'addUpdateProduct']);
+    Route::post('/getProduct', [ProductController::class, 'getProduct']);
+    Route::post('/deleteProduct', [ProductController::class, 'deleteProduct']);
 
 });
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->text('billing_address')->nullable();
             $table->text('branch_address')->nullable();
-            $table->integer('branch_id');
+            $table->unsignedBigInteger('branch_id');
             $table->string('email');
             $table->string('mobile');
             $table->text('notes')->nullable();

@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('reasons', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('branch_id');
-            $table->integer('user_id');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
             $table->softDeletes();
             $table->timestamps();
         });

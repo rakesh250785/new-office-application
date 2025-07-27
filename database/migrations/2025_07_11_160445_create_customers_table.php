@@ -19,12 +19,12 @@ return new class extends Migration {
             $table->string('mobile_no', 11);
             $table->string('landline_no', 12);
             $table->text('address');
-            $table->integer('owner_id');
-            $table->integer('country_id');
-            $table->integer('branch_id');
-            $table->integer('user_id');
-            $table->integer('state_id')->nullable();
-            $table->integer('classification_id');
+            $table->unsignedBigInteger('owner_id');
+            $table->unsignedBigInteger('country_id');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('state_id')->nullable();
+            $table->unsignedBigInteger('classification_id');
             $table->string('other_state')->nullable();
             $table->string('pin_code', 15);
             $table->string('city', 50);

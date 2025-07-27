@@ -41,7 +41,7 @@ class CategoryController extends Controller
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
             # Convert params fields into string

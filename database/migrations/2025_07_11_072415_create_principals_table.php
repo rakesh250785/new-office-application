@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->text('type')->nullable();
             $table->text('type_id')->nullable();
-            $table->integer('branch_id');
-            $table->integer('user_id');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
             $table->softDeletes();
         });
