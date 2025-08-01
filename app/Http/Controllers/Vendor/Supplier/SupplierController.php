@@ -32,12 +32,13 @@ class SupplierController extends Controller
                 'principal_id'
             ]);
 
-            # Validate rule
+            # Validate input
             $validator = Validator::make($data, [
                 'product_id' => ['required', 'integer', 'exists:products,id'],
                 'principal_id' => ['required', 'integer', 'exists:principals,id'],
-                'date' => 'required|date',
+                'date' => ['required', 'date'],
                 'product_list' => ['required', 'array', 'min:1'],
+                'product_list.*.id' => ['nullable', 'integer', 'exists:suppliers,id'],
                 'product_list.*.currency_id' => ['required', 'integer', 'exists:currencies,id'],
                 'product_list.*.source_id' => ['required', 'integer', 'exists:sources,id'],
                 'product_list.*.rate_fc' => ['required', 'numeric'],
@@ -53,17 +54,17 @@ class SupplierController extends Controller
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Get branch id
+            # Context setup
             $branchId = Auth::user()->branch_id;
+            $userId = Auth::id();
+            $date = Carbon::parse($data['date'])->format('Y-m-d');
 
-            # Maintain product list
+            # Track all submitted IDs
+            $submittedIds = [];
+
             foreach ($data['product_list'] as $item) {
-                Supplier::updateOrCreate(
-                    [
-                        'id' => $data['supplier_id'],
-                        'product_id' => $data['product_id'],
-                        'branch_id' => $branchId,
-                    ],
+                $supplier = Supplier::updateOrCreate(
+                    ['id' => $item['id'] ?? 0],
                     [
                         'product_id' => $data['product_id'],
                         'principal_id' => $data['principal_id'],
@@ -74,22 +75,32 @@ class SupplierController extends Controller
                         'total_cost' => round($item['total_cost']),
                         'discount' => $item['discount'],
                         'net_price' => round($item['net_price']),
-                        'custom_price' => 11,
-                        'user_id' => Auth::id(),
-                        'branch_id' => Auth::user()['branch_id'],
+                        'custom_price' => round($item['custom_price']),
+                        'user_id' => $userId,
+                        'branch_id' => $branchId,
                         'deleted_at' => null,
-                        'date' => Carbon::parse($data['date'])->format('Y-m-d'),
+                        'date' => $date,
                     ]
                 );
+
+                # Collect actual DB id (new or updated)
+                $submittedIds[] = $supplier->id;
             }
 
-            # Retunr response
-            return Utility::apiSuccess('data saved successfully', [], 200);
+            # Delete missing suppliers from DB for this product and branch
+            Supplier::where('product_id', $data['product_id'])
+                ->where('branch_id', $branchId)
+                ->whereNotIn('id', $submittedIds)
+                ->delete();
+
+            # Return success
+            return Utility::apiSuccess('Data saved successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Error while saving supplier', ['exception' => $ex->getMessage()]);
         }
     }
+
 
     public function getSupplier(Request $request)
     {
