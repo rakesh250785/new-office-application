@@ -256,7 +256,7 @@ class SupplierController extends Controller
             }
 
             # Delete supplier
-            $deleted = Supplier::where('id', $data['id'])->delete();
+            $deleted = Supplier::where('product_id', $data['id'])->delete();
 
             # Return if fail to delete
             if (!$deleted) {
