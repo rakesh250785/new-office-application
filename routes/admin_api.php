@@ -14,6 +14,7 @@ use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Dropdown\DropdownController;
 use App\Http\Controllers\Product\Category\CategoryController;
 use App\Http\Controllers\Product\Parameter\ParameterController;
+use App\Http\Controllers\Vendor\Supplier\SupplierController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Authentication\AuthenticationController;
@@ -44,6 +45,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getClassificationDD', [DropdownController::class, 'getClassificationDD']);
     Route::post('/getBrandDD', [DropdownController::class, 'getBrandDD']);
     Route::post('/getCategoryDD', [DropdownController::class, 'getCategoryDD']);
+    Route::post('/getProductDD', [DropdownController::class, 'getProductDD']);
+    Route::post('/getSourceDD', [DropdownController::class, 'getSourceDD']);
+    Route::post('/getCurrencyDD', [DropdownController::class, 'getCurrencyDD']);
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -109,6 +113,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateUser', [UserController::class, 'addUpdateUser']);
     Route::post('/getUser', [UserController::class, 'getUser']);
     Route::post('/deleteUser', [UserController::class, 'deleteUser']);
+
+     # Supplier
+     Route::post('/addUpdateSupplier', [SupplierController::class, 'addUpdateSupplier']);
+     Route::post('/getSupplier', [SupplierController::class, 'getSupplier']);
+     Route::post('/deleteSupplier', [SupplierController::class, 'deleteSupplier']);
 
 });
 

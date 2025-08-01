@@ -147,7 +147,7 @@ class DropdownController extends Controller
     {
         try {
             # Get currency
-            $currency = Currency::pluck('name', 'code')->toArray();
+            $currency = Currency::pluck('name', 'id')->toArray();
 
             # Return response
             return Utility::apiSuccess('DD Currency', $currency, 200);
@@ -168,15 +168,14 @@ class DropdownController extends Controller
 
     }
 
-    public function getPartNumberDD()
+    public function getProductDD()
     {
         try {
-            $product = Product::select('id', 'part_no')
-                ->groupBy('part_no', 'id')
+            $products = Product::select('id', 'part_no', 'description', 'principal_id')
+                ->with(['principal:id,type'])
                 ->get()
-                ->pluck('part_no', 'id')
-                ->toArray();
-            return Utility::apiSuccess('DD principal', $product, 200);
+                ->unique('part_no');
+            return Utility::apiSuccess('DD partnodd', $products, 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Something went wrong in getPartNumberDD', ['exception' => $ex->getMessage()], 500);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Vendor\Supplier;
 
 use App\Http\Controllers\Controller;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -21,104 +22,221 @@ class SupplierController extends Controller
     public function addUpdateSupplier(Request $request)
     {
         try {
-            # Request specific fields
+            # Extract only expected fields
             $data = $request->only([
-                'part_no_search',
-                'reference_date',
-                'principal_id',
-                'source_id',
-                'currency_id',
-                'rate',
-                'factor',
-                'total_cost',
-                'discount',
-                'net_cost',
-                'profit',
-                'selling_price',
-                'branch_id',
-                'decsription'
+                'product_id',
+                'date',
+                'product_list',
+                'update_status',
+                'supplier_id',
+                'principal_id'
             ]);
 
-            # Validation rule
+            # Validate rule
             $validator = Validator::make($data, [
-                'part_no_search' => 'required|string',
-                'reference_date' => 'required|date',
-                'principal_id' => 'required',
-                'source_id' => 'required|array',
-                'currency_id' => 'required|array',
-                'rate' => 'required|array',
-                'factor' => 'required|array',
-                'total_cost' => 'required|array',
-                'discount' => 'required|array',
-                'net_cost' => 'required|array',
-                'profit' => 'required|array',
-                'selling_price' => 'required|array',
-                'branch_id' => 'sometimes|numeric',
-                'decsription' => 'sometimes|string',
+                'product_id' => ['required', 'integer', 'exists:products,id'],
+                'principal_id' => ['required', 'integer', 'exists:principals,id'],
                 'date' => 'required|date',
+                'product_list' => ['required', 'array', 'min:1'],
+                'product_list.*.currency_id' => ['required', 'integer', 'exists:currencies,id'],
+                'product_list.*.source_id' => ['required', 'integer', 'exists:sources,id'],
+                'product_list.*.rate_fc' => ['required', 'numeric'],
+                'product_list.*.factor_fc' => ['required', 'numeric'],
+                'product_list.*.total_cost' => ['required', 'numeric'],
+                'product_list.*.discount' => ['required', 'numeric'],
+                'product_list.*.net_price' => ['required', 'numeric'],
+                'product_list.*.custom_price' => ['required', 'numeric'],
             ]);
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Get existing supplier
-            $partNo = $data['product_search'];
-            $branchId = $data['branch_id'] ?? Auth::user()->branch_id;
+            # Get branch id
+            $branchId = Auth::user()->branch_id;
 
-            Supplier::where('s_partno', $partNo)
-                ->where('branch_id', $branchId)
-                ->delete();
-
-            # Mass insert prepare
-            $records = [];
-            foreach ($data['source_id'] as $i => $source_id) {
-                $records[] = [
-                    'principal_id' => $data['principal_id'],
-                    'part_no' => $partNo,
-                    'description' => $data['decsription'] ?? '',
-                    'source_id' => $source_id,
-                    'currency_id' => $data['currency'][$i],
-                    'rate' => $data['rate'][$i],
-                    'factor' => $data['factor'][$i],
-                    'total_cost' => round($data['total_cost'][$i]),
-                    'discount' => $data['discount'][$i],
-                    'net_price' => round($data['net_cost'][$i]),
-                    'profit' => $data['profit'][$i],
-                    'selling_price' => round($data['selling_price'][$i]),
-                    'user_id' => Auth::id(),
-                    'branch_id' => $branchId,
-                    'deleted_at' => null,
-                    'date' => isset($data['date'][$i])
-                        ? Carbon::parse($data['date'][$i])->format('Y-m-d')
-                        : Carbon::parse($data['reference_date'])->format('Y-m-d'),
-                ];
+            # Maintain product list
+            foreach ($data['product_list'] as $item) {
+                Supplier::updateOrCreate(
+                    [
+                        'id' => $data['supplier_id'],
+                        'product_id' => $data['product_id'],
+                        'branch_id' => $branchId,
+                    ],
+                    [
+                        'product_id' => $data['product_id'],
+                        'principal_id' => $data['principal_id'],
+                        'source_id' => $item['source_id'],
+                        'currency_id' => $item['currency_id'],
+                        'rate_fc' => $item['rate_fc'],
+                        'factor_fc' => $item['factor_fc'],
+                        'total_cost' => round($item['total_cost']),
+                        'discount' => $item['discount'],
+                        'net_price' => round($item['net_price']),
+                        'custom_price' => 11,
+                        'user_id' => Auth::id(),
+                        'branch_id' => Auth::user()['branch_id'],
+                        'deleted_at' => null,
+                        'date' => Carbon::parse($data['date'])->format('Y-m-d'),
+                    ]
+                );
             }
 
-            # Insert data
-            $status = Supplier::insert($records);
-
-            # Return if fail
-            if (!$status) {
-                return Utility::apiError('Fail to insert supplier');
-            }
-            return Utility::apiSuccess('Supplier added successfully', [], 200);
+            # Retunr response
+            return Utility::apiSuccess('data saved successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error while saving supplier', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Error while saving supplier', ['exception' => $ex->getMessage()]);
         }
     }
+
+    public function getSupplier(Request $request)
+    {
+        try {
+            $data = $request->only([
+                'page',
+                'per_page',
+                'principal_list',
+                'product_list',
+                'source_list',
+                'currency_list',
+                'search',
+            ]);
+
+            $page = max((int) ($data['page'] ?? 1), 1);
+            $perPage = max((int) ($data['per_page'] ?? config('constant.per_page', 15)), 1);
+
+            // Build filtered supplier base
+            $baseQuery = Supplier::query()
+                ->join('products', 'products.id', '=', 'suppliers.product_id')
+                ->whereNull('suppliers.deleted_at');
+
+            if (!empty($data['principal_list'])) {
+                $baseQuery->whereIn('suppliers.principal_id', $data['principal_list']);
+            }
+
+            if (!empty($data['product_list'])) {
+                $baseQuery->whereIn('suppliers.product_id', $data['product_list']);
+            }
+
+            if (!empty($data['source_list'])) {
+                $baseQuery->whereIn('suppliers.source_id', $data['source_list']);
+            }
+
+            if (!empty($data['currency_list'])) {
+                $baseQuery->whereIn('suppliers.currency_id', $data['currency_list']);
+            }
+
+            if (!empty($data['search'])) {
+                $search = '%' . $data['search'] . '%';
+                $baseQuery->where(function ($q) use ($search) {
+                    $q->where('products.part_no', 'like', $search)
+                        ->orWhere('products.description', 'like', $search);
+                });
+            }
+
+            // Step 1: Paginate unique part_no list
+            $partNoListQuery = (clone $baseQuery)
+                ->select('products.part_no')
+                ->distinct();
+
+            $totalGroups = DB::table(DB::raw("({$partNoListQuery->toSql()}) as grouped"))
+                ->mergeBindings($partNoListQuery->getQuery())
+                ->count();
+
+            $partNos = DB::table(DB::raw("({$partNoListQuery->toSql()}) as grouped"))
+                ->mergeBindings($partNoListQuery->getQuery())
+                ->offset(($page - 1) * $perPage)
+                ->limit($perPage)
+                ->pluck('part_no');
+
+            // Step 2: Fetch full supplier data for selected partNos
+            $supplierQuery = Supplier::query()
+                ->select([
+                    'id',
+                    'product_id',
+                    'branch_id',
+                    'user_id',
+                    'currency_id',
+                    'principal_id',
+                    'source_id',
+                    'rate_fc',
+                    'factor_fc',
+                    'total_cost',
+                    'discount',
+                    'net_price',
+                    'custom_price',
+                    'date',
+                    'deleted_at',
+                    'created_at',
+                    'updated_at'
+                ])
+                ->whereNull('deleted_at')
+                ->whereHas('product', function ($q) use ($partNos) {
+                    $q->whereIn('part_no', $partNos);
+                })
+                ->with([
+                    'product:id,part_no,description',
+                    'principal:id,type',
+                    'source:id,name',
+                    'currency:id,name',
+                    'branch:id,name'
+                ])
+                ->orderByDesc('id');
+
+            // Apply filters again
+            if (!empty($data['principal_list'])) {
+                $supplierQuery->whereIn('principal_id', $data['principal_list']);
+            }
+
+            if (!empty($data['product_list'])) {
+                $supplierQuery->whereIn('product_id', $data['product_list']);
+            }
+
+            if (!empty($data['source_list'])) {
+                $supplierQuery->whereIn('source_id', $data['source_list']);
+            }
+
+            if (!empty($data['currency_list'])) {
+                $supplierQuery->whereIn('currency_id', $data['currency_list']);
+            }
+
+            if (!empty($data['search'])) {
+                $search = '%' . $data['search'] . '%';
+                $supplierQuery->whereHas('product', function ($q) use ($search) {
+                    $q->where('part_no', 'like', $search)
+                        ->orWhere('description', 'like', $search);
+                });
+            }
+
+            // Step 3: Group results by part_no
+            $result = $supplierQuery->get()->groupBy(fn($item) => $item->product->part_no);
+
+            return Utility::apiSuccess('Supplier list grouped by part_no', [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total' => $totalGroups,
+                'last_page' => ceil($totalGroups / $perPage),
+                'data' => $result,
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
+        }
+    }
+
 
     public function deleteSupplier(Request $request)
     {
         try {
             # Get specific fields
-            $data = $request->only(['part_no']);
+            $data = $request->only(['id']);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'part_no' => 'required|string'
+                'id' => ['required', 'integer', 'exists:products,id'],
             ]);
 
             # Return validation error
@@ -127,7 +245,7 @@ class SupplierController extends Controller
             }
 
             # Delete supplier
-            $deleted = Supplier::where('part_no', $data['part_no'])->delete();
+            $deleted = Supplier::where('id', $data['id'])->delete();
 
             # Return if fail to delete
             if (!$deleted) {
@@ -135,54 +253,10 @@ class SupplierController extends Controller
             }
 
             # Return response
-            return Utility::apiSuccess('Supplier deleted successfully', [], 200);
+            return Utility::apiSuccess('deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Error while deleting supplier', ['exception' => $ex->getMessage()]);
-        }
-    }
-
-    public function getSuppliers(Request $request)
-    {
-        try {
-            # Get specific fields
-            $data = $request->only([
-                'page',
-                'per_page',
-                'principal_id',
-                'part_no',
-                'source_id',
-                'currency_id'
-            ]);
-
-            # Set per page
-            $perPage = $data['per_page'] ?? 10;
-
-            # Get supplier
-            $query = Supplier::whereNull('deleted_at')->orderByDesc('id');
-
-            # Filter condition
-            if (!empty($data['principal_id'])) {
-                $query->where('principal_id', $data['principal_id']);
-            }
-            if (!empty($data['part_no'])) {
-                $query->where('part_no', $data['part_no']);
-            }
-            if (!empty($data['source_id'])) {
-                $query->where('source_id', $data['source_id']);
-            }
-            if (!empty($data['currency_id'])) {
-                $query->where('currency_id', $data['currency_id']);
-            }
-
-            # Get result
-            $suppliers = $query->paginate($perPage);
-
-            # Return response
-            return Utility::apiSuccess('Supplier list fetched', $suppliers, 200);
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
         }
     }
 }
