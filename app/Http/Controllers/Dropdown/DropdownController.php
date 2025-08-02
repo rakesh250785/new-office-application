@@ -11,6 +11,7 @@ use App\Models\Classification;
 use App\Models\Customer;
 use App\Models\Notification;
 use App\Models\Parameter;
+use App\Models\PaymentDayAdvance;
 use App\Models\PrincipalType;
 use App\Models\QuotationType;
 use App\Models\Usp;
@@ -179,7 +180,7 @@ class DropdownController extends Controller
     {
         try {
             # Get currency
-            $currency = Customer::whereNull('deleted_at')->select('id', 'customer_name', 'company_name', 'address', 'owner_id', 'state_id', 'other_state')
+            $currency = Customer::whereNull('deleted_at')->select('id', 'customer_name', 'company_name', 'address', 'owner_id', 'state_id', 'other_state', 'city')
                 ->with(['owner:id,name'])->get();
 
             # Return response
@@ -226,7 +227,16 @@ class DropdownController extends Controller
 
     public function getPaymentAdvanceDD()
     {
+        try {
+            # Get quotation type
+            $quotationType = PaymentDayAdvance::pluck('date_type', 'id')->toArray();
 
+            # Return response
+            return Utility::apiSuccess('DD getPaymentAdvanceDD', $quotationType, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getPaymentAdvanceDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getReasonDD()
