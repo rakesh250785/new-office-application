@@ -66,6 +66,6 @@ class Customer extends Model
     {
         return $this->hasMany(PartialOrder::class, 'customer_id', 'id');
     }
-
+    
 }
 

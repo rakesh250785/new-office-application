@@ -49,6 +49,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getSourceDD', [DropdownController::class, 'getSourceDD']);
     Route::post('/getCurrencyDD', [DropdownController::class, 'getCurrencyDD']);
     Route::post('/getQuotationTypeDD', [DropdownController::class, 'getQuotationTypeDD']);
+    Route::post('/getCompanyDD', [DropdownController::class, 'getCompanyDD']);
+    Route::post('/getNotificationDD', [DropdownController::class, 'getNotificationDD']);
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);

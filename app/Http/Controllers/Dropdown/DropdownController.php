@@ -8,6 +8,8 @@ use App\Models\Branch;
 use App\Models\CategoryType;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Models\Customer;
+use App\Models\Notification;
 use App\Models\Parameter;
 use App\Models\PrincipalType;
 use App\Models\QuotationType;
@@ -158,14 +160,35 @@ class DropdownController extends Controller
         }
     }
 
-    public function getNotificationGroupDD()
+    public function getNotificationDD()
     {
+        try {
+            # Get currency
+            $notifiaction = Notification::pluck('name', 'id')->toArray();
 
+            # Return response
+            return Utility::apiSuccess('DD getNotificationDD', $notifiaction, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getNotificationDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getCompanyDD()
     {
+        try {
+            # Get currency
+            $currency = Customer::whereNull('deleted_at')->select('id', 'customer_name', 'company_name', 'address', 'owner_id', 'state_id', 'other_state')
+                ->with(['owner:id,name'])->get();
 
+            # Return response
+            return Utility::apiSuccess('DD getCompanyDD', $currency, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getCompanyDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getProductDD()
@@ -186,7 +209,7 @@ class DropdownController extends Controller
     {
         try {
             # Get quotation type
-            $quotationType = QuotationType::pluck('name', 'id')->toArray();
+            $quotationType = QuotationType::pluck('type', 'id')->toArray();
 
             # Return response
             return Utility::apiSuccess('DD getQuotationFormatDD', $quotationType, 200);
