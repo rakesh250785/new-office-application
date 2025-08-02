@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Parameter;
 use App\Models\PrincipalType;
+use App\Models\QuotationType;
 use App\Models\Usp;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Brand;
@@ -36,7 +37,6 @@ class DropdownController extends Controller
         try {
             # Get owner list
             $owners = Owner::whereNull('deleted_at')->orderBy('name', 'asc')->pluck('name', 'id');
-            ;
 
             # Return response
             return Utility::apiSuccess('DD Owner', $owners, 200);
@@ -176,6 +176,20 @@ class DropdownController extends Controller
                 ->get()
                 ->unique('part_no');
             return Utility::apiSuccess('DD partnodd', $products, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getPartNumberDD', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function getQuotationTypeDD()
+    {
+        try {
+            # Get quotation type
+            $quotationType = QuotationType::pluck('name', 'id')->toArray();
+
+            # Return response
+            return Utility::apiSuccess('DD getQuotationFormatDD', $quotationType, 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Something went wrong in getPartNumberDD', ['exception' => $ex->getMessage()], 500);

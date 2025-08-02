@@ -18,9 +18,6 @@ class QuotationFormat extends Model
         'mobile',
         'notes',
     ];
-
-    protected $table = 'quotation_formats';
-
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
