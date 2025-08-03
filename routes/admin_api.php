@@ -10,6 +10,7 @@ use App\Http\Controllers\Configuration\Reason\ReasonController;
 use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
+use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Dropdown\DropdownController;
 use App\Http\Controllers\Product\Category\CategoryController;
@@ -118,10 +119,15 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getUser', [UserController::class, 'getUser']);
     Route::post('/deleteUser', [UserController::class, 'deleteUser']);
 
-     # Supplier
-     Route::post('/addUpdateSupplier', [SupplierController::class, 'addUpdateSupplier']);
-     Route::post('/getSupplier', [SupplierController::class, 'getSupplier']);
-     Route::post('/deleteSupplier', [SupplierController::class, 'deleteSupplier']);
+    # Supplier
+    Route::post('/addUpdateSupplier', [SupplierController::class, 'addUpdateSupplier']);
+    Route::post('/getSupplier', [SupplierController::class, 'getSupplier']);
+    Route::post('/deleteSupplier', [SupplierController::class, 'deleteSupplier']);
+
+    # Quotation
+    Route::post('/addUpdateQuotation', [QuotationDetailController::class, 'addUpdateQuotation']);
+    Route::post('/getQuotation', [QuotationDetailController::class, 'getQuotation']);
+    Route::post('/deleteQuotation', [QuotationDetailController::class, 'deleteQuotation']);
 
 });
 

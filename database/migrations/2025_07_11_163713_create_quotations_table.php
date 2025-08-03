@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,8 +12,46 @@ return new class extends Migration
     {
         Schema::create('quotations', function (Blueprint $table) {
             $table->id();
+            $table->string('unique_quotation_no');
+            $table->text('product_description')->nullable();
+            $table->longText('payment_term_condition')->nullable();
+            $table->string('lead_from')->nullable();
+
+            $table->string('billing_address')->nullable();
+            $table->text('billing_city')->nullable();
+        
+            $table->string('billing_mobile')->nullable();
+            $table->string('billing_email')->nullable();
+            $table->string('billing_landline')->nullable();
+            $table->string('billing_pin_code')->nullable();
+            $table->string('billing_contact_person')->nullable();
+            $table->string('date');
+            $table->string('enq_ref')->nullable();
+            $table->string('prepard_by')->nullable();
+
+            $table->text('shipping_address')->nullable();
+            ;
+            $table->string('shipping_city')->nullable();
+            ;
+            $table->string('shipping_pin_code')->nullable();
+            $table->string('shipping_mobile')->nullable();
+            $table->string('shipping_email')->nullable();
+            $table->string('shipping_landline')->nullable();
+
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('principal_id');
+            $table->unsignedBigInteger('billing_state_id');
+            $table->unsignedBigInteger('shipping_state_id');
+            $table->unsignedBigInteger('company_id');
+            $table->unsignedBigInteger('notification_id');
+            $table->unsignedBigInteger('owner_id');
+            $table->unsignedBigInteger('currency_id');
+            $table->unsignedBigInteger('delivery_date_id');
+
+            $table->softDeletes();
             $table->timestamps();
         });
+
     }
 
     /**
