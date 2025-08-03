@@ -14,8 +14,8 @@ use App\Models\Parameter;
 use App\Models\PaymentDayAdvance;
 use App\Models\PrincipalType;
 use App\Models\QuotationType;
-use App\Models\Usp;
-use Illuminate\Support\Facades\Auth;
+use DB;
+use Illuminate\Http\Request;
 use App\Models\Brand;
 use App\Models\Currency;
 use App\Models\Owner;
@@ -180,7 +180,7 @@ class DropdownController extends Controller
     {
         try {
             # Get currency
-            $currency = Customer::whereNull('deleted_at')->select('id', 'customer_name', 'company_name', 'address', 'owner_id', 'state_id', 'other_state', 'city')
+            $currency = Customer::whereNull('deleted_at')->select('id', 'customer_name', 'company_name', 'address', 'owner_id', 'state_id', 'other_state', 'city', 'email_id', 'pin_code', 'mobile_no', 'landline_no')
                 ->with(['owner:id,name'])->get();
 
             # Return response
@@ -192,13 +192,33 @@ class DropdownController extends Controller
         }
     }
 
-    public function getProductDD()
+    public function getProductDD(Request $request)
     {
         try {
-            $products = Product::select('id', 'part_no', 'description', 'principal_id')
-                ->with(['principal:id,type'])
-                ->get()
-                ->unique('part_no');
+            $data = $request->only('search');
+
+            $whereClause = '';
+            $bindings = [];
+
+            if (!empty($data['search'])) {
+                $whereClause = 'WHERE part_no LIKE ?';
+                $bindings[] = '%' . $data['search'] . '%';
+            }
+
+            $subQuery = "
+        SELECT MAX(id) AS id
+        FROM products
+        $whereClause
+        GROUP BY part_no
+    ";
+
+            $products = Product::with(['principal:id,type'])
+                ->join(DB::raw("($subQuery) AS latest"), 'products.id', '=', 'latest.id')
+                ->select('products.id', 'products.part_no', 'products.description', 'products.principal_id', 'products.hsn_no', 'products.description', 'products.quantity', 'products.price', 'products.discount', 'products.price as net_price', 'products.igst_rate')
+                ->addBinding($bindings, 'select')
+                ->get();
+
+            # Return response
             return Utility::apiSuccess('DD partnodd', $products, 200);
         } catch (Exception $ex) {
             Log::error($ex);
