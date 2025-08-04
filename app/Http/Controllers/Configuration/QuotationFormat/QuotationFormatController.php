@@ -45,7 +45,7 @@ class QuotationFormatController extends Controller
                 'email' => [
                     'required',
                     'email',
-                    Rule::unique('quatation_formats', 'email')
+                    Rule::unique('quotation_formats', 'email')
                         ->ignore($data['quotation_format_id'] ?? null)
                 ],
                 'quotation_format_id' => 'nullable|integer|exists:quotation_formats,id',

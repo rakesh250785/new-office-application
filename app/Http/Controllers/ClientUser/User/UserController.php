@@ -97,7 +97,7 @@ class UserController extends Controller
                 $branchName = Branch::where('id', $data['branch_id'])->first();
                 $cc = array_map('trim', explode(',', $data['cc_email']));
                 $mailData = [
-                    'email' => $data['email_id'],
+                    'email' => $data['email'],
                     'cc' => $cc,
                     'admin_info' => [
                         'admin_fname' => $user['first_name'],
