@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('pending_quotations', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('quotation_id');
+            $table->string('unique_quotation_no');
+            $table->text('reason');
+            $table->string('reason_mode');
+            $table->double('amount');
+            $table->date('last_updated_at');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

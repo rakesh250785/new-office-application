@@ -12,6 +12,7 @@ class Customer extends Model
         'gst_number',
         'company_name',
         'customer_name',
+        'contact_person',
         'email_id',
         'mobile_no',
         'landline_no',
@@ -19,13 +20,22 @@ class Customer extends Model
         'customer_id',
         'owner_id',
         'country_id',
+        'unique_quotation_no',
         'state_id',
         'classification_id',
         'other_state',
         'pin_code',
         'city',
         'user_id',
-        'branch_id'
+        'branch_id',
+        'shipping_address',
+        'shiping_city',
+        'shipping_state_id',
+        'shiping_pin_code',
+        'shipping_phone',
+        'shipping_email',
+        'shipping_landline',
+        'pdf_name'
     ];
 
     protected $casts = [
@@ -66,6 +76,6 @@ class Customer extends Model
     {
         return $this->hasMany(PartialOrder::class, 'customer_id', 'id');
     }
-    
+
 }
 

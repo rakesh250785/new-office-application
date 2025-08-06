@@ -27,6 +27,7 @@ return new class extends Migration {
             $table->string('billing_contact_person')->nullable();
             $table->string('date');
             $table->string('enq_ref')->nullable();
+            $table->string('tin_number')->nullable();
             $table->string('prepard_by')->nullable();
 
             $table->text('shipping_address')->nullable();
@@ -46,6 +47,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('notification_id');
             $table->unsignedBigInteger('owner_id');
             $table->unsignedBigInteger('currency_id');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('delivery_date_id');
 
             $table->softDeletes();

@@ -10,6 +10,32 @@ class Quotation extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'unique_quotation_no',
+        'customer_id',
+        'shipping_address',
+        'shiping_city',
+        'shipping_state',
+        'shiping_pin_code',
+        'shipping_phone',
+        'shipping_email',
+        'shipping_landline',
+        'product_description',
+        'delivery_period',
+        'lead_from',
+        'notification_id',
+        'owner_id',
+        'quotation_format_type',
+        'term_condition_notes',
+        'reference_date',
+        'date',
+        'contact_person',
+        'enquiry_reference',
+        'quotation_prepare_by',
+        'branch_id',
+        'pdf_name',
+        'currency_id',
+        'tin_number',
+        'user_id'
     ];
 
     public function customer()

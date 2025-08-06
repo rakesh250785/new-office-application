@@ -38,7 +38,6 @@ class QuotationDetailController extends Controller
             # Request specific fields
             $data = $request->only([
                 "product_id",
-                "principal_id",
                 "product_description",
                 "principal_type",
                 "payment_term_condition",
@@ -50,10 +49,11 @@ class QuotationDetailController extends Controller
                 "billing_email",
                 "billing_landline",
                 "billing_pin_code",
-                "billing_contact_person",
+                "contact_person",
                 "shipping_address",
                 "shipping_city",
                 "shipping_state_id",
+                "shipping_email",
                 "company_id",
                 "quotation_type_id",
                 "notification_id",
@@ -75,7 +75,6 @@ class QuotationDetailController extends Controller
             # Validation rule
             $validator = Validator::make($data, [
                 'product_id' => 'nullable|integer|exists:products,id',
-                'principal_id' => 'required|integer|exists:principals,id',
                 'product_description' => 'required|string',
                 'principal_type' => 'nullable|string',
                 'payment_term_condition' => 'required|string',
@@ -87,7 +86,7 @@ class QuotationDetailController extends Controller
                 'billing_email' => 'required|email|max:255',
                 'billing_landline' => 'required|string|max:15',
                 'billing_pin_code' => 'required|string|max:10',
-                'billing_contact_person' => 'required|string|max:255',
+                'contact_person' => 'required|string|max:255',
                 'shipping_address' => 'required|string|max:500',
                 'shipping_city' => 'required|string|max:255',
                 'shipping_state_id' => 'required|integer|exists:states,id',
@@ -137,7 +136,7 @@ class QuotationDetailController extends Controller
             $currencyInfo = Currency::findOrFail($data['currency_id']);
 
             # Get unique quotation number
-            $quotationNumber = $data['quotation_id']
+            $quotationNumber = !empty($data['quotation_id'])
                 ? Quotation::findOrFail($data['quotation_id'])->unique_quotation_no
                 : $this->generateQuotationNumber($branchName, $quotationDate, $branchId);
 
@@ -147,29 +146,29 @@ class QuotationDetailController extends Controller
             # Prepare quotation data
             $quotationData = [
                 'unique_quotation_no' => $quotationNumber,
-                'customer_id' => $data['company_id'],
-                'shipping_address' => $data['shipping_address'],
-                'shiping_city' => $data['shipping_city'],
-                'shipping_state' => $data['shipping_state_id'],
-                'shiping_pin_code' => $data['shipping_pin_code'],
-                'shipping_phone' => $data['shipping_mobile'],
-                'shipping_email' => $data['shipping_email'],
-                'shipping_landline' => $data['shipping_landline'],
-                'product_description' => $data['product_description'],
-                'delivery_period' => $data['delivery_date_id'],
-                'lead_from' => $data['lead_from'],
-                'notification_id' => $data['notification_id'],
-                'owner_id' => $data['owner_id'],
-                'quotation_format_type' => $data['quotation_type_id'],
-                'term_condition_notes' => $data['payment_term_condition'],
-                'reference_date' => $quotationDate,
-                'date' => $data['date'],
-                'enquiry_reference' => $data['enq_ref'],
-                'quotation_prepare_by' => $data['prepard_by'],
-                'login_id' => $adminId,
-                'branch_id' => $branchId,
-                'pdf_name' => $pdfFilePath,
-                'currency_id' => $data['currency_id'],
+                'customer_id' => $data['company_id'] ?? null,
+                'shipping_address' => $data['shipping_address'] ?? null,
+                'shiping_city' => $data['shipping_city'] ?? null,
+                'shipping_state_id' => $data['shipping_state_id'] ?? null,
+                'shiping_pin_code' => $data['shipping_pin_code'] ?? null,
+                'shipping_phone' => $data['shipping_mobile'] ?? null,
+                'shipping_email' => $data['shipping_email'] ?? null,
+                'shipping_landline' => $data['shipping_landline'] ?? null,
+                'product_description' => $data['product_description'] ?? null,
+                'delivery_period_id' => $data['delivery_date_id'] ?? null,
+                'lead_from' => $data['lead_from'] ?? null,
+                'notification_id' => $data['notification_id'] ?? null,
+                'owner_id' => $data['owner_id'] ?? null,
+                'quotation_type_id' => $data['quotation_type_id'] ?? null,
+                'term_condition_notes' => $data['payment_term_condition'] ?? null,
+                'reference_date' => $quotationDate ?? null,
+                'date' => $data['date'] ?? null,
+                'contact_person' => $data['contact_person'] ?? null,
+                'enq_ref' => $data['enq_ref'] ?? null,
+                'prepard_by' => $data['prepard_by'] ?? null,
+                'branch_id' => $branchId ?? null,
+                'pdf_name' => $pdfFilePath ?? null,
+                'currency_id' => $data['currency_id'] ?? null,
                 'tin_number' => '27700707469',
                 'user_id' => $adminId,
             ];
@@ -178,12 +177,13 @@ class QuotationDetailController extends Controller
             $customerStatus = Customer::where('id', $data['company_id'])->update([
                 'address' => $data['billing_address'],
                 'city' => $data['billing_city'],
-                'contact_person1' => $data['billing_contact_person'],
-                'pin_code' => $data['billing_pin_code'],
-                'state_id' => $data['billing_state_id'],
-                'mobile' => $data['billing_mobile'],
-                'email' => $data['billing_email'],
-                'land_line' => $data['billing_landline'],
+                'contact_person' => $data['contact_person'] ?? null,
+                'pin_code' => $data['billing_pin_code'] ?? null,
+                'billing_state_id' => $data['billing_state_id'] ?? null,
+                'other_state' => $data['other_state'] ?? null,
+                'mobile_no' => $data['billing_mobile'] ?? null,
+                'email_id' => $data['billing_email'] ?? null,
+                'landline_no' => $data['billing_landline'] ?? null,
             ]);
 
             # Return if fail
@@ -203,10 +203,12 @@ class QuotationDetailController extends Controller
             $statusReason = PendingQuotation::updateOrCreate(
                 ['quotation_id' => $quotation->id],
                 [
+                    'quotatioon_id' => $quotation->id,
                     'unique_quotation_no' => $quotationNumber,
                     'amount' => $data['amount'] ?? 0,
                     'reason' => 'Open',
                     'reason_mode' => 0,
+                    'last_updated_at' => Carbon::now(),
                 ]
             );
 
@@ -252,9 +254,8 @@ class QuotationDetailController extends Controller
                     $productList[] = [
                         'quotation_id' => $quotationId,
                         'unique_quotaion_no' => $quotationNumber,
-                        'product_id' => $data['product_id'],
-                        'principal_id' => $data['principal_id'],
-                        'principal_type' => $data['principal_type'],
+                        'product_id' => $data['product_id'] ?? 0,
+                        'principal_id' => $data['principal_id'] ?? null,
                         'part_no' => $item['part_no'] ?? '',
                         'description' => $item['description'] ?? '',
                         'hsn_code' => $item['hsn_code'] ?? '',
@@ -310,11 +311,11 @@ class QuotationDetailController extends Controller
             ]);
 
             # Dispatch for pdf
-            dispatch(new ProcessQuotation($responsePayload));
+            // dispatch(new ProcessQuotation($responsePayload));
 
             # Return response
             return Utility::apiSuccess(
-                $data['quotation_id'] ? 'Quotation updated successfully.' : 'Quotation added successfully.',
+                !empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.',
                 ['quotation_id' => $quotationId]
             );
 
@@ -517,17 +518,14 @@ class QuotationDetailController extends Controller
             $basePrefix = "{$branchCode}/{$formattedDateForQuote}/{$flgType}";
 
             # Get last quote number created on the same day
-            $lastQuote = Quotation::where([
-                ['deleted_at', '=', 0],
-                ['branch_id', '=', $branchId],
-            ])
+            $lastQuote = Quotation::whereNull('deleted_at')->where('branch_id', $branchId)
                 ->whereDate('created_at', $formattedDate)
                 ->orderByDesc('id')
                 ->first();
 
             # If found generate number
-            if ($lastQuote && isset($lastQuote->in_quot_num)) {
-                $segments = explode('/', $lastQuote->in_quot_num);
+            if ($lastQuote && isset($lastQuote->unique_quotation_no)) {
+                $segments = explode('/', $lastQuote->unique_quotation_no);
                 $lastNumber = (int) str_replace($flgType, '', $segments[2] ?? 0);
                 $nextNumber = $lastNumber + 1;
             } else {
