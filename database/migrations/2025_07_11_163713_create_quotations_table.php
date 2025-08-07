@@ -29,18 +29,13 @@ return new class extends Migration {
             $table->string('enq_ref')->nullable();
             $table->string('tin_number')->nullable();
             $table->string('prepard_by')->nullable();
-
             $table->text('shipping_address')->nullable();
-            ;
             $table->string('shipping_city')->nullable();
-            ;
             $table->string('shipping_pin_code')->nullable();
             $table->string('shipping_mobile')->nullable();
             $table->string('shipping_email')->nullable();
             $table->string('shipping_landline')->nullable();
 
-            $table->unsignedBigInteger('product_id');
-            $table->unsignedBigInteger('principal_id');
             $table->unsignedBigInteger('billing_state_id');
             $table->unsignedBigInteger('shipping_state_id');
             $table->unsignedBigInteger('company_id');

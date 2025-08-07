@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             CountrySeeder::class,
             StateSeeder::class,
             CurrencySeeder::class,
+            QuotationTypeSeeder::class,
+            PaymentAdvanceDay::class
         ]);
     }
 }

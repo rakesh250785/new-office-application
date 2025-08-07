@@ -146,24 +146,30 @@ class QuotationDetailController extends Controller
             # Prepare quotation data
             $quotationData = [
                 'unique_quotation_no' => $quotationNumber,
-                'customer_id' => $data['company_id'] ?? null,
+                'company_id' => $data['company_id'] ?? null,
+                'billing_address' => $data['billing_address'],
+                'billing_city' => $data['billing_city'],
+                'billing_mobile' => $data['billing_mobile'],
+                'billing_email' => $data['billing_email'],
+                'billing_landline' => $data['billing_landline'],
+                'billing_pin_code' => $data['billing_pin_code'],
+                'billing_state_id' => $data['billing_state_id'],
+                'billing_contact_person' => $data['contact_person'],
                 'shipping_address' => $data['shipping_address'] ?? null,
-                'shiping_city' => $data['shipping_city'] ?? null,
+                'shipping_city' => $data['shipping_city'] ?? null,
                 'shipping_state_id' => $data['shipping_state_id'] ?? null,
-                'shiping_pin_code' => $data['shipping_pin_code'] ?? null,
-                'shipping_phone' => $data['shipping_mobile'] ?? null,
+                'shipping_pin_code' => $data['shipping_pin_code'] ?? null,
+                'shipping_mobile' => $data['shipping_mobile'] ?? null,
                 'shipping_email' => $data['shipping_email'] ?? null,
                 'shipping_landline' => $data['shipping_landline'] ?? null,
                 'product_description' => $data['product_description'] ?? null,
-                'delivery_period_id' => $data['delivery_date_id'] ?? null,
+                'delivery_date_id' => $data['delivery_date_id'] ?? null,
                 'lead_from' => $data['lead_from'] ?? null,
                 'notification_id' => $data['notification_id'] ?? null,
                 'owner_id' => $data['owner_id'] ?? null,
                 'quotation_type_id' => $data['quotation_type_id'] ?? null,
-                'term_condition_notes' => $data['payment_term_condition'] ?? null,
-                'reference_date' => $quotationDate ?? null,
-                'date' => $data['date'] ?? null,
-                'contact_person' => $data['contact_person'] ?? null,
+                'payment_term_condition' => $data['payment_term_condition'] ?? null,
+                'date' => $quotationDate ?? null,
                 'enq_ref' => $data['enq_ref'] ?? null,
                 'prepard_by' => $data['prepard_by'] ?? null,
                 'branch_id' => $branchId ?? null,
@@ -177,9 +183,8 @@ class QuotationDetailController extends Controller
             $customerStatus = Customer::where('id', $data['company_id'])->update([
                 'address' => $data['billing_address'],
                 'city' => $data['billing_city'],
-                'contact_person' => $data['contact_person'] ?? null,
                 'pin_code' => $data['billing_pin_code'] ?? null,
-                'billing_state_id' => $data['billing_state_id'] ?? null,
+                'state_id' => $data['billing_state_id'] ?? null,
                 'other_state' => $data['other_state'] ?? null,
                 'mobile_no' => $data['billing_mobile'] ?? null,
                 'email_id' => $data['billing_email'] ?? null,
@@ -253,14 +258,14 @@ class QuotationDetailController extends Controller
 
                     $productList[] = [
                         'quotation_id' => $quotationId,
-                        'unique_quotaion_no' => $quotationNumber,
+                        'unique_quotation_no' => $quotationNumber,
                         'product_id' => $data['product_id'] ?? 0,
                         'principal_id' => $data['principal_id'] ?? null,
                         'part_no' => $item['part_no'] ?? '',
                         'description' => $item['description'] ?? '',
                         'hsn_code' => $item['hsn_code'] ?? '',
                         'quantity' => $quantity,
-                        'in_stock' => $item['in_stock'] ?? '',
+                        'in_stock' => $item['in_stock'] ?? 0,
                         'price' => $price,
                         'discount' => $discount,
                         'net_price' => $afterDiscount,
@@ -314,10 +319,7 @@ class QuotationDetailController extends Controller
             // dispatch(new ProcessQuotation($responsePayload));
 
             # Return response
-            return Utility::apiSuccess(
-                !empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.',
-                ['quotation_id' => $quotationId]
-            );
+            return Utility::apiSuccess(!empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
