@@ -53,6 +53,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getCompanyDD', [DropdownController::class, 'getCompanyDD']);
     Route::post('/getNotificationDD', [DropdownController::class, 'getNotificationDD']);
     Route::post('/getPaymentAdvanceDD', [DropdownController::class, 'getPaymentAdvanceDD']);
+    Route::post('/getStatusDD', [DropdownController::class, 'getStatusDD']);
+
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -128,6 +130,6 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateQuotation', [QuotationDetailController::class, 'addUpdateQuotation']);
     Route::post('/getQuotation', [QuotationDetailController::class, 'getQuotation']);
     Route::post('/deleteQuotation', [QuotationDetailController::class, 'deleteQuotation']);
-
+    Route::post('/updateQuotationStatus', [QuotationDetailController::class, 'updateQuotationStatus']);
 });
 

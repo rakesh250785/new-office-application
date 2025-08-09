@@ -15,8 +15,9 @@ return new class extends Migration {
             $table->unsignedBigInteger('quotation_id');
             $table->string('unique_quotation_no');
             $table->text('reason');
-            $table->string('staus_code');
+            $table->string('status_code');
             $table->date('follow_up_date');
+            $table->date('last_updated_at');
             $table->double('total_amount');
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('user_id');

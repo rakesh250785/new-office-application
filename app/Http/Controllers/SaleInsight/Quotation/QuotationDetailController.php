@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SaleInsight\Quotation;
 
+use App\Models\ReasonType;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
@@ -111,7 +112,7 @@ class QuotationDetailController extends Controller
                 'product_list.*.description' => 'required|string|max:1000',
                 'product_list.*.hsn_code' => 'required|string|max:50',
                 'product_list.*.quantity' => 'required|numeric|min:1',
-                'product_list.*.in_stock' => 'nullable|string|max:255',
+                'product_list.*.in_stock' => 'nullable|numeric|max:255',
                 'product_list.*.price' => 'required|numeric|min:0',
                 'product_list.*.discount' => 'nullable|numeric|min:0|max:100',
                 'product_list.*.net_price' => 'required|numeric|min:0',
@@ -179,7 +180,7 @@ class QuotationDetailController extends Controller
                 'currency_id' => $data['currency_id'] ?? null,
                 'tin_number' => '27700707469',
                 'user_id' => $adminId,
-                'total_amount'=> $data['total_amount'] ?? null,
+                'total_amount' => $data['total_amount'] ?? null,
             ];
 
             # Update customer info
@@ -211,12 +212,16 @@ class QuotationDetailController extends Controller
             $statusReason = PendingQuotation::updateOrCreate(
                 ['quotation_id' => $quotation->id],
                 [
-                    'quotatioon_id' => $quotation->id,
+                    'quotation_id' => $quotation->id,
                     'unique_quotation_no' => $quotationNumber,
                     'total_amount' => $data['total_amount'] ?? 0,
                     'reason' => 'Open',
-                    'reason_mode' => 0,
+                    'status_code' => 'open',
                     'last_updated_at' => Carbon::now(),
+                    'user_id' => $adminId,
+                    'follow_up_date' => Carbon::now(),
+                    'branch_id' => $branchId ?? null,
+                    'reason_status_id' => 3
                 ]
             );
 
@@ -359,12 +364,42 @@ class QuotationDetailController extends Controller
                 'branch_id',
                 'total_amount',
                 'created_at',
+                'billing_state_id',
+                'billing_address',
+                'billing_city',
+                'billing_mobile',
+                'billing_email',
+                'billing_landline',
+                'billing_pin_code',
+                'billing_contact_person',
+                'shipping_address',
+                'shipping_city',
+                'shipping_pin_code',
+                'shipping_mobile',
+                'shipping_email',
+                'shipping_state_id',
+                'shipping_landline',
+                'product_description',
+                'lead_from',
+                'notification_id',
+                'quotation_type_id',
+                'owner_id',
+                'payment_term_condition',
+                'date',
+                'prepard_by',
+                'pdf_name',
+                'enq_ref',
+                'currency_id',
+                'company_id',
+                'delivery_date_id',
+                'total_amount',
             ])
                 ->with([
-                    'quotationDetails:id,quotation_id,total',
+                    'quotationDetails',
                     'companyDetails:id,company_name,email_id',
                     'branchDetails:id,name',
                     'currencyDetails:id,code',
+                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at'
                 ])
                 ->whereNull('deleted_at')
                 ->when(
@@ -467,7 +502,7 @@ class QuotationDetailController extends Controller
         }
     }
 
-    public function deleteQuotation(Request $request, $id)
+    public function deleteQuotation(Request $request)
     {
         try {
             # Get requested fields
@@ -475,16 +510,16 @@ class QuotationDetailController extends Controller
 
             # Validation rule
             $validator = Validator::make($data, [
-                'id' => 'required|integer|exists:quotation,id',
+                'id' => 'required|integer|exists:quotations,id',
             ]);
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation error', $validator->errors(), 422);
+                return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
             # Delete quotation
-            $status = (Auth::user()->hasPermission('branch_all')) ? Quotation::where('id', $id)->delete() : Quotation::where(['in_quot_id' => $id, 'in_branch_id' => Auth::user()->branch_id])->delete();
+            $status = Quotation::where('id', $data['id'])->delete();
 
             # Return if fail
             if (!$status) {
@@ -492,7 +527,7 @@ class QuotationDetailController extends Controller
             }
 
             # Return response
-            return Utility::apiError('Quotation deleted successfully', [], 200);
+            return Utility::apiSuccess('deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::debug($ex);
         }
@@ -703,62 +738,50 @@ class QuotationDetailController extends Controller
 
         return $total;
     }
-    public function statusQuotationChange(Request $request)
+    public function updateQuotationStatus(Request $request)
     {
         try {
+
             # Request specific fields
             $data = $request->only([
-                'quotation_status',
-                'quotation_reason',
-                'quotation_no',
-                'quote_id',
-                'follow_up_date'
+                'current_follow_date',
+                'reason',
+                'reason_status_id',
+                'quotation_id',
+                'unique_quotation_no'
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'quotation_status' => 'required|in:0,1',
-                'quotation_no' => 'required|string',
-                'quote_id' => 'required|integer',
-                'quotation_reason' => 'required|string',
-                'follow_up_date' => 'required|date'
+                'current_follow_date' => 'required',
+                'reason' => 'required',
+                'reason_status_id' => 'required|numeric',
+                'quotation_id' => 'required|numeric',
+                'unique_quotation_no' => 'required',
             ]);
 
             # Return validation error
             if ($validator->fails()) {
-                return Utility::apiError('Validation error', $validator->errors(), 422);
+                return Utility::apiError('Validation error', $validator->errors(), 221);
             }
-
-            # Update quotation status
-            $quotationQuery = Quotation::where('id', $data['quote_id'])
-                ->where('unique_quotation_number', $data['quotation_no']);
-
-            # If has permission
-            if (!Auth::user()->hasPermission('branch_all')) {
-                $quotationQuery->where('in_branch_id', Auth::user()->branch_id);
-            }
-
-            # Update status
-            $quotationUpdated = $quotationQuery->update([
-                'is_order_pending' => $data['quotation_status']
-            ]);
 
             # Update quotation reason
-            $updateReasonStatus = PendingQuotation::where('stn_qtn_ord_no', $data['quotation_no'])->update([
-                'stn_reason' => \DB::raw("CONCAT(stn_reason, ', {$data['quotation_reason']}')"),
-                'created_at' => Carbon::parse($data['follow_up_date'])->format('Y-m-d H:i:s'),
-                'user_id' => Auth::id(),
-                'updated_at' => Carbon::now(),
-                'deleted_at' => Carbon::now(),
-            ]);
+            $exitingReasonType = ReasonType::select('id', 'code')->where('id', $data['reason_status_id'])->first();
+            $updateReasonStatus = PendingQuotation::where('quotation_id', $data['quotation_id'])
+                ->where('unique_quotation_no', $data['unique_quotation_no'])->update([
+                        'reason' => \DB::raw("CONCAT(reason, ', {$data['reason']}')"),
+                        'last_updated_at' => Carbon::parse($data['current_follow_date'])->format('Y-m-d H:i:s'),
+                        'reason_status_id' => $data['reason_status_id'],
+                        'status_code' => $exitingReasonType['code']
+                    ]);
 
             # Return if fail
-            if (!$quotationUpdated && !$updateReasonStatus) {
+            if (!$updateReasonStatus) {
                 return Utility::apiError('Failed to update quotation status or reason', [], 500);
             }
 
             # Return response
-            return Utility::apiSuccess('Quotation status and reason updated successfully.');
+            return Utility::apiSuccess('status and reason updated successfully.');
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Fail at statusQuotationChange server error', ['exception' => $ex->getMessage()], 500);

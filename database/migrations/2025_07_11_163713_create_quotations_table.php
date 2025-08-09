@@ -19,7 +19,7 @@ return new class extends Migration {
 
             $table->string('billing_address')->nullable();
             $table->text('billing_city')->nullable();
-        
+
             $table->string('billing_mobile')->nullable();
             $table->string('billing_email')->nullable();
             $table->string('billing_landline')->nullable();
@@ -44,6 +44,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('currency_id');
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('quotation_type_id');
             $table->unsignedBigInteger('delivery_date_id');
             $table->decimal('total_amount', 18, 2)->default(0);
             $table->softDeletes();

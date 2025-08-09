@@ -13,6 +13,7 @@ use App\Models\Notification;
 use App\Models\Parameter;
 use App\Models\PaymentDayAdvance;
 use App\Models\PrincipalType;
+use App\Models\ReasonType;
 use App\Models\QuotationType;
 use DB;
 use Illuminate\Http\Request;
@@ -84,7 +85,16 @@ class DropdownController extends Controller
 
     public function getStatusDD()
     {
+        try {
+            # Get source
+            $statusList = ReasonType::pluck('type', 'id');
 
+            # Return response
+            return Utility::apiSuccess('DD StatusDD', $statusList, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in public function getStatusDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getClassificationDD()

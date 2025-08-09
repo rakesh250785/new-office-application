@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class PendingQuotation extends Model
@@ -15,11 +16,16 @@ class PendingQuotation extends Model
         'unique_quotation_no',
         'reason',
         'total_amount',
-        'staus_code',
+        'status_code',
         'last_updated_at',
         'follow_up_date',
         'branch_id',
         'user_id',
         'reason_status_id',
     ];
+
+    public function getLastUpdatedAtAttribute($value)
+    {
+        return $value ? Carbon::parse($value)->format('d-m-Y') : null;
+    }
 }

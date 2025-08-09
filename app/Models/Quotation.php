@@ -12,7 +12,6 @@ class Quotation extends Model
 
     protected $fillable = [
         'unique_quotation_no',
-        'customer_id',
         'billing_state_id',
         'billing_address',
         'billing_city',
@@ -22,27 +21,26 @@ class Quotation extends Model
         'billing_pin_code',
         'billing_contact_person',
         'shipping_address',
-        'shiping_city',
+        'shipping_city',
         'shipping_state',
-        'shiping_pin_code',
-        'shipping_phone',
+        'shipping_pin_code',
+        'shipping_mobile',
         'shipping_email',
         'shipping_state_id',
         'shipping_landline',
         'product_description',
-        'delivery_period',
         'lead_from',
         'notification_id',
         'owner_id',
-        'quotation_format_type',
-        'term_condition_notes',
+        'quotation_type_id',
+        'payment_term_condition',
         'reference_date',
         'date',
-        'contact_person',
         'enquiry_reference',
-        'quotation_prepare_by',
+        'prepard_by',
         'branch_id',
         'pdf_name',
+        'enq_ref',
         'currency_id',
         'company_id',
         'delivery_date_id',
@@ -56,6 +54,12 @@ class Quotation extends Model
     {
         return Carbon::parse($value)->format('d-m-Y');
     }
+
+    public function getLastUpdatedAtAttribute($value)
+    {
+        return $value ? Carbon::parse($value)->format('d-m-Y') : null;
+    }
+    
 
     public function companyDetails()
     {
@@ -87,7 +91,7 @@ class Quotation extends Model
         return $this->belongsTo(Principal::class, 'principal_id');
     }
 
-    public function pending()
+    public function pendingQuotationDetails()
     {
         return $this->hasOne(PendingQuotation::class, 'quotation_id', 'id');
     }
