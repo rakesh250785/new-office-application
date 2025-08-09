@@ -14,8 +14,12 @@ class PendingQuotation extends Model
         'quotation_id',
         'unique_quotation_no',
         'reason',
-        'amount',
-        'reason_mode',
-        'last_updated_at'
+        'total_amount',
+        'staus_code',
+        'last_updated_at',
+        'follow_up_date',
+        'branch_id',
+        'user_id',
+        'reason_status_id',
     ];
 }

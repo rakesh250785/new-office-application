@@ -69,7 +69,8 @@ class QuotationDetailController extends Controller
                 "delivery_date_id",
                 "product_list",
                 "update_status",
-                "quotation_id"
+                "quotation_id",
+                "total_amount",
             ]);
 
             # Validation rule
@@ -118,6 +119,7 @@ class QuotationDetailController extends Controller
                 'product_list.*.total' => 'required|numeric|min:0',
                 'product_list.*.notes' => 'nullable|string|max:1000',
                 'product_list.*.product_specification' => 'nullable|string',
+                'total_amount' => 'required|numeric|min:0',
             ]);
 
             # Return validation error
@@ -177,6 +179,7 @@ class QuotationDetailController extends Controller
                 'currency_id' => $data['currency_id'] ?? null,
                 'tin_number' => '27700707469',
                 'user_id' => $adminId,
+                'total_amount'=> $data['total_amount'] ?? null,
             ];
 
             # Update customer info
@@ -210,7 +213,7 @@ class QuotationDetailController extends Controller
                 [
                     'quotatioon_id' => $quotation->id,
                     'unique_quotation_no' => $quotationNumber,
-                    'amount' => $data['amount'] ?? 0,
+                    'total_amount' => $data['total_amount'] ?? 0,
                     'reason' => 'Open',
                     'reason_mode' => 0,
                     'last_updated_at' => Carbon::now(),
@@ -331,112 +334,101 @@ class QuotationDetailController extends Controller
     public function getQuotation(Request $request)
     {
         try {
-            # Get quotation data with required table
-            $query = Quotation::with(['details', 'customer', 'pending'])
-                ->where('is_deleted', 0)
+            // Collect only the relevant inputs
+            $data = $request->only([
+                'per_page',
+                'branch_list',
+                'owner_list',
+                'currency_list',
+                'quotation_status_list',
+                'principal_list',
+                'date_range',
+                'search.value'
+            ]);
+
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+
+            $query = Quotation::select([
+                'id',
+                'unique_quotation_no',
+                'lead_from',
+                'branch_id',
+                'owner_id',
+                'currency_id',
+                'company_id',
+                'branch_id',
+                'total_amount',
+                'created_at',
+            ])
+                ->with([
+                    'quotationDetails:id,quotation_id,total',
+                    'companyDetails:id,company_name,email_id',
+                    'branchDetails:id,name',
+                    'currencyDetails:id,code',
+                ])
+                ->whereNull('deleted_at')
                 ->when(
-                    !Auth::user()->hasPermission('branch_all'),
+                    !empty($data['branch_list']),
                     fn($q) =>
-                    $q->where('in_branch_id', Auth::user()->branch_id)
+                    $q->whereIn('branch_id', $data['branch_list'])
                 )
                 ->when(
-                    $request->filled('owner_select'),
+                    !empty($data['owner_list']),
                     fn($q) =>
-                    $q->where('owner_id', $request->owner_select)
+                    $q->whereIn('owner_id', $data['owner_list'])
                 )
                 ->when(
-                    $request->filled('branch_select'),
+                    !empty($data['currency_list']),
                     fn($q) =>
-                    $q->where('in_branch_id', $request->branch_select)
+                    $q->whereIn('currency_id', $data['currency_list'])
                 )
                 ->when(
-                    $request->filled('currency_select'),
+                    !empty($data['quotation_status_list']),
                     fn($q) =>
-                    $q->where('st_currency_applied', $request->currency_select)
+                    $q->whereIn('is_order_pending', $data['quotation_status_list'])
                 )
                 ->when(
-                    $request->filled('status_select'),
+                    !empty($data['principal_list']),
                     fn($q) =>
-                    $q->where('is_order_pending', (int) $request->status_select)
+                    $q->whereIn('principal_id', $data['principal_list'])
                 )
-                ->when(
-                    $request->filled('principal_select'),
-                    fn($q) =>
-                    $q->whereHas(
-                        'details',
-                        fn($d) =>
-                        $d->where('st_maker', $request->principal_select)
-                    )
-                )
-                ->when($request->filled('date_range'), function ($q) use ($request) {
-                    [$from, $to] = explode('|', $request->date_range);
+                ->when(!empty($data['date_range']), function ($q) use ($data) {
+                    [$from, $to] = explode('|', $data['date_range']);
                     $q->whereBetween('dt_date_created', [
                         Carbon::parse($from)->startOfDay(),
                         Carbon::parse($to)->endOfDay()
                     ]);
                 })
-                ->when($request->filled('search.value'), function ($q) use ($request) {
-                    $term = $request->input('search.value');
+                ->when(!empty($data['search.value']), function ($q) use ($data) {
+                    $term = $data['search.value'];
                     $q->where(function ($sub) use ($term) {
-                        $sub->where('in_quot_num', 'like', "%$term%")
-                            ->orWhere('fl_nego_amt', 'like', "%$term%")
-                            ->orWhere('lead_from', 'like', "%$term%")
+                        $sub->where('in_quot_num', 'like', "%{$term}%")
+                            ->orWhere('fl_nego_amt', 'like', "%{$term}%")
+                            ->orWhere('lead_from', 'like', "%{$term}%")
                             ->orWhereHas(
                                 'customer',
                                 fn($c) =>
-                                $c->where('st_com_name', 'like', "%$term%")
+                                $c->where('st_com_name', 'like', "%{$term}%")
                             )
                             ->orWhereHas(
-                                'details',
+                                'quotationDetails',
                                 fn($d) =>
-                                $d->where('st_part_no', 'like', "%$term%")
+                                $d->where('st_part_no', 'like', "%{$term}%")
                             );
                     });
                 })
-                ->orderByDesc('in_quot_id');
+                ->orderByDesc('id');
 
-            $paginated = $query->paginate(15);
+            $quotationData = $query->paginate($perPage);
 
-            $data = $paginated->getCollection()->transform(function ($quotation) {
-                return [
-                    'quotation_id' => $quotation->in_quot_id,
-                    'quotation_no' => $quotation->in_quot_num,
-                    'created_date' => optional($quotation->dt_date_created)->format('d-m-Y'),
-                    'company_name' => optional($quotation->customer)->st_com_name,
-                    'customer_email' => optional($quotation->customer)->st_cust_email,
-                    'mobile' => optional($quotation->customer)->st_cust_mobile,
-                    'reason' => optional($quotation->pending)->stn_reason,
-                    'follow_date' => optional($quotation->pending)?->modify
-                        ? date('d-m-Y', strtotime($quotation->pending->modify))
-                        : null,
-                    'status' => $this->getStatusLabel($quotation->is_order_pending),
-                    'pdf_url' => $this->getQuotationPdfUrl($quotation->stn_pdf_name),
-                    'products' => $quotation->details->map(fn($d) => [
-                        'part_no' => $d->st_part_no,
-                        'description' => $d->st_product_desc,
-                        'quantity' => $d->in_pro_qty,
-                        'unit_price' => $d->fl_pro_unitprice,
-                        'net_price' => $d->fl_net_price,
-                    ])
-                ];
-            });
-
-            return response()->json([
-                'code' => 200,
-                'data' => $data,
-                'meta' => [
-                    'current_page' => $paginated->currentPage(),
-                    'last_page' => $paginated->lastPage(),
-                    'per_page' => $paginated->perPage(),
-                    'total' => $paginated->total(),
-                ]
-            ]);
+            return Utility::apiSuccess('list_quotation', $quotationData, 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed getQuotation server error', ['exception' => $ex->getMessage()], 500);
         }
     }
+
 
     protected function getQuotationPdfUrl($filename)
     {

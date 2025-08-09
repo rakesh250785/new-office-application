@@ -23,7 +23,8 @@ class DatabaseSeeder extends Seeder
             StateSeeder::class,
             CurrencySeeder::class,
             QuotationTypeSeeder::class,
-            PaymentAdvanceDay::class
+            PaymentAdvanceDay::class,
+            ReasonStatus::class,
         ]);
     }
 }

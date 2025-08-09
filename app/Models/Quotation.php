@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Quotation extends Model
@@ -46,22 +47,44 @@ class Quotation extends Model
         'company_id',
         'delivery_date_id',
         'tin_number',
+        'total_amount',
         'user_id'
     ];
 
-    public function customer()
+
+    public function getCreatedAtAttribute($value)
     {
-        return $this->belongsTo(Customer::class, 'customer_id');
+        return Carbon::parse($value)->format('d-m-Y');
     }
 
-    public function details()
+    public function companyDetails()
+    {
+        return $this->belongsTo(Customer::class, 'company_id');
+    }
+
+    public function quotationDetails()
     {
         return $this->hasMany(QuotationDetail::class, 'quotation_id', 'id');
     }
 
-    public function owner()
+    public function ownerDetails()
     {
         return $this->belongsTo(Owner::class, 'owner_id');
+    }
+
+    public function branchDetails()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function currencyDetails()
+    {
+        return $this->belongsTo(Currency::class, 'currency_id');
+    }
+
+    public function principalDetails()
+    {
+        return $this->belongsTo(Principal::class, 'principal_id');
     }
 
     public function pending()

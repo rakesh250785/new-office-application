@@ -13,8 +13,11 @@ return new class extends Migration
     {
         Schema::create('reason_types', function (Blueprint $table) {
             $table->id();
+            $table->string('type', 20);
+            $table->string('code', 20);
             $table->timestamps();
         });
+        
     }
 
     /**

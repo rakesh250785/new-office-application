@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,9 +15,12 @@ return new class extends Migration
             $table->unsignedBigInteger('quotation_id');
             $table->string('unique_quotation_no');
             $table->text('reason');
-            $table->string('reason_mode');
-            $table->double('amount');
-            $table->date('last_updated_at');
+            $table->string('staus_code');
+            $table->date('follow_up_date');
+            $table->double('total_amount');
+            $table->unsignedBigInteger('branch_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger(column: 'reason_status_id');
             $table->softDeletes();
             $table->timestamps();
         });

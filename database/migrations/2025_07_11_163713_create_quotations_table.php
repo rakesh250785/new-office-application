@@ -35,7 +35,7 @@ return new class extends Migration {
             $table->string('shipping_mobile')->nullable();
             $table->string('shipping_email')->nullable();
             $table->string('shipping_landline')->nullable();
-
+            $table->string('pdf_name')->nullable();
             $table->unsignedBigInteger('billing_state_id');
             $table->unsignedBigInteger('shipping_state_id');
             $table->unsignedBigInteger('company_id');
@@ -45,7 +45,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('delivery_date_id');
-
+            $table->decimal('total_amount', 18, 2)->default(0);
             $table->softDeletes();
             $table->timestamps();
         });
