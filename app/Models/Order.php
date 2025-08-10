@@ -45,7 +45,9 @@ class Order extends Model
         'user_id',
         'total_amount',
         'sale_tax_amount',
-        'final_total_amount'
+        'final_total_amount',
+        'is_order_closed',
+        'is_shipment_pending'
     ];
     public function partialOrders()
     {

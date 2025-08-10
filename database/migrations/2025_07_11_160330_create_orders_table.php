@@ -56,6 +56,9 @@ return new class extends Migration
             $table->decimal('total_amount', 15, 2)->default(0);
             $table->decimal('sale_tax_amount', 15, 2)->default(0);
             $table->decimal('final_total_amount', 15, 2)->default(0);
+            $table->enum('is_order_closed', [0, 1])->default(0);
+            $table->enum('is_shipment_pending', [0, 1])->default(0);
+
             $table->timestamps();
             $table->softDeletes();
         });

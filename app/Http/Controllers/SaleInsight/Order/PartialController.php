@@ -5,10 +5,18 @@ namespace App\Http\Controllers\SaleInsight\Order;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Currency;
+use App\Models\Customer;
+use App\Jobs\ProcessPartialOrder;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\PartialOrder;
+use App\Models\PartialOrderDetails;
+use App\Models\PendingQuotation;
+use App\Models\QuotationFormat;
+use App\Models\States;
 use Carbon\Carbon;
+use Exception, Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -62,12 +70,11 @@ class PartialController extends Controller
                 'customer_order_no',
                 'overdues_value',
                 'overdue_no'
-
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'order_id'=>'required|integer|exists:orders,id',
+                'order_id' => 'required|integer|exists:orders,id',
                 'customer_order_no' => 'required|string',
                 'overdues_value' => 'required|string',
                 'overdue_no' => 'required|string',
@@ -124,13 +131,7 @@ class PartialController extends Controller
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
-            // // Unpack all necessary data once
-            // $customer = $req['customer_details'];
-            // $billing = $req['billing_detail'];
-            // $shipping = $req['shipping_details'];
-            // $other = $req['other_details'];
-            // $selProds = $req['sel_prods_details'];
-
+            # Auth user
             $orderId = $data['order_id'];
             $branchId = Auth::user()->branch_id;
             $adminUserId = Auth::id();
@@ -144,6 +145,22 @@ class PartialController extends Controller
                 return Utility::apiError('Order has been fully completed', [], 221);
             }
 
+            # Update customer details
+            $customerUpdate = Customer::where('id', $data['company_id'])->update([
+                'address' => $data['billing_address'],
+                'city' => $data['billing_city'],
+                'pin_code' => $data['billing_pin_code'] ?? null,
+                'state_id' => $data['billing_state_id'] ?? null,
+                'other_state' => $data['other_state'] ?? null,
+                'mobile_no' => $data['billing_mobile'] ?? null,
+                'email_id' => $data['billing_email'] ?? null,
+                'landline_no' => $data['billing_landline'] ?? null,
+            ]);
+
+            if (!$customerUpdate) {
+                return Utility::apiError('Failed to update customer info.', [], 221);
+            }
+
             # Calculate subtotal from order details once
             $subTotal = OrderDetails::where('order_id', $orderId)->sum('total');
             $frightPack = 10;
@@ -152,11 +169,15 @@ class PartialController extends Controller
             $finalTotal = ceil($subTotal + $frightPack);
 
             # Update order totals 
-            Order::where('order_id', $orderId)->update([
+            $orderTotalUpdate = Order::where('order_id', $orderId)->update([
                 'total_amount' => $subTotal,
                 'sale_tax_amount' => $salesTax,
                 'final_total_amount' => $finalTotal,
             ]);
+
+            if (!$orderTotalUpdate) {
+                return Utility::apiError('Failed to update order toytal.', [], 221);
+            }
 
             # Generate unique partial order number
             $dateStr = Carbon::now()->format('dmY');
@@ -207,156 +228,168 @@ class PartialController extends Controller
             ];
 
             # Insert partial order data
-            $partialOrderId = PartialOrder::insertGetId($partialOrderData);
+            $partialOrderId = PartialOrder::create($partialOrderData);
             if (!$partialOrderId) {
-                return response()->json(['code' => 400, 'error' => 'Failed to create partial order.']);
+                return Utility::apiError('Failed to create partial order.', [], 221);
             }
 
-            // Prepare bulk insert for partial order details
-            $orderDetailsInsert = [];
-            $orderDetailsToUpdate = [];
+            # Prepare bulk insert for partial order details
+            $grandTotal = 0;
+            $calculations = [];
+            $productList = [];
 
-            foreach ($selProds as $prod) {
-                $balanceQty = max(0, $prod['bal_qty'] - $prod['send_prod_qty']);
-                $orderDetailsInsert[] = [
-                    'in_partparaint_ord_id' => $partialOrderId,
-                    'in_partlyorder_id' => (int) $orderId,
-                    'st_part_no' => $prod['prod_part_No'],
-                    'in_partlyord_prod_id' => 0,
-                    'in_partlyord_pro_desc' => $prod['prod_desc'],
-                    'in_partlyord_delivery_period' => 0,
-                    'in_partlyord_pro_maker' => 'manoj',
-                    'in_partlyord_pro_qty' => $prod['in_pro_qty'],
-                    'in_balance_pro_qty' => $balanceQty,
-                    'in_sent_pro_qty' => $prod['send_prod_qty'],
-                    'flt_partlyord_pro_price' => $prod['prod_unit_price'],
-                    'flt_partlyord_pro_disct' => $prod['prod_discount'],
-                    'flt_partlyord_pro_net_price' => $prod['prod_net_price'],
-                    'in_igst_rate' => $prod['prod_igst_rate'],
-                    'flt_partlyord_pro_row_total' => $prod['prod_row_total'],
-                    'in_partlyord_pro_status' => 0,
-                    'dt_created' => $now,
+            foreach ($data['product_list'] as $item) {
+                $balanceQty = max(0, $item['balance_qyantity'] - $item['send_quantity']);
+                $price = $item['price'] ?? 0;
+                $quantity = $item['quantity'] ?? 0;
+                $discount = $item['discount'] ?? 0;
+                $igst = $item['igst'] ?? 0;
+
+                $baseAmount = $price * $quantity;
+                $discountAmount = ($baseAmount * $discount) / 100;
+                $afterDiscount = $baseAmount - $discountAmount;
+                $gstAmount = ($afterDiscount * $igst) / 100;
+                $totalAmount = $afterDiscount + $gstAmount;
+
+                $calculations[] = [
+                    'base_amount' => $baseAmount,
+                    'discount_amount' => $discountAmount,
+                    'net_price' => $afterDiscount,
+                    'gst_amount' => $gstAmount,
+                    'total' => $totalAmount
                 ];
 
-                if (!empty($prod['in_ord_detail_id'])) {
-                    $orderDetailsToUpdate[] = [
-                        'id' => $prod['in_ord_detail_id'],
-                        'bal_qty' => $balanceQty,
-                    ];
+                $grandTotal += $totalAmount;
+                $productList[] = [
+                    'partial_order_id' => $partialOrderId,
+                    'order_id' => $orderId,
+                    'quotation_id' => $data['quotation_id'],
+                    'unique_order_no' => $data['unique_order_no'],
+                    'unique_quotation_no' => $data['unique_quotation_no'],
+                    'unique_partial_order_no' => $data['unique_partial_order_no'],
+                    'product_id' => $data['product_id'] ?? 0,
+                    'principal_id' => $data['principal_id'] ?? null,
+                    'part_no' => $item['part_no'] ?? '',
+                    'description' => $item['description'] ?? '',
+                    'hsn_code' => $item['hsn_code'] ?? '',
+                    'in_stock' => $item['in_stock'] ?? 0,
+                    'price' => $price,
+                    'discount' => $discount,
+                    'net_price' => $afterDiscount,
+                    'igst' => $igst,
+                    'balance_quantity' => $balanceQty ?? 0,
+                    'order_type' => 1,
+                    'quantity' => $item['send_quantity'],
+                    'total' => $totalAmount,
+                    'status' => 0,
+                    'partial_order_status' => 0,
+                    'notes' => $item['notes'] ?? null,
+                    'product_specification' => $item['product_specification'] ?? null,
+                    'delivery_date_id' => $item['delivery_date_id'] ?? 0,
+                    'deleted_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                $orderDetailsToUpdate[] = [
+                    'id' => $item['id'],
+                    'balance_quantity' => $balanceQty,
+                ];
+            }
+
+            # Add partial order details
+            $partialOrderDetails = PartialOrderDetails::insert($productList);
+            if (!$partialOrderDetails) {
+                return Utility::apiError('Failed to create partial order details.', [], 221);
+            }
+
+            # Bulk update order details balances and sent qty
+            foreach ($orderDetailsToUpdate as $upd) {
+                $updateStatus = OrderDetails::where('order_detail_id', $upd['id'])->update([
+                    'quantity' => 0,
+                    'balance_quantity' => $upd['balance_quantity'],
+                ]);
+
+                if (!$updateStatus) {
+                    return Utility::apiError('Failed to update quantity.', [], 221);
                 }
             }
 
-            PartialOrderDetails::insert($orderDetailsInsert);
+            # Update order details status flags inline
+            $orderDetailStatusUpdate = OrderDetails::where('order_id', $orderId)
+                ->where('balance_quantity', '<=', 0)
+                ->update(['partial_order_status' => 1]);
 
-            // Bulk update order details balances and sent qty
-            foreach ($orderDetailsToUpdate as $upd) {
-                OrderDetails::where('in_ord_detail_id', $upd['id'])->update([
-                    'in_ord_pro_sent_qty' => 0,
-                    'in_ord_pro_bal_qty' => $upd['bal_qty'],
-                ]);
+            if (!$orderDetailStatusUpdate) {
+                return Utility::apiError('Failed to update order status.', [], 221);
             }
 
-            // Update order details status flags inline
-            OrderDetails::where('in_order_id', $orderId)
-                ->where('in_ord_pro_bal_qty', '<=', 0)
-                ->update(['flg_partord_status' => 1, 'flg_is_partial_checked' => 0]);
 
-            OrderDetails::where('in_order_id', $orderId)
-                ->where('in_ord_pro_bal_qty', '>', 0)
-                ->update(['flt_ord_pro_row_total' => 0]);
-
-            // Close the order
-            Order::where('in_order_id', $orderId)->update([
-                'st_cust_order_num' => $customer['cust_order_no'],
-                'flg_is_order_closed' => 1,
-            ]);
-
-            // Update customer billing info once
-            Customer::where('in_cust_id', $customer['customer_id'])->update([
-                'st_com_address' => $billing['auto_pop_addr'],
-                'st_cust_city' => $billing['auto_pop_city'],
-                'in_pincode' => $billing['auto_pop_pincod'],
-                'st_cust_state' => $billing['auto_pop_state'],
-                'st_cust_mobile' => $billing['auto_pop_phone'],
-                'st_cust_email' => $billing['auto_pop_email'],
-            ]);
-
-            // Mark pending quotation deleted
-            PendingQuotation::where('stn_qtn_ord_no', $customer['unique_order_id'])->update(['is_deleted' => 1]);
-
-            // Mark shipment pending & update PDF file path
-            Order::where('in_uniq_order_id', $customer['unique_order_id'])->update([
+            # Close the order
+            $updateCloseOrder = Order::where(['id' => $orderId, 'unique_order_no' => $data['unique_order_no']])->update([
+                'cutomer_order_no' => $data['customer_order_no'],
+                'is_order_closed' => true,
                 'is_shipment_pending' => 1,
                 'stn_pdf_name' => $pdfFilePath,
             ]);
 
-            // Fetch required data for PDF generation in one go
-            $updatedState = Customer::where('in_cust_id', $customer['customer_id'])->first()->toArray();
-            $updatedShipping = PartialOrder::where('in_partparaint_ord_id', $partialOrderId)
-                ->where('flg_deleted', 0)->first()->toArray();
-
-            $couriers = Courier::where('is_deleted', 0)->pluck('st_courier_name', 'in_courier_id')->toArray();
-            $countries = config('constant.countries');
-            $indianStates = config('constant.indian_all_states');
-            $currencyCodes = config('constant.currencyCodes');
-            $currencies = config('constant.currency');
-            $quotation = QuatationAdd::where('in_quot_num', $customer['qoute_no'])
-                ->select('dt_date_created', 'st_currency_applied')->first();
-
-            // Map states and countries properly
-            if (($updatedState['st_country'] ?? '') === 'IN') {
-                $updatedShipping['st_ord_ship_state'] = $indianStates[$updatedState['st_cust_state']] ?? '';
-                $updatedState['auto_pop_state'] = $updatedShipping['st_ord_ship_state'];
-            } else {
-                $updatedShipping['st_ord_ship_state'] = $shipping['shipping_state'];
+            if (!$updateCloseOrder) {
+                return Utility::apiError('Failed to update order status.', [], 221);
             }
 
-            $updatedState['country'] = $countries[$updatedState['st_country']] ?? '';
-            $updatedState['courier'] = $couriers[$other['courier']] ?? '';
+            # Mark pending quotation deleted
+            $updatePendingStatus = PendingQuotation::where(['quotation_id' => $data['quotation_id'], 'unique_quotation_no' => $data['unique_quotation_no']])->update(['deleted_at' => Carbon::now()]);
+            if (!$updatePendingStatus) {
+                return Utility::apiError('Failed to update pending status.', [], 221);
+            }
 
-            $currency = $currencyCodes[$currencies[$quotation->st_currency_applied] ?? ''] ?? '';
+            # Customer and currency info
+            $customerInfo = Customer::findOrFail($data['company_id']);
+            $currencyInfo = Currency::findOrFail($data['currency_id']);
 
-            // Prepare PDF data object
-            $pdfData = [
-                'order_info' => $updatedShipping,
-                'customer_info' => $updatedState,
-                'BillAddress' => Quatation::where(['is_deleted' => 0, 'int_branch_id' => $branchId])
-                    ->value('stn_branch_add') ?? '',
-                'orderCreateDate' => $now->format('d-m-Y'),
-                'preparing_by' => $customer['preparing_by'] ?? '',
-                'st_pay_turm' => $updatedShipping['st_pay_turm'] ?? '',
+            $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
+            $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
+
+            # Prepare Pdf data
+            $responsePayload = array_merge($data, [
+                'product_list' => $productList,
+                'quotation_info' => [
+                    'state_id' => $states[$customerInfo->state_id] ?? null,
+                    'shiping_state' => $states[$customerInfo->state_id] ?? null,
+                    'extra_notes' => $customerInfo->extra_notes,
+                    'gst' => $customerInfo->gst,
+                ],
+                'customer_info' => $customerInfo,
+                'tax_text' => 0,
+                'country' => $country->name ?? null,
+                'date' => $data['order_date'] ?? null,
+                'courier' => $courier->name ?? null,
+                'payment_term' => $paymentTerm->payment_type ?? null,
+                'preparing_by' => $data['prepard_by'] ?? null,
+                'branch_address' => $branchAddress,
+                'currency' => $currencyInfo,
                 'file_path' => $pdfFilePath,
-                'currency' => $currency,
-                'email' => auth()->user()->email,
-                'cc_email' => auth()->user()->cc_email,
-                'ext_note' => $other['ext_note'],
-                'quotation_created_date' => $quotation->dt_date_created ?? '',
-                'order_details' => PartialOrderDetails::where([
-                    'in_partparaint_ord_id' => $partialOrderId,
-                    'flg_deleted' => 0,
-                ])->get()->map(function ($prd) {
-                    return [
-                        'in_ord_pro_desc' => $prd->in_partlyord_pro_desc,
-                        'in_ord_pro_qty' => $prd->in_partlyord_pro_qty,
-                        'flt_ord_pro_price' => $prd->flt_partlyord_pro_price,
-                        'flt_ord_pro_disct' => $prd->flt_partlyord_pro_disct,
-                        'flt_ord_pro_net_price' => $prd->flt_partlyord_pro_net_price,
-                        'flt_ord_pro_row_total' => $prd->flt_partlyord_pro_row_total,
-                        'in_ord_delivery_period' => $prd->in_partlyord_delivery_period,
-                        'product_comments' => '',
-                        'st_part_no' => $prd->st_part_no,
-                        'st_hsn_no' => '',
-                        'in_igst_rate' => $prd->in_igst_rate,
-                    ];
-                }),
-            ];
+                'update_company_name' => $data['updated_company_name'] ?? null,
+                'quotation_type' => $data['quotation_type'] ?? null,
+                'email' => Auth::user()->email,
+                'order_created_at' => now()->format('Y-m-d'),
+                'overdue_no' => $data['overdue_number'] ?? null,
+                'overdue_name' => $data['overdue_value'] ?? null,
+                'order_prepared_by' => $data['order_prepared_by'] ?? null,
+                'quotation_created_date' => $data['quotation_created_date'] ?? null,
+                'cc_email' => Auth::user()->cc_email,
+                'multiProdCal' => [
+                    'calculations' => $calculations,
+                    'grand_total' => $grandTotal
+                ],
+                'totalcalc' => $grandTotal,
+            ]);
 
-            dispatch(new Orders($pdfData));
+            // dispatch(new ProcessPartialOrder($responsePayload));
 
             return response()->json(['code' => 200, 'success' => 'Partially order generated successfully.']);
         } catch (Exception $ex) {
             Log::error($ex);
-            return response()->json(['code' => 500, 'error' => 'Internal Server Error']);
+            return Utility::apiError('Fail to generate order', ['exception' => $ex->getMessage()], 500);
         }
     }
 

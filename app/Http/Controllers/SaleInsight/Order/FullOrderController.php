@@ -198,6 +198,7 @@ class FullOrderController extends Controller
                 'user_id' => $adminId,
                 'total_amount' => $data['total_amount'] ?? null,
                 'customer_order_no' => $data['customer_order_no'] ?? null,
+                'is_order_closed'=> 0,
             ];
 
             # Update customer info
