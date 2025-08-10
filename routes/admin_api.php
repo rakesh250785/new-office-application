@@ -11,6 +11,8 @@ use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
 use App\Http\Controllers\SaleInsight\Order\FullOrderController;
+use App\Http\Controllers\SaleInsight\Order\PartialController;
+use App\Http\Controllers\SaleInsight\Order\PartialOrderController;
 use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Dropdown\DropdownController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Vendor\Supplier\SupplierController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Authentication\AuthenticationController;
+use App\Http\Controllers\ClientUser\RoleAPermission\RolePermissionController;
 
 # Public route
 Route::prefix('admin')->group(function () {
@@ -133,11 +136,32 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/deleteQuotation', [QuotationDetailController::class, 'deleteQuotation']);
     Route::post('/updateQuotationStatus', [QuotationDetailController::class, 'updateQuotationStatus']);
 
-    # Store order
-     Route::post('/storeOrder', [FullOrderController::class, 'storeOrder']);
-     Route::post('/getOrder', [FullOrderController::class, 'getOrder']);
-     Route::post('/deleteOrder', [FullOrderController::class, 'deleteOrder']);
-     Route::post('/updateQuotationStatus', [FullOrderController::class, 'updateQuotationStatus']);
-    
+    # Order
+    Route::post('/storeOrder', [FullOrderController::class, 'storeOrder']);
+    Route::post('/getOrder', [FullOrderController::class, 'getOrder']);
+    Route::post('/deleteOrder', [FullOrderController::class, 'deleteOrder']);
+    Route::post('/updateQuotationStatus', [FullOrderController::class, 'updateQuotationStatus']);
+
+    # Partial rder
+    Route::post('/storePartialOrder', [PartialOrderController::class, 'storePartialOrder']);
+    Route::post('/getPartialOrder', [PartialOrderController::class, 'storePartialOrder']);
+    Route::post('/deletePartialOrder', [PartialOrderController::class, 'deletePartialOrder']);
+
+
+    # Role and permission
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('listRoles', [RolePermissionController::class, 'listRoles']);
+        Route::post('storeRole', [RolePermissionController::class, 'storeRole']);
+        Route::put('updateRole', [RolePermissionController::class, 'updateRole']);
+        Route::delete('deleteRole', [RolePermissionController::class, 'deleteRole']);
+        Route::post('deleteRole', [RolePermissionController::class, 'listPermissions']);
+        Route::post('storePermission', [RolePermissionController::class, 'storePermission']);
+        Route::put('updatePermission', [RolePermissionController::class, 'updatePermission']);
+        Route::delete('deletePermission', [RolePermissionController::class, 'deletePermission']);
+        Route::post('assignRole', [RolePermissionController::class, 'assignRole']);
+        Route::post('assignPermission', [RolePermissionController::class, 'assignPermission']);
+        Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
+    });
+
 });
 
