@@ -31,6 +31,7 @@ class Quotation extends Model
         'product_description',
         'lead_from',
         'notification_id',
+        'is_order_pending',
         'owner_id',
         'quotation_type_id',
         'payment_term_condition',

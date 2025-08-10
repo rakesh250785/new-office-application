@@ -6,5 +6,34 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderDetails extends Model
 {
-    //
+    protected $primaryKey = 'id';
+    protected $fillable = [
+        'order_id',
+        'quotation_id',
+        "unique_quotation_no",
+        'unique_order_no',
+        'product_id',
+        'principal_id',
+        'part_no',
+        'description',
+        'hsn_code',
+        'quantity',
+        'in_stock',
+        'price',
+        'discount',
+        'net_price',
+        'igst',
+        'balance_quantity',
+        'order_type',
+        'order_quantity',
+        'total',
+        'status',
+        'partial_order_status',
+        'notes',
+        'product_specification',
+        'delivery_date_id',
+        'deleted_at',
+        'created_at',
+        'updated_at',
+    ];
 }

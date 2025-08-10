@@ -13,7 +13,12 @@ return new class extends Migration {
         Schema::create('quotation_details', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('quotation_id');
+            $table->unsignedBigInteger('order_id')->nullable();
+            $table->string('order_type')->nullable();
             $table->string('unique_quotation_no')->nullable();
+            $table->string('unique_order_no')->nullable();
+            $table->string('status')->nullable();
+            $table->string('partial_order_status')->default(false);
             $table->unsignedBigInteger('product_id')->nullable();
             $table->unsignedBigInteger('principal_id')->nullable();
             $table->string('part_no')->nullable();
@@ -27,10 +32,11 @@ return new class extends Migration {
             $table->decimal('igst', 18, 2)->default(0);
             $table->decimal('total', 18, 2)->default(0);
             $table->text('notes')->nullable();
+            $table->integer('balance_quantity')->default(0);
             $table->text('product_specification')->nullable();
             $table->unsignedBigInteger('delivery_date_id')->nullable();
-            $table->softDeletes(); // adds 'deleted_at' column
-            $table->timestamps();  // adds 'created_at' and 'updated_at' columns
+            $table->softDeletes();
+            $table->timestamps();
         });
     }
 

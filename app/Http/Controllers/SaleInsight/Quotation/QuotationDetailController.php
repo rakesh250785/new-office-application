@@ -393,6 +393,7 @@ class QuotationDetailController extends Controller
                 'company_id',
                 'delivery_date_id',
                 'total_amount',
+                'is_order_pending'
             ])
                 ->with([
                     'quotationDetails',
@@ -534,6 +535,42 @@ class QuotationDetailController extends Controller
     }
 
     public function generateQuotationNumber($branchName, $quotationDate, $type = '')
+    {
+        try {
+            # Branch code (first 3 letters)
+            $branchCode = substr($branchName, 0, 3);
+
+            # Dates
+            $formattedDate = Carbon::parse($quotationDate)->format('Y-m-d');
+            $formattedDateForQuote = Carbon::parse($quotationDate)->format('Ymd');
+            $branchId = Auth::user()->branch_id;
+
+            # Get last quote number created on the same day
+            $lastQuote = Quotation::whereNull('deleted_at')
+                ->where('branch_id', $branchId)
+                ->whereDate('created_at', $formattedDate)
+                ->orderByDesc('id')
+                ->first();
+
+            # Determine next sequence number
+            if ($lastQuote && isset($lastQuote->unique_quotation_no)) {
+                $segments = explode('/', $lastQuote->unique_quotation_no);
+                $lastNumber = (int) ($segments[2] ?? 0);
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            # Final quotation number
+            return "{$branchCode}/{$formattedDateForQuote}/{$nextNumber}";
+
+        } catch (Exception $ex) {
+            Log::error("Failed to generate quotation number: " . $ex->getMessage());
+            return null;
+        }
+    }
+
+    public function generateOrderNumber($branchName, $quotationDate, $type = '')
     {
         try {
             # Create format

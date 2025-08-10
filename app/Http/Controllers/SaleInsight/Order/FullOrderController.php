@@ -9,7 +9,6 @@ use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Order;
 use App\Models\PartialOrder;
-use App\Models\PaymentTerm;
 use App\Models\Quotation;
 use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
@@ -36,17 +35,103 @@ class FullOrderController extends Controller
     {
     }
 
-    public function getQuotationOrder(Request $request)
+    public function storeOrder(Request $request)
     {
         try {
-            # Get specific fields
+            # Request specific fields
             $data = $request->only([
-                'quotation_id',
+                "product_id",
+                "product_description",
+                "principal_type",
+                "payment_term_condition",
+                "lead_from",
+                "billing_address",
+                "billing_city",
+                "billing_state_id",
+                "billing_mobile",
+                "billing_email",
+                "billing_landline",
+                "billing_pin_code",
+                "contact_person",
+                "shipping_address",
+                "shipping_city",
+                "shipping_state_id",
+                "shipping_email",
+                "company_id",
+                "quotation_type_id",
+                "notification_id",
+                "owner_id",
+                "date",
+                "enq_ref",
+                "prepard_by",
+                "currency_id",
+                "shipping_pin_code",
+                "shipping_mobile",
+                "shipping_email",
+                "shipping_landline",
+                "delivery_date_id",
+                "product_list",
+                "update_status",
+                "quotation_id",
+                "total_amount",
+                "unique_quotation_no",
+                'customer_order_no',
+                'overdues_value',
+                'overdue_no'
+
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'quotation_id',
+                'customer_order_no' => 'required|string',
+                'overdues_value' => 'required|string',
+                'overdue_no' => 'required|string',
+                "unique_quotation_no" => 'required|string',
+                'product_id' => 'nullable|integer|exists:products,id',
+                'product_description' => 'required|string',
+                'principal_type' => 'nullable|string',
+                'payment_term_condition' => 'required|string',
+                'lead_from' => 'required|string|max:255',
+                'billing_address' => 'required|string|max:500',
+                'billing_city' => 'required|string|max:255',
+                'billing_state_id' => 'required|integer|exists:states,id',
+                'billing_mobile' => 'required|string|max:15',
+                'billing_email' => 'required|email|max:255',
+                'billing_landline' => 'required|string|max:15',
+                'billing_pin_code' => 'required|string|max:10',
+                'contact_person' => 'required|string|max:255',
+                'shipping_address' => 'required|string|max:500',
+                'shipping_city' => 'required|string|max:255',
+                'shipping_state_id' => 'required|integer|exists:states,id',
+                'shipping_pin_code' => 'required|string|max:10',
+                'shipping_mobile' => 'required|string|max:15',
+                'shipping_email' => 'required|email|max:255',
+                'shipping_landline' => 'required|string|max:15',
+                'company_id' => 'required|integer|exists:customers,id',
+                'quotation_type_id' => 'required|integer|exists:quotation_types,id',
+                'notification_id' => 'required|integer|exists:notifications,id',
+                'owner_id' => 'required|integer|exists:owners,id',
+                'currency_id' => 'required|integer|exists:currencies,id',
+                'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
+                'date' => 'required|date|after_or_equal:today',
+                'enq_ref' => 'required|string|max:255',
+                'prepard_by' => 'required|string|max:255',
+                'update_status' => 'required|boolean',
+                'quotation_id' => 'nullable|integer|exists:quotations,id',
+                'product_list' => 'required|array|min:1',
+                'product_list.*.part_no' => 'required|string|max:255',
+                'product_list.*.description' => 'required|string|max:1000',
+                'product_list.*.hsn_code' => 'required|string|max:50',
+                'product_list.*.quantity' => 'required|numeric|min:1',
+                'product_list.*.in_stock' => 'nullable|numeric|max:255',
+                'product_list.*.price' => 'required|numeric|min:0',
+                'product_list.*.discount' => 'nullable|numeric|min:0|max:100',
+                'product_list.*.net_price' => 'required|numeric|min:0',
+                'product_list.*.igst' => 'nullable|numeric|min:0',
+                'product_list.*.total' => 'required|numeric|min:0',
+                'product_list.*.notes' => 'nullable|string|max:1000',
+                'product_list.*.product_specification' => 'nullable|string',
+                'total_amount' => 'required|numeric|min:0',
             ]);
 
             # Return validation error
@@ -54,237 +139,161 @@ class FullOrderController extends Controller
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
-            # Get quotation for order
-            $quotation = Quotation::with([
-                'customer',
-                'details',
-                'owner',
-                'pending'
-            ])->find($data['quotation_id']);
+            # Check if quotation already exist
+            $checkExistingQuotationInfo = Order::where(['quotation_id' => $data['quotation_id'], 'unique_quotation_no' => $data['unique_quotation_no']])->first();
 
-            # Return if not found
-            if (!$quotation) {
-                return Utility::apiError('Quotation not found.');
+            if ($checkExistingQuotationInfo) {
+                return Utility::apiError('Already order generated against this quotaion number', [], 221);
             }
 
-            # Meta info
+            # Auth info
+            $adminId = Auth::id();
             $branchId = Auth::user()->branch_id;
-            $branchWise = Branch::get()->pluck('name', 'id');
-            $branchName = $branchWise[$branchId] ?? null;
-            $quotationDate = Carbon::now()->format('Y-m-d 00:00:00');
+            $branchName = Branch::findOrFail($branchId)->name;
+            $orderDate = Carbon::now()->format('Y-m-d 00:00:00');
 
-            # Quotation data
-            $data = [
-                'quotation_info' => $quotation,
-                'quotation_created_date' => $quotation['created_at'],
-                'quotation_id' => $quotation['id'],
-                'unique_quotation_number' => $quotation['unique_quotation_number'],
-                'customer_id' => $quotation['customer_id'],
-                'owner_id' => $quotation['owner_id'],
-                'currency_id' => $quotation['currency_id'],
-                'enqury_reference_number' => $this->generateOrderNumber($branchName, $branchId, $quotationDate),
-            ];
+            # Customer and currency info
+            $customerInfo = Customer::findOrFail($data['company_id']);
+            $currencyInfo = Currency::findOrFail($data['currency_id']);
 
-            # Return response
-            return Utility::apiSuccess('Order data fetched successfully', $data, 200);
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed fetching getQuotationOrder server error', ['exception' => $ex->getMessage()]);
-        }
-    }
+            # Get unique order number
+            $orderNumber = $this->generateOrderNumber($branchName, $branchId, $orderDate, );
 
-    public function addUpdateOrder(Request $request)
-    {
-        try {
-            # Extract request
-            $data = $request->only([
-                'order_id',
-                'customer_id',
-                'quotation_id',
-                'unique_quotation_id',
-                'lead_from',
-                'order_date',
-                'order_number',
-                'quotation_date',
-                'order_prepared_by',
-                'contact_persion',
-                'billing_info',
-                'courier_id',
-                'notes',
-                'term_condition_notes',
-                'shipment_invoice_id',
-                'overdue_number',
-                'overdue_value',
-                'product_details',
-                'shipping_info',
-                'quotation_type',
-                'enquiry_refefence_number',
-                'net_total_amount',
-                'sales_tax_amount',
-                'order_total_amount',
-                'updated_company_name',
-                'currency_id',
-                'quotation_created_date'
-            ]);
+            # PDF path
+            $pdfFilePath = 'order_' . time() . '_' . date('dmy') . '.pdf';
 
-            # Auth + Branch
-            $admin = Auth::user();
-            $branchId = $admin->branch_id;
-
-            # Fetch master data
-            $customerInfo = Customer::find($data['customer_id']);
-            $branch = Branch::find($branchId);
-            $country = Country::find(optional($customerInfo)->country_id);
-            $state = States::find(optional($customerInfo)->state_id);
-            $paymentTerm = PaymentTerm::find($data['shipment_invoice_id']);
-            $courier = Courier::find($data['courier_id']);
-            $currency = Currency::find($data['currency_id']);
-            $branchAddress = QuotationFormat::whereNull('deleted_at')->where('branch_id', $branchId)->first();
-
-            # Validate lookups
-            if (!$customerInfo || !$branch || !$country || !$state || !$paymentTerm || !$courier || !$currency || !$branchAddress) {
-                return Utility::apiError('Master data missing', [], 221);
-            }
-
-            # Parse shipping/billing
-            $shipping = $data['shipping_info'] ?? [];
-            $billing = $data['billing_info'] ?? [];
-
-            # Determine state
-            $withingState = ($country->code === 'in') ? $customerInfo->state_id : null;
-            $otherState = $customerInfo->other_state;
-
-            # Generate file name
-            $pdfFilePath = 'order_' . time() . '_' . now()->format('dmy') . '.pdf';
-
-            # Core order data
+            # Prepare order data
             $orderData = [
-                'unique_quotation_id' => $data['unique_quotation_id'],
-                'customer_id' => $data['customer_id'],
-                'order_number' => $data['order_number'],
-                'order_date' => $data['order_date'],
-                'shipping_address' => $shipping['address'] ?? null,
-                'state_id' => $shipping['state_id'] ?? null,
-                'state' => $withingState,
-                'other_state' => $otherState,
-                'pincode' => $shipping['pincode'] ?? null,
-                'city' => $shipping['city'] ?? null,
-                'mobile' => $shipping['mobile'] ?? null,
-                'landline' => $shipping['landline'] ?? null,
-                'email' => $shipping['email'] ?? null,
-                'same_as_billing' => $shipping['same_as_billing'] ?? null,
-                'delivery_period' => 30,
-                'lead_from' => $data['lead_from'],
-                'branch_id' => $branchId,
-                'term_condition_notes' => $data['term_condition_notes'],
-                'order_prepared_by' => $data['order_prepared_by'],
-                'quotation_type' => $data['quotation_type'],
-                'user_id' => $admin->id,
-                'pdf_name' => $pdfFilePath,
-                'order_status' => 0,
-                'currency_id' => $data['currency_id'],
-                'contact_for_payment' => $shipping['mobile'] ?? null,
-                'contact_person_for_payment' => $billing['mobile'] ?? null,
-                'enquiry_refefence_number' => $data['enquiry_refefence_number'],
-                'net_total_amount' => $data['net_total_amount'],
-                'tax_branch_id' => 0,
-                'sales_tax_amount' => $data['sales_tax_amount'],
-                'order_fridge_package' => 0,
-                'order_total_amount' => $data['order_total_amount'],
+                'unique_order_no' => $orderNumber,
+                'company_id' => $data['company_id'] ?? null,
+                'billing_address' => $data['billing_address'],
+                'billing_city' => $data['billing_city'],
+                'billing_mobile' => $data['billing_mobile'],
+                'billing_email' => $data['billing_email'],
+                'billing_landline' => $data['billing_landline'],
+                'billing_pin_code' => $data['billing_pin_code'],
+                'billing_state_id' => $data['billing_state_id'],
+                'billing_contact_person' => $data['contact_person'],
+                'shipping_address' => $data['shipping_address'] ?? null,
+                'shipping_city' => $data['shipping_city'] ?? null,
+                'shipping_state_id' => $data['shipping_state_id'] ?? null,
+                'shipping_pin_code' => $data['shipping_pin_code'] ?? null,
+                'shipping_mobile' => $data['shipping_mobile'] ?? null,
+                'shipping_email' => $data['shipping_email'] ?? null,
+                'shipping_landline' => $data['shipping_landline'] ?? null,
+                'product_description' => $data['product_description'] ?? null,
+                'delivery_date_id' => $data['delivery_date_id'] ?? null,
+                'lead_from' => $data['lead_from'] ?? null,
+                'notification_id' => $data['notification_id'] ?? null,
+                'owner_id' => $data['owner_id'] ?? null,
+                'quotation_type_id' => $data['quotation_type_id'] ?? null,
+                'payment_term_condition' => $data['payment_term_condition'] ?? null,
+                'date' => $quotationDate ?? null,
+                'enq_ref' => $data['enq_ref'] ?? null,
+                'prepard_by' => $data['prepard_by'] ?? null,
+                'branch_id' => $branchId ?? null,
+                'pdf_name' => $pdfFilePath ?? null,
+                'currency_id' => $data['currency_id'] ?? null,
+                'tin_number' => '27700707469',
+                'user_id' => $adminId,
+                'total_amount' => $data['total_amount'] ?? null,
+                'customer_order_no' => $data['customer_order_no'] ?? null,
             ];
-
-            # Add mode
-            if (empty($data['order_id'])) {
-                $orderData['unique_order_id'] = $this->generateOrderNumber($branch->name, $branchId, now()->toDateString());
-                $order = Order::create($orderData);
-            } else {
-                $order = Order::find($data['order_id']);
-                if (!$order)
-                    return Utility::apiError('Order not found for update', [], 221);
-                $order->update($orderData);
-            }
 
             # Update customer info
-            $customerUpdate = Customer::where('id', $customerInfo->id)->update([
-                'address' => $billing['address'] ?? null,
-                'city' => $billing['city'] ?? null,
-                'contact_person' => $billing['name'] ?? null,
-                'pincode' => $billing['pincode'] ?? null,
-                'state_id' => $withingState,
-                'other_state' => $otherState,
-                'mobile' => $billing['mobile'] ?? null,
-                'email' => $billing['email'] ?? null,
+            $customerStatus = Customer::where('id', $data['company_id'])->update([
+                'address' => $data['billing_address'],
+                'city' => $data['billing_city'],
+                'pin_code' => $data['billing_pin_code'] ?? null,
+                'state_id' => $data['billing_state_id'] ?? null,
+                'other_state' => $data['other_state'] ?? null,
+                'mobile_no' => $data['billing_mobile'] ?? null,
+                'email_id' => $data['billing_email'] ?? null,
+                'landline_no' => $data['billing_landline'] ?? null,
             ]);
 
             # Return if fail
-            if (!$customerUpdate) {
-                return Utility::apiError('Fail to update customer info', [], 221);
+            if (!$customerStatus) {
+                return Utility::apiError('Failed to update billing info', [], 221);
             }
 
-            # Sync order details
-            $orderDetailDeleteStatus = OrderDetails::where('order_id', $order->id)->delete();
+            # Add update quoation info
+            $order = Order::create($orderData);
 
             # Return if fail
-            if (!$orderDetailDeleteStatus) {
-                return Utility::apiError('Fail to delete exiting order details', [], 221);
+            if (!$order) {
+                return Utility::apiError('Failed to save order', [], 221);
             }
 
-            # Define product
-            $quotationData = [];
-            $productData = [];
-            $calcDetails = [];
+            # Initialize variable
+            $orderId = $order->id;
             $grandTotal = 0;
+            $calculations = [];
+            $productList = [];
 
-            foreach ($data['product_details'] as $prod) {
-                unset($prod['balance_quantity']);
-                $quotationData[] = array_merge($prod, [
-                    'quotation_id' => $data['quotation_id'],
-                    'customer_id' => $data['customer_id'],
-                ]);
-                $productData[] = [
-                    'order_id' => $order->id,
-                    'product_id' => $prod['product_id'],
-                    'description' => $prod['description'],
-                    'principal_id' => $prod['principal_id'],
-                    'order_quantity' => $prod['quantity'],
-                    'price' => $prod['price'],
-                    'discount' => $prod['discount'],
-                    'net_price' => $prod['net_price'],
-                    'total' => $prod['total'],
-                    'balance_quantity' => $prod['balance_quantity'] ?? 0,
-                    'order_type' => 1,
-                    'delevery_period' => $prod['delevery_period'],
-                    'comments' => $prod['comments'],
-                    'part_number' => $prod['part_number'],
-                    'hsn_number' => $prod['hsn_number'],
-                    'igst_rate' => $prod['igst_rate'],
-                    'quotation_type' => $data['quotation_type'],
-                    'term_condition_notes' => $data['term_condition_notes'],
-                    'uom' => $prod['uom'],
-                    'moc' => $prod['moc'],
-                    'specification' => $prod['specification'],
-                    'product_head' => $prod['product_head'],
-                    'status' => 0,
-                    'partial_order_status' => 0,
-                ];
+            # Sync order details
+            if (OrderDetails::where('order_id', $orderId)->exists()) {
+                if (OrderDetails::where('order_id', $orderId)->delete() === false) {
+                    return Utility::apiError('Failed to delete existing order details', [], 221);
+                }
+            }
 
-                $baseAmount = $prod['unit_price'] * $prod['order_quantity'];
-                $discountAmount = ($baseAmount * $prod['discount']) / 100;
+            # Product calculation
+
+            foreach ($data['product_list'] as $item) {
+                $price = $item['price'] ?? 0;
+                $quantity = $item['quantity'] ?? 0;
+                $discount = $item['discount'] ?? 0;
+                $igst = $item['igst'] ?? 0;
+
+                $baseAmount = $price * $quantity;
+                $discountAmount = ($baseAmount * $discount) / 100;
                 $afterDiscount = $baseAmount - $discountAmount;
-                $gstAmount = ($afterDiscount * $prod['igst_rate']) / 100;
+                $gstAmount = ($afterDiscount * $igst) / 100;
                 $totalAmount = $afterDiscount + $gstAmount;
-                $calcDetails[] = [
+
+                $calculations[] = [
                     'base_amount' => $baseAmount,
                     'discount_amount' => $discountAmount,
                     'net_price' => $afterDiscount,
                     'gst_amount' => $gstAmount,
-                    'total' => $totalAmount,
+                    'total' => $totalAmount
                 ];
+
                 $grandTotal += $totalAmount;
+                $productList[] = [
+                    'order_id' => $orderId,
+                    'quotation_id' => $data['quotation_id'],
+                    'unique_order_no' => $orderNumber,
+                    'unique_quotation_no' => $data['unique_quotation_no'],
+                    'product_id' => $data['product_id'] ?? 0,
+                    'principal_id' => $data['principal_id'] ?? null,
+                    'part_no' => $item['part_no'] ?? '',
+                    'description' => $item['description'] ?? '',
+                    'hsn_code' => $item['hsn_code'] ?? '',
+                    'in_stock' => $item['in_stock'] ?? 0,
+                    'price' => $price,
+                    'discount' => $discount,
+                    'net_price' => $afterDiscount,
+                    'igst' => $igst,
+                    'balance_quantity' => $item['balance_quantity'] ?? 0,
+                    'order_type' => 1,
+                    'quantity' => $item['quantity'],
+                    'total' => $totalAmount,
+                    'status' => 0,
+                    'partial_order_status' => 0,
+                    'notes' => $item['notes'] ?? null,
+                    'product_specification' => $item['product_specification'] ?? null,
+                    'delivery_date_id' => $item['delivery_date_id'] ?? 0,
+                    'deleted_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
 
+
             # Insert order details
-            $orderDetailInsert = OrderDetails::insert($productData);
+            $orderDetailInsert = OrderDetails::insert($productList);
 
             # Return if fail
             if (!$orderDetailInsert) {
@@ -296,11 +305,11 @@ class FullOrderController extends Controller
 
             # Return if fail
             if (!$quotationDetailDelete) {
-                return Utility::apiError('Fail to delete quotation details', [], 221);
+                return Utility::apiError('Fail to delete existing quotation details', [], 221);
             }
 
             # Insert quotation details
-            $insertStatus = QuotationDetail::insert($quotationData);
+            $insertStatus = QuotationDetail::insert($productList);
 
             # Return if fail
             if (!$insertStatus) {
@@ -310,13 +319,11 @@ class FullOrderController extends Controller
             # Update quotation flags
             $quotationFilter = [
                 'id' => $data['quotation_id'],
-                'customer_id' => $data['customer_id']
+                'company_id' => $data['company_id']
             ];
-            if (!$admin->hasPermission('branch_all'))
-                $quotationFilter['branch_id'] = $branchId;
 
             # Update quotation status
-            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => 1]);
+            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => 0]);
 
             # Return if fail
             if (!$updateQuotationStatus) {
@@ -324,64 +331,200 @@ class FullOrderController extends Controller
             }
 
             # Mark pending quotation deleted
-            $pendingFilter = ['unique_quotation_id' => $data['unique_quotation_id']];
-            if (!$admin->hasPermission('branch_all'))
-                $pendingFilter['branch_id'] = $branchId;
-            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['deleted_at' => now()]);
+            $pendingFilter = ['unique_quotation_no' => $data['unique_quotation_no'], 'quotation_id' => $data['quotation_id']];
+
+            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id'=> 1]);
 
             # Return if fail
             if (!$updatePendingQuotation) {
                 return Utility::apiError('Fail to update pending quotation', [], 221);
             }
 
-            # Update quotation status
-            $updateQuotationSatatus = Quotation::where($pendingFilter)->update(['order_pending' => 1]);
 
-            # Return if fail
-            if (!$updateQuotationSatatus) {
-                return Utility::apiError('Fail to update quotation status', [], 221);
-            }
+            # Get pdf info
+            $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
+            $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
 
-            # Prepare PDF
-            $pdfInfo = [
-                'state' => $country->code === 'in' ? ($state->name ?? null) : null,
-                'customer_info' => $customerInfo->toArray(),
+            # Prepare Pdf data
+            $responsePayload = array_merge($data, [
+                'product_list' => $productList,
+                'quotation_info' => [
+                    'state_id' => $states[$customerInfo->state_id] ?? null,
+                    'shiping_state' => $states[$customerInfo->state_id] ?? null,
+                    'extra_notes' => $customerInfo->extra_notes,
+                    'gst' => $customerInfo->gst,
+                ],
+                'customer_info' => $customerInfo,
+                'tax_text' => 0,
                 'country' => $country->name ?? null,
                 'date' => $data['order_date'] ?? null,
-                'payment_term' => $paymentTerm->payment_type ?? null,
                 'courier' => $courier->name ?? null,
+                'payment_term' => $paymentTerm->payment_type ?? null,
+                'preparing_by' => $data['prepard_by'] ?? null,
+                'branch_address' => $branchAddress,
+                'currency' => $currencyInfo,
+                'file_path' => $pdfFilePath,
                 'update_company_name' => $data['updated_company_name'] ?? null,
+                'quotation_type' => $data['quotation_type'] ?? null,
+                'email' => Auth::user()->email,
+                'order_created_at' => now()->format('Y-m-d'),
                 'overdue_no' => $data['overdue_number'] ?? null,
                 'overdue_name' => $data['overdue_value'] ?? null,
-                'ext_note' => $data['notes'] ?? null,
-                'quotation_created_date' => $data['quotation_created_date'] ?? null,
-                'currency' => $currency->code ?? null,
-                'order_info' => $orderData,
-                'order_details' => $productData,
-                'branch_adddress' => $branchAddress['address'] ?? $branchAddress['branch_address'] ?? null,
-                'order_created_at' => now()->format('Y-m-d'),
                 'order_prepared_by' => $data['order_prepared_by'] ?? null,
-                'file_path' => $pdfFilePath,
-                'email' => $admin->email ?? null,
-                'cc_email' => $admin->cc_email ?? null,
-                'quotation_type' => $data['quotation_type'] ?? null,
-                'multi_prod_cal' => [
-                    'calculations' => $calcDetails,
+                'quotation_created_date' => $data['quotation_created_date'] ?? null,
+                'cc_email' => Auth::user()->cc_email,
+                'multiProdCal' => [
+                    'calculations' => $calculations,
                     'grand_total' => $grandTotal
                 ],
-                'total_cal' => $grandTotal,
-            ];
+                'totalcalc' => $grandTotal,
+            ]);
 
-            # Dispatch job for pdf
-            dispatch(new ProcessOrder($pdfInfo));
+
+            # Dispatch for pdf
+            // dispatch(new ProcessQuotation($responsePayload));
 
             # Return response
-            return Utility::apiSuccess($data['order_id'] ? 'Order updated successfully' : 'Order created successfully', [], 200);
+            return Utility::apiSuccess('Order generated successfully', [], 200);
+
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed to process order', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Fail to generate order', ['exception' => $ex->getMessage()], 500);
         }
     }
+
+
+    public function getOrder(Request $request)
+    {
+        try {
+            // Collect only the relevant inputs
+            $data = $request->only([
+                'per_page',
+                'branch_list',
+                'owner_list',
+                'currency_list',
+                'quotation_status_list',
+                'principal_list',
+                'date_range',
+                'search.value'
+            ]);
+
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+
+            $query = Order::select([
+                'id',
+                'unique_order_no',
+                'unique_quotation_no',
+                'lead_from',
+                'branch_id',
+                'owner_id',
+                'currency_id',
+                'company_id',
+                'branch_id',
+                'total_amount',
+                'created_at',
+                'billing_state_id',
+                'billing_address',
+                'billing_city',
+                'billing_mobile',
+                'billing_email',
+                'billing_landline',
+                'billing_pin_code',
+                'billing_contact_person',
+                'shipping_address',
+                'shipping_city',
+                'shipping_pin_code',
+                'shipping_mobile',
+                'shipping_email',
+                'shipping_state_id',
+                'shipping_landline',
+                'product_description',
+                'lead_from',
+                'notification_id',
+                'quotation_type_id',
+                'owner_id',
+                'payment_term_condition',
+                'date',
+                'prepard_by',
+                'pdf_name',
+                'enq_ref',
+                'currency_id',
+                'company_id',
+                'delivery_date_id',
+                'total_amount',
+                'customer_order_no'
+            ])
+                ->with([
+                    'orderDetails',
+                    'companyDetails:id,company_name,email_id',
+                    'branchDetails:id,name',
+                    'currencyDetails:id,code',
+                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at'
+                ])
+                ->whereNull('deleted_at')
+                ->when(
+                    !empty($data['branch_list']),
+                    fn($q) =>
+                    $q->whereIn('branch_id', $data['branch_list'])
+                )
+                ->when(
+                    !empty($data['owner_list']),
+                    fn($q) =>
+                    $q->whereIn('owner_id', $data['owner_list'])
+                )
+                ->when(
+                    !empty($data['currency_list']),
+                    fn($q) =>
+                    $q->whereIn('currency_id', $data['currency_list'])
+                )
+                ->when(
+                    !empty($data['quotation_status_list']),
+                    fn($q) =>
+                    $q->whereIn('is_order_pending', $data['quotation_status_list'])
+                )
+                ->when(
+                    !empty($data['principal_list']),
+                    fn($q) =>
+                    $q->whereIn('principal_id', $data['principal_list'])
+                )
+                ->when(!empty($data['date_range']), function ($q) use ($data) {
+                    [$from, $to] = explode('|', $data['date_range']);
+                    $q->whereBetween('dt_date_created', [
+                        Carbon::parse($from)->startOfDay(),
+                        Carbon::parse($to)->endOfDay()
+                    ]);
+                })
+                ->when(!empty($data['search.value']), function ($q) use ($data) {
+                    $term = $data['search.value'];
+                    $q->where(function ($sub) use ($term) {
+                        $sub->where('in_quot_num', 'like', "%{$term}%")
+                            ->orWhere('fl_nego_amt', 'like', "%{$term}%")
+                            ->orWhere('lead_from', 'like', "%{$term}%")
+                            ->orWhereHas(
+                                'customer',
+                                fn($c) =>
+                                $c->where('st_com_name', 'like', "%{$term}%")
+                            )
+                            ->orWhereHas(
+                                'quotationDetails',
+                                fn($d) =>
+                                $d->where('st_part_no', 'like', "%{$term}%")
+                            );
+                    });
+                })
+                ->orderByDesc('id');
+
+            $quotationData = $query->paginate($perPage);
+
+            return Utility::apiSuccess('list_quotation', $quotationData, 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Failed getQuotation server error', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+
     public function deletePendingQuotation($id)
     {
         try {
@@ -429,42 +572,6 @@ class FullOrderController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed generating order info', ['exception' => $ex->getMessage()]);
-        }
-    }
-    public function getOrder(Request $request)
-    {
-        try {
-
-            # Get order list
-            $data = Order::with([
-                'customer:id,name,mobile,email',
-                'quotation:id,unique_quotation_id,order_pending',
-                'details:id,order_id,part_number,description,principal_id,price,discount,quantity',
-                'pendingQuotation:id,order_no,reason,created_at'
-            ])
-                ->whereNull('deleted_at')
-                ->when(!Auth::user()->hasPermission('branch_all'), fn($q) => $q->where('branch_id', Auth::user()->branch_id))
-                ->when($request->branch_id, fn($q, $branchId) => $q->where('branch_id', (int) $branchId))
-                ->when($request->date_range, function ($q, $range) {
-                    [$from, $to] = explode('|', $range);
-                    $start = Carbon::parse($from)->startOfDay();
-                    $end = Carbon::parse($to)->endOfDay();
-                    $q->whereBetween('created_at', [$start, $end]);
-                })
-                ->when($request->search['value'] ?? null, function ($q, $term) {
-                    $q->whereHas('customer', fn($q) => $q->where('name', 'like', "%$term%"))
-                        ->orWhere('order_id', 'like', "%$term%")
-                        ->orWhere('order_number', 'like', "%$term%")
-                        ->orWhere('total_amount', 'like', "%$term%")
-                        ->orWhere('lead_from', 'like', "%$term%")
-                        ->orWhereHas('details', fn($q) => $q->where('part_number', 'like', "%$term%"));
-                });
-
-            # Return response
-            return Utility::apiSuccess('Order list', $data, 200);
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed at getOrder info', ['exception' => $ex->getMessage()]);
         }
     }
     public function orderPreview(Request $request)
@@ -735,7 +842,7 @@ class FullOrderController extends Controller
                 'city' => $orderInfo['city'] ?? null,
 
 
-                
+
                 'st_partlyord_ship_pincode' => $orderInfo['st_ord_ship_pincode'],
                 'in_partlyord_ship_tel' => $orderInfo['in_ord_ship_tel'],
                 'st_landline' => $orderInfo['st_landline'],
@@ -930,6 +1037,42 @@ class FullOrderController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Server error while getting checkPartialOrderStatus', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function generateQuotationNumber($branchName, $quotationDate, $type = '')
+    {
+        try {
+            # Branch code (first 3 letters)
+            $branchCode = substr($branchName, 0, 3);
+
+            # Dates
+            $formattedDate = Carbon::parse($quotationDate)->format('Y-m-d');
+            $formattedDateForQuote = Carbon::parse($quotationDate)->format('Ymd');
+            $branchId = Auth::user()->branch_id;
+
+            # Get last quote number created on the same day
+            $lastQuote = Quotation::whereNull('deleted_at')
+                ->where('branch_id', $branchId)
+                ->whereDate('created_at', $formattedDate)
+                ->orderByDesc('id')
+                ->first();
+
+            # Determine next sequence number
+            if ($lastQuote && isset($lastQuote->unique_quotation_no)) {
+                $segments = explode('/', $lastQuote->unique_quotation_no);
+                $lastNumber = (int) ($segments[2] ?? 0);
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            # Final quotation number
+            return "{$branchCode}/{$formattedDateForQuote}/{$nextNumber}";
+
+        } catch (Exception $ex) {
+            Log::error("Failed to generate quotation number: " . $ex->getMessage());
+            return null;
         }
     }
 

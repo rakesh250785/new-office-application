@@ -45,6 +45,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('quotation_type_id');
+            $table->enum('is_order_pending', [true, false])->default(true);
+            
             $table->unsignedBigInteger('delivery_date_id');
             $table->decimal('total_amount', 18, 2)->default(0);
             $table->softDeletes();
