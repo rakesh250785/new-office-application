@@ -11,7 +11,6 @@ use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
 use App\Http\Controllers\SaleInsight\Order\FullOrderController;
-use App\Http\Controllers\SaleInsight\Order\PartialController;
 use App\Http\Controllers\SaleInsight\Order\PartialOrderController;
 use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Source\SourceController;
@@ -22,7 +21,7 @@ use App\Http\Controllers\Vendor\Supplier\SupplierController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Authentication\AuthenticationController;
-use App\Http\Controllers\ClientUser\RoleAPermission\RolePermissionController;
+use App\Http\Controllers\ClientUser\RolePermission\RolePermissionController;
 
 # Public route
 Route::prefix('admin')->group(function () {
@@ -58,6 +57,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getNotificationDD', [DropdownController::class, 'getNotificationDD']);
     Route::post('/getPaymentAdvanceDD', [DropdownController::class, 'getPaymentAdvanceDD']);
     Route::post('/getStatusDD', [DropdownController::class, 'getStatusDD']);
+    Route::post('/getCourierDD', [DropdownController::class, 'getCourierDD']);
 
 
     # Quotation format

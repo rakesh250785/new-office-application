@@ -9,6 +9,7 @@ class Order extends Model
 {
     protected $primaryKey = 'id';
     protected $fillable = [
+        'unique_quotation_no',
         'quotation_id',
         'unique_order_no',
         'company_id',
@@ -47,7 +48,10 @@ class Order extends Model
         'sale_tax_amount',
         'final_total_amount',
         'is_order_closed',
-        'is_shipment_pending'
+        'is_shipment_pending',
+        'overdues_value',
+        'overdue_no',
+        'courier_id'
     ];
     public function partialOrders()
     {

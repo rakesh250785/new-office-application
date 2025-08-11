@@ -42,6 +42,7 @@ return new class extends Migration
             $table->unsignedBigInteger('delivery_date_id')->nullable();
             $table->string('lead_from')->nullable();
             $table->unsignedBigInteger('notification_id')->nullable();
+            $table->unsignedBigInteger('courier_id')->nullable();
             $table->unsignedBigInteger('owner_id')->nullable();
             $table->unsignedBigInteger('quotation_type_id')->nullable();
             $table->longText('payment_term_condition')->nullable();
@@ -58,7 +59,8 @@ return new class extends Migration
             $table->decimal('final_total_amount', 15, 2)->default(0);
             $table->enum('is_order_closed', [0, 1])->default(0);
             $table->enum('is_shipment_pending', [0, 1])->default(0);
-
+            $table->string('overdues_value')->nullable();
+            $table->string('overdue_no')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

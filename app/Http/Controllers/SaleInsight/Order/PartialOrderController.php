@@ -32,7 +32,7 @@ class PartialOrderController extends Controller
             # Request specific fields
             $data = $request->only([
                 "product_id",
-                "order_id",
+                "id",
                 "product_description",
                 "principal_type",
                 "payment_term_condition",
@@ -69,12 +69,14 @@ class PartialOrderController extends Controller
                 "unique_quotation_no",
                 'customer_order_no',
                 'overdues_value',
-                'overdue_no'
+                'overdue_no',
+                'extra_notes',
+                'courier_id',
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'order_id' => 'required|integer|exists:orders,id',
+                'id' => 'required|integer|exists:orders,id',
                 'customer_order_no' => 'required|string',
                 'overdues_value' => 'required|string',
                 'overdue_no' => 'required|string',
@@ -191,7 +193,7 @@ class PartialOrderController extends Controller
                 'unique_order_no' => $data['unique_order_no'] ?? null,
                 'unique_quotation_no' => $data['unique_quotation_no'] ?? null,
                 'quotation_id' => $data['quotation_id'] ?? null,
-                'order_id' => $data['order_id'] ?? null,
+                'order_id' => $data['id'] ?? null,
                 'company_id' => $data['company_id'] ?? null,
                 'billing_address' => $data['billing_address'] ?? null,
                 'billing_city' => $data['billing_city'] ?? null,
@@ -225,6 +227,8 @@ class PartialOrderController extends Controller
                 'user_id' => $adminUserId,
                 'total_amount' => $data['total_amount'] ?? null,
                 'customer_order_no' => $data['customer_order_no'] ?? null,
+                'extra_notes' => $data['extra_notes'] ?? null,
+                'courier_id' => $data['courier_id'] ?? null,
             ];
 
             # Insert partial order data

@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\CategoryType;
 use App\Models\Category;
 use App\Models\Classification;
+use App\Models\Courier;
 use App\Models\Customer;
 use App\Models\Notification;
 use App\Models\Parameter;
@@ -122,6 +123,20 @@ class DropdownController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Something went wrong in     public function getBranchDD', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function getCourierDD()
+    {
+        try {
+            # Get source
+            $brands = Courier::whereNull('deleted_at')->pluck('name', 'id');
+
+            # Return response
+            return Utility::apiSuccess('DD Courier', $brands, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in getCourierDD', ['exception' => $ex->getMessage()], 500);
         }
     }
 

@@ -43,10 +43,12 @@ class PartialOrder extends Model
         'branch_id',
         'pdf_name',
         'currency_id',
+        'courier_id',
         'tin_number',
         'user_id',
         'total_amount',
         'customer_order_no',
+        'extra_notes'
     ];
 
     public function partialOrders()

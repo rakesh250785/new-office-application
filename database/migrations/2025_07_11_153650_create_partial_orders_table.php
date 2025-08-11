@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('quotation_type_id')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('branch_id')->nullable();
+            $table->unsignedBigInteger('courier_id')->nullable();
             $table->string('billing_address')->nullable();
             $table->string('billing_city')->nullable();
             $table->string('billing_mobile')->nullable();
@@ -50,6 +51,7 @@ return new class extends Migration {
             $table->string('tin_number')->nullable();
             $table->decimal('total_amount', 15, 2)->nullable();
             $table->string('customer_order_no')->nullable();
+
             $table->softDeletes();
             $table->timestamps();
         });

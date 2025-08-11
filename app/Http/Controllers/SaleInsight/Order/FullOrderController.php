@@ -77,12 +77,14 @@ class FullOrderController extends Controller
                 "unique_quotation_no",
                 'customer_order_no',
                 'overdues_value',
-                'overdue_no'
+                'overdue_no',
+                'courier_id',
 
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
+                'courier_id' => 'required|integer|exists:couriers,id',
                 'customer_order_no' => 'required|string',
                 'overdues_value' => 'required|string',
                 'overdue_no' => 'required|string',
@@ -157,13 +159,14 @@ class FullOrderController extends Controller
             $currencyInfo = Currency::findOrFail($data['currency_id']);
 
             # Get unique order number
-            $orderNumber = $this->generateOrderNumber($branchName, $branchId, $orderDate, );
+            $orderNumber = $this->generateOrderNumber($branchName, $branchId, $orderDate);
 
             # PDF path
             $pdfFilePath = 'order_' . time() . '_' . date('dmy') . '.pdf';
 
             # Prepare order data
             $orderData = [
+                'unique_quotation_no' => $data['unique_quotation_no'],
                 'unique_order_no' => $orderNumber,
                 'company_id' => $data['company_id'] ?? null,
                 'billing_address' => $data['billing_address'],
@@ -198,7 +201,10 @@ class FullOrderController extends Controller
                 'user_id' => $adminId,
                 'total_amount' => $data['total_amount'] ?? null,
                 'customer_order_no' => $data['customer_order_no'] ?? null,
-                'is_order_closed'=> 0,
+                'overdues_value' => $data['customer_order_no'] ?? null,
+                'overdue_no' => $data['customer_order_no'] ?? null,
+                'is_order_closed' => '0',
+                'courier_id'=> $data['courier_id'] ?? null
             ];
 
             # Update customer info
@@ -324,7 +330,7 @@ class FullOrderController extends Controller
             ];
 
             # Update quotation status
-            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => 0]);
+            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => '0']);
 
             # Return if fail
             if (!$updateQuotationStatus) {
@@ -334,7 +340,7 @@ class FullOrderController extends Controller
             # Mark pending quotation deleted
             $pendingFilter = ['unique_quotation_no' => $data['unique_quotation_no'], 'quotation_id' => $data['quotation_id']];
 
-            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id'=> 1]);
+            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id' => 1]);
 
             # Return if fail
             if (!$updatePendingQuotation) {
@@ -386,7 +392,7 @@ class FullOrderController extends Controller
             // dispatch(new ProcessQuotation($responsePayload));
 
             # Return response
-            return Utility::apiSuccess('Order generated successfully', [], 200);
+            return Utility::apiSuccess('generated successfully', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
@@ -453,7 +459,10 @@ class FullOrderController extends Controller
                 'company_id',
                 'delivery_date_id',
                 'total_amount',
-                'customer_order_no'
+                'customer_order_no',
+                'overdues_value',
+                'overdue_no',
+                'courier_id'
             ])
                 ->with([
                     'orderDetails',
@@ -561,8 +570,8 @@ class FullOrderController extends Controller
             $nextNumber = 1;
 
             # If order found
-            if ($latestOrder && !empty($latestOrder['unique_order_id'])) {
-                $parts = explode('-', $latestOrder['unique_order_id']);
+            if ($latestOrder && !empty($latestOrder['unique_order_no'])) {
+                $parts = explode('-', $latestOrder['unique_order_no']);
                 if (isset($parts[1]) && is_numeric($parts[1])) {
                     $nextNumber = (int) $parts[1] + 1;
                 }
