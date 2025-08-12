@@ -12,6 +12,76 @@ use Exception, Log;
 class RolePermissionController extends Controller
 {
 
+    public function addUpdateRole(Request $request)
+    {
+        try {
+
+            # Request specific fields
+            $data = $request->only(['id', 'name', 'permissions']);
+
+            # Ids
+            $id = isset($data['id']) ? trim($data['id']) : null;
+
+            # Define rule
+            $rules = [
+                'name' => 'required|unique:roles,name' . ($id ? ',' . $id : ''),
+                'permissions' => 'required|array',
+            ];
+
+            # Validation rule
+            $validate = Validator::make($data, $rules);
+
+            # Return if fails
+            if ($validate->fails()) {
+                return Utility::apiError($validate->errors()->first(), 221);
+            }
+
+            # Update or create
+            $role = Role::updateOrCreate(
+                ['id' => $data['id']],
+                ['name' => $data['name']]
+            );
+
+            # Map permission
+            $permissionIds = [];
+            foreach ($data['permissions'] as $module => $codes) {
+                foreach ($codes as $code) {
+                    dd($module, $code);
+                    $perm = Permission::where('module_name', $module)->where('name', $code)->first();
+                    if ($perm) {
+                        $permissionIds[] = $perm->id;
+                    }
+                }
+            }
+
+            # Sync permission with role
+            $role->permissions()->sync($permissionIds);
+
+            # Return response
+            return Utility::apiSuccess($data['id'] ? ' updated successfully' : ' created successfully');
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Failed to storeRole.', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function listPermissions(Request $request)
+    {
+        try {
+            # Get permission list
+            $permissions = Permission::all();
+            $grouped = $permissions->groupBy('module_name')->map(function ($perms) {
+                return $perms->pluck('name')->values()->toArray();
+            });
+
+            # Return response
+            return Utility::apiSuccess('Permissions fetched successfully', $grouped, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Failed to fetch permission list.', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
     public function listRolesWithPermissions(Request $request)
     {
         try {
@@ -61,111 +131,42 @@ class RolePermissionController extends Controller
         }
     }
 
-
-
-    public function storeRole(Request $request)
-    {
-        try {
-            $v = Validator::make($request->all(), ['name' => 'required|unique:roles']);
-            if ($v->fails())
-                return Utility::apiError($v->errors()->first(), 422);
-            $role = Role::create(['name' => $request->name]);
-            return Utility::apiSuccess($role, 'Role created');
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to storeRole.', ['exception' => $ex->getMessage()], 500);
-        }
-    }
-
-    public function updateRole(Request $request, $id)
-    {
-        try {
-            $role = Role::find($id);
-            if (!$role)
-                return Utility::apiError('Not found', 404);
-            $v = Validator::make($request->all(), ['name' => 'required|unique:roles,name,' . $id]);
-            if ($v->fails())
-                return Utility::apiError($v->errors()->first(), 422);
-            $role->update(['name' => $request->name]);
-            return Utility::apiSuccess($role, 'Role updated');
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to updateRole.', ['exception' => $ex->getMessage()], 500);
-        }
-    }
-
-    public function deleteRole($id)
+    public function deleteRole(Request $request)
     {
 
         try {
-            $role = Role::find($id);
-            if (!$role)
-                return Utility::apiError('Not found', 404);
-            $role->delete();
-            return Utility::apiSuccess([], 'Role deleted');
+            # Request specific fields
+            $data = $request->only([
+                'id',
+            ]);
+
+            # Validation rule
+            $validator = Validator::make($data, [
+                'id' => 'required',
+
+            ]);
+
+            # Return validation error 
+            if ($validator->fails()) {
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
+            }
+            # Find role
+            $role = Role::find($data['id'])->delete();
+
+            # Return if fail to delete
+            if (!$role) {
+                return Utility::apiError('Fail to delete', 221);
+            }
+
+            # Retunr response
+            return Utility::apiSuccess('deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed to updateRole.', ['exception' => $ex->getMessage()], 500);
         }
     }
 
-    # ---- Permission CRUD ----
-    public function listPermissions()
-    {
-        try {
-            return Utility::apiSuccess(Permission::all(), 'Permissions fetched');
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to listPermissions.', ['exception' => $ex->getMessage()], 500);
-        }
-    }
 
-    public function storePermission(Request $request)
-    {
-        try {
-            $v = Validator::make($request->all(), ['name' => 'required|unique:permissions']);
-            if ($v->fails())
-                return Utility::apiError($v->errors()->first(), 422);
-            $perm = Permission::create(['name' => $request->name]);
-            return Utility::apiSuccess($perm, 'Permission created');
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to storePermission.', ['exception' => $ex->getMessage()], 500);
-        }
-    }
-
-    public function updatePermission(Request $request, $id)
-    {
-        try {
-            $perm = Permission::find($id);
-            if (!$perm)
-                return Utility::apiError('Not found', 404);
-            $v = Validator::make($request->all(), ['name' => 'required|unique:permissions,name,' . $id]);
-            if ($v->fails())
-                return Utility::apiError($v->errors()->first(), 422);
-            $perm->update(['name' => $request->name]);
-            return Utility::apiSuccess($perm, 'Permission updated');
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to updatePermission.', ['exception' => $ex->getMessage()], 500);
-        }
-    }
-
-    public function deletePermission($id)
-    {
-        try {
-            $perm = Permission::find($id);
-            if (!$perm)
-                return Utility::apiError('Not found', 404);
-            $perm->delete();
-            return Utility::apiSuccess([], 'Permission deleted');
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to updatePermission.', ['exception' => $ex->getMessage()], 500);
-        }
-    }
-
-    # ---- Assign ----
     public function assignRole(Request $request)
     {
         try {

@@ -19,4 +19,9 @@ class Role extends Model
             'created_at' => 'date',
         ];
     }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'role_permissions');
+    }
 }

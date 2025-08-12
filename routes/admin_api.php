@@ -150,9 +150,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
     # Role and permission
     Route::post('listRolesWithPermissions', [RolePermissionController::class, 'listRolesWithPermissions']);
+    Route::post('listPermissions', [RolePermissionController::class, 'listPermissions']);
+    Route::post('addUpdateRole', [RolePermissionController::class, 'addUpdateRole']);
+    Route::post('deleteRole', [RolePermissionController::class, 'deleteRole']);
     // Route::post('storeRole', [RolePermissionController::class, 'storeRole']);
-    // Route::put('updateRole', [RolePermissionController::class, 'updateRole']);
-    // Route::delete('deleteRole', [RolePermissionController::class, 'deleteRole']);
     // Route::post('deleteRole', [RolePermissionController::class, 'listPermissions']);
     // Route::post('storePermission', [RolePermissionController::class, 'storePermission']);
     // Route::put('updatePermission', [RolePermissionController::class, 'updatePermission']);
@@ -160,7 +161,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     // Route::post('assignRole', [RolePermissionController::class, 'assignRole']);
     // Route::post('assignPermission', [RolePermissionController::class, 'assignPermission']);
     // Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
-   
+
 
 });
 
