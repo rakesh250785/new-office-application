@@ -46,7 +46,6 @@ class RolePermissionController extends Controller
             $permissionIds = [];
             foreach ($data['permissions'] as $module => $codes) {
                 foreach ($codes as $code) {
-                    dd($module, $code);
                     $perm = Permission::where('module_name', $module)->where('name', $code)->first();
                     if ($perm) {
                         $permissionIds[] = $perm->id;
@@ -69,7 +68,7 @@ class RolePermissionController extends Controller
     {
         try {
             # Get permission list
-            $permissions = Permission::all();
+            $permissions = Permission::orderBy('id')->get();
             $grouped = $permissions->groupBy('module_name')->map(function ($perms) {
                 return $perms->pluck('name')->values()->toArray();
             });
