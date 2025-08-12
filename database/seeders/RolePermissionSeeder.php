@@ -11,33 +11,99 @@ class RolePermissionSeeder extends Seeder
 {
     public function run()
     {
-        # Reset cached roles and permissions
+        # Clear cached permissions & roles
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        # Define permissions
-        $permissions = [
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-            'view roles',
-            'create roles',
-            'edit roles',
-            'delete roles'
+        # Define modules and permissions
+        $modulesPermissions = [
+            'expances' => ['view_expanses'],
+            'order_summary' => ['view_order_summary'],
+            'performance_report' => ['view_performance_report'],
+            'quotation_summary' => ['view_quotation_summary'],
+            'quotation_detail' => [
+                'view_quotation_detail',
+                'add_quotation_detail',
+                'export_quotation_detail',
+                'view_quotation_detail_reason',
+                'edit_quotation_detail_reason',
+                'generate_quotation_detail_order',
+                'download_quotation_detail',
+                'edit_quotation_detail',
+                'delete_quotation_detail',
+            ],
+            'quotation_report' => ['view_quotation_report', 'export_quotation_report'],
+            'order' => [
+                'view_order',
+                'export_order',
+                'add_order',
+                'delete_order',
+                'view_order_reason',
+                'edit_order_reason',
+                'generate_partial_order',
+                'close_order',
+                'download_order',
+            ],
+            'partial_order' => [
+                'view_partial_order',
+                'edit_partial_order',
+                'delete_partial_order',
+                'export_partial_order',
+            ],
+            'order_report' => ['view_order_report', 'export_order_report'],
+            'invoice' => ['view_invoice', 'export_invoice'],
+            'owner' => ['view_owner', 'export_owner', 'edit_owner', 'delete_owner', 'add_owner'],
+            'customer' => ['view_customer', 'export_customer', 'edit_customer', 'delete_customer', 'add_customer'],
+            'user' => ['view_user', 'export_user', 'edit_user', 'delete_user', 'add_user'],
+            'role_access' => ['view_role_access', 'edit_role_access', 'delete_role_access', 'add_role_access'],
+            'product' => [
+                'view_product',
+                'export_product',
+                'edit_product',
+                'delete_product',
+                'add_product',
+                'import_product_quantity',
+                'import_product_price',
+            ],
+            'parameter' => ['view_parameter', 'export_parameter', 'edit_parameter', 'delete_parameter', 'add_parameter'],
+            'ups' => ['view_ups', 'export_ups', 'edit_ups', 'delete_ups', 'add_ups'],
+            'brand' => ['view_brand', 'export_brand', 'edit_brand', 'delete_brand', 'add_brand'],
+            'category' => ['view_category', 'export_category', 'edit_category', 'delete_category', 'add_category'],
+            'quotation_format' => [
+                'view_quotation_format',
+                'export_quotation_format',
+                'edit_quotation_format',
+                'delete_quotation_format',
+                'add_quotation_format',
+            ],
+            'principal' => ['view_principal', 'export_principal', 'edit_principal', 'delete_principal', 'add_principal'],
+            'reason' => ['view_reason', 'export_reason', 'edit_reason', 'delete_reason', 'add_reason'],
+            'notification' => ['view_notification', 'export_notification', 'edit_notification', 'delete_notification', 'add_notification'],
+            'source' => ['view_source', 'export_source', 'edit_source', 'delete_source', 'add_source'],
+            'supplier' => ['view_supplier', 'export_supplier', 'edit_supplier', 'delete_supplier', 'add_supplier'],
+            'courier' => ['view_courier', 'export_courier', 'edit_courier', 'delete_courier', 'add_courier'],
         ];
 
-        foreach ($permissions as $perm) {
-            Permission::firstOrCreate(['name' => $perm]);
+        # Create permissions with module_name
+        foreach ($modulesPermissions as $module => $permissions) {
+            foreach ($permissions as $permission) {
+                Permission::firstOrCreate(
+                    ['name' => $permission],
+                    ['module_name' => $module] 
+                );
+            }
         }
 
-        # Create admin role and give all permissions
+        # Create default admin role
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $adminRole->givePermissionTo(Permission::all());
 
-        # Assign admin role to first user (if exists)
-        $firstUser = User::where('email', 'admin@office.com')->first();
-        if ($firstUser) {
-            $firstUser->assignRole($adminRole);
+        # Assign all permissions to admin role
+        $allPermissions = Permission::all();
+        $adminRole->syncPermissions($allPermissions);
+
+        # Assign admin role to user with email admin@office.com
+        $adminUser = User::where('email', 'admin@office.com')->first();
+        if ($adminUser && !$adminUser->hasRole('admin')) {
+            $adminUser->assignRole($adminRole);
         }
     }
 }

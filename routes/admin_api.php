@@ -149,19 +149,18 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
 
     # Role and permission
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('listRoles', [RolePermissionController::class, 'listRoles']);
-        Route::post('storeRole', [RolePermissionController::class, 'storeRole']);
-        Route::put('updateRole', [RolePermissionController::class, 'updateRole']);
-        Route::delete('deleteRole', [RolePermissionController::class, 'deleteRole']);
-        Route::post('deleteRole', [RolePermissionController::class, 'listPermissions']);
-        Route::post('storePermission', [RolePermissionController::class, 'storePermission']);
-        Route::put('updatePermission', [RolePermissionController::class, 'updatePermission']);
-        Route::delete('deletePermission', [RolePermissionController::class, 'deletePermission']);
-        Route::post('assignRole', [RolePermissionController::class, 'assignRole']);
-        Route::post('assignPermission', [RolePermissionController::class, 'assignPermission']);
-        Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
-    });
+    Route::post('listRolesWithPermissions', [RolePermissionController::class, 'listRolesWithPermissions']);
+    // Route::post('storeRole', [RolePermissionController::class, 'storeRole']);
+    // Route::put('updateRole', [RolePermissionController::class, 'updateRole']);
+    // Route::delete('deleteRole', [RolePermissionController::class, 'deleteRole']);
+    // Route::post('deleteRole', [RolePermissionController::class, 'listPermissions']);
+    // Route::post('storePermission', [RolePermissionController::class, 'storePermission']);
+    // Route::put('updatePermission', [RolePermissionController::class, 'updatePermission']);
+    // Route::delete('deletePermission', [RolePermissionController::class, 'deletePermission']);
+    // Route::post('assignRole', [RolePermissionController::class, 'assignRole']);
+    // Route::post('assignPermission', [RolePermissionController::class, 'assignPermission']);
+    // Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
+   
 
 });
 

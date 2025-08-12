@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             QuotationTypeSeeder::class,
             PaymentAdvanceDay::class,
             ReasonStatus::class,
+            RolePermissionSeeder::class
         ]);
     }
 }

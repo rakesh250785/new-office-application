@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\ClientUser\RolePermission;
 
 use App\Http\Controllers\Controller;
@@ -12,16 +11,57 @@ use Validator;
 use Exception, Log;
 class RolePermissionController extends Controller
 {
-    # ---- Role CRUD ----
-    public function listRoles()
+
+    public function listRolesWithPermissions(Request $request)
     {
         try {
-            return Utility::apiSuccess(Role::all(), 'Roles fetched');
+
+            # Request specific fields
+            $data = $request->only([
+                'page',
+                'per_page',
+                'search',
+            ]);
+
+            # Config pagination
+            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+            $page = $data['page'] ?? 1;
+
+            # Get role with permissions
+            $query = Role::with('permissions');
+
+            # Optional search by role name
+            if (!empty($data['search'])) {
+                $search = $data['search'];
+                $query->where('name', 'like', "%{$search}%");
+            }
+
+            # Get records
+            $roles = $query->orderByDesc('id')->paginate($perPage, ['*'], 'page', $page);
+
+            # Transform to group permissions by module_name
+            $roles->getCollection()->transform(function ($role) {
+                $groupedPermissions = $role->permissions->groupBy('module_name')->map(function ($perms) {
+                    return $perms->pluck('name')->values();
+                });
+
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'created_at' => $role?->created_at?->format('d-m-Y'),
+                    'permissions' => $groupedPermissions,
+                ];
+            });
+
+            # Return response
+            return Utility::apiSuccess('Roles list fetched successfully', $roles, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed to fetch listRoles.', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Failed to fetch roles list.', ['exception' => $ex->getMessage()], 500);
         }
     }
+
+
 
     public function storeRole(Request $request)
     {
