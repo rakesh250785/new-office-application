@@ -58,6 +58,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getPaymentAdvanceDD', [DropdownController::class, 'getPaymentAdvanceDD']);
     Route::post('/getStatusDD', [DropdownController::class, 'getStatusDD']);
     Route::post('/getCourierDD', [DropdownController::class, 'getCourierDD']);
+    Route::post('/getRoleDD', [DropdownController::class, 'getRoleDD']);
+
 
 
     # Quotation format

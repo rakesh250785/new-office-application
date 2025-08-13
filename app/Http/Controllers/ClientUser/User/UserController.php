@@ -35,6 +35,7 @@ class UserController extends Controller
                 'name',
                 'branch_id',
                 'user_id',
+                'role_id'
             ]);
 
             # Check if update user
@@ -58,6 +59,7 @@ class UserController extends Controller
                 ],
                 'cc_email' => 'required|string',
                 'branch_id' => 'required|integer',
+                'role_id' => 'required|integer',
             ];
 
             # Validate user
@@ -74,6 +76,7 @@ class UserController extends Controller
                 'email' => $data['email'],
                 'cc_email' => $data['cc_email'],
                 'branch_id' => $data['branch_id'],
+                'role_id' => $data['role_id'],
             ];
 
             # Bcrypt password

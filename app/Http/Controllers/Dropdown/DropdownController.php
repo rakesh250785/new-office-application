@@ -16,6 +16,7 @@ use App\Models\PaymentDayAdvance;
 use App\Models\PrincipalType;
 use App\Models\ReasonType;
 use App\Models\QuotationType;
+use App\Models\Role;
 use DB;
 use Illuminate\Http\Request;
 use App\Models\Brand;
@@ -371,7 +372,16 @@ class DropdownController extends Controller
 
     public function getRoleDD()
     {
+        try {
+            # Get principal
+            $role = Role::pluck('name', 'id');
 
+            # Return response
+            return Utility::apiSuccess('DD RoleDD', $role, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in RoleDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getPermissionDD()
