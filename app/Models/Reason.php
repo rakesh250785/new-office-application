@@ -10,6 +10,7 @@ class Reason extends Model
     protected $fillable = [
         'name',
         'branch_id',
+        'order_type',
         'user_id',
     ];
 

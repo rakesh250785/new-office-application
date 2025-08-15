@@ -25,12 +25,14 @@ class ReasonController extends Controller
                 'name',
                 'branch_id',
                 'reason_id',
+                'order_type',
                 'update_status'
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
                 'name' => 'required|string|max:255',
+                'order_type' => 'required|string|max:255',
             ]);
 
             # Return validation error 
@@ -41,6 +43,7 @@ class ReasonController extends Controller
             # Map validated data
             $payload = [
                 'name' => $data['name'],
+                'order_type' => $data['order_type'],
                 'branch_id' => Auth::user()['branch_id'],
                 'user_id' => Auth::id(),
             ];

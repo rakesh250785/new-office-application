@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Country;
 use App\Models\Currency;
+use App\Models\Reason;
 use App\Models\Order;
 use App\Models\PartialOrder;
 use App\Models\Quotation;
@@ -204,7 +205,7 @@ class FullOrderController extends Controller
                 'overdues_value' => $data['customer_order_no'] ?? null,
                 'overdue_no' => $data['customer_order_no'] ?? null,
                 'is_order_closed' => '0',
-                'courier_id'=> $data['courier_id'] ?? null
+                'courier_id' => $data['courier_id'] ?? null
             ];
 
             # Update customer info
@@ -956,23 +957,26 @@ class FullOrderController extends Controller
                 'order_value',
                 'order_date',
                 'customer_id',
-                'reason_mode',
-                'quotation_status',
                 'quotation_text',
-                'reason_id',
+                'reason_status_id',
+                'reason_status',
+                'quotation_status_code',
+                'unique_quotation_no',
+                'reason_text',
+                'total_amount'
             ]);
 
             # Validation rule
             $validator = Validator::make($data, [
-                'quote_id' => 'required|integer|exists:quotations,id',
+                'quotation_id' => 'required|integer|exists:quotations,id',
                 'order_number' => 'required|string',
                 'order_value' => 'required|numeric',
                 'order_date' => 'required|date',
-                'customer_id' => 'required|integer|exists:customers,id',
-                'reason_mode' => 'nullable|in:0,1',
-                'status_quotation' => 'nullable|in:0,1',
-                'status_quotation_text' => 'nullable|string',
-                'reason_id' => 'nullable|sometimes',
+                'quotation_status_code' => 'required',
+                'unique_quotation_no' => 'required',
+                'reason_text' => 'required',
+                'reason_status_id' => 'required',
+                'total_amount'=> 'required',
             ]);
 
             # Return validation error
@@ -983,43 +987,33 @@ class FullOrderController extends Controller
             # Authenticated user
             $admin = Auth::user();
 
-            # Initialize reason data
-            $reasonMode = isset($data['reason_mode']) && $data['reason_mode'] == 1 ? 1 : 0;
-            $stnReason = $data['reason_name'] ?? null;
-            $isDeleted = 0;
-
-            # Determine reason source
-            if (isset($data['status_quotation'])) {
-                if (!empty($data['status_quotation_text'])) {
-                    Quotation::where('id', operator: $data['quotation_id'])->update([
-                        'is_order_pending' => $data['status_quotation']
-                    ]);
-                    $stnReason = $data['status_quotation_text'];
-                    $isDeleted = 1;
-                }
-            }
-
             # Prepare insert data
             $insertData = [
-                'quotation_id' => $data['quote_id'] ?? null,
-                'quotation_order_no' => $data['order_number'] ?? null,
+                'quotation_id' => $data['quotation_id'] ?? null,
+                'unique_quotation_no' => $data['unique_quotation_no'] ?? null,
+                'unique_order_no' => $data['order_number'] ?? null,
                 'amount' => $data['order_value'],
                 'date' => Carbon::parse($data['order_date']),
-                'customer_id' => $data['customer_id'] ?? null,
-                'reason' => $stnReason,
-                'reason_mode' => $reasonMode,
+                'reason' => $data['reason_text'],
+                'total_amount' => $data['total_amount'],
+                'reason_status_id' => $data['reason_status_id'],
                 'branch_id' => $admin['branch_id'] ?? null,
                 'user_id' => $admin['id'] ?? null,
+                'status_code' => $data['quotation_status_code'] ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'is_deleted' => $isDeleted
+                'last_updated_at' => now(),
+                'follow_up_date' => now(),
             ];
 
             # Update reason 
             $reason = PendingQuotation::create($insertData);
+            if (!$reason) {
+                return Utility::apiError('fail_add_reason', [], 221);
+            }
 
             # Return response
-            return Utility::apiSuccess('Reason added successfully', ['id' => $reason->id]);
+            return Utility::apiSuccess('added successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Server error while adding reason', ['exception' => $ex->getMessage()], 500);

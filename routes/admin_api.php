@@ -59,8 +59,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getStatusDD', [DropdownController::class, 'getStatusDD']);
     Route::post('/getCourierDD', [DropdownController::class, 'getCourierDD']);
     Route::post('/getRoleDD', [DropdownController::class, 'getRoleDD']);
-
-
+    Route::post('/getOrderStatusDD', [DropdownController::class, 'getOrderStatusDD']);
 
     # Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -142,8 +141,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/storeOrder', [FullOrderController::class, 'storeOrder']);
     Route::post('/getOrder', [FullOrderController::class, 'getOrder']);
     Route::post('/deleteOrder', [FullOrderController::class, 'deleteOrder']);
-    Route::post('/updateQuotationStatus', [FullOrderController::class, 'updateQuotationStatus']);
-
+    Route::post('/addOrderReason', [FullOrderController::class, 'addOrderReason']);
+    
+    
     # Partial rder
     Route::post('/storePartialOrder', [PartialOrderController::class, 'storePartialOrder']);
     Route::post('/getPartialOrder', [PartialOrderController::class, 'storePartialOrder']);

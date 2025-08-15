@@ -11,6 +11,8 @@ use App\Models\Classification;
 use App\Models\Courier;
 use App\Models\Customer;
 use App\Models\Notification;
+use App\Models\OrderReason;
+use App\Models\OrderStatus;
 use App\Models\Parameter;
 use App\Models\PaymentDayAdvance;
 use App\Models\PrincipalType;
@@ -384,9 +386,18 @@ class DropdownController extends Controller
         }
     }
 
-    public function getPermissionDD()
+    public function getOrderStatusDD()
     {
+        try {
+            # Get status
+            $role = OrderReason::where('order_type', 'pending_order')->pluck('name', 'id');
 
+            # Return response
+            return Utility::apiSuccess('DD OrderStatusDD', $role, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Something went wrong in OrderStatusDD', ['exception' => $ex->getMessage()], 500);
+        }
     }
 
     public function getModuleDD()
