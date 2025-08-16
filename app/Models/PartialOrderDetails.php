@@ -24,6 +24,7 @@ class PartialOrderDetails extends Model
         'net_price',
         'igst',
         'balance_quantity',
+        'send_qty',
         'order_type',
         'quantity',
         'total',

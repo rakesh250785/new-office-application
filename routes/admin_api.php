@@ -146,7 +146,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     
     # Partial rder
     Route::post('/storePartialOrder', [PartialOrderController::class, 'storePartialOrder']);
-    Route::post('/getPartialOrder', [PartialOrderController::class, 'storePartialOrder']);
+    Route::post('/getPartialOrder', [PartialOrderController::class, 'getPartialOrder']);
     Route::post('/deletePartialOrder', [PartialOrderController::class, 'deletePartialOrder']);
 
 

@@ -51,7 +51,8 @@ class Order extends Model
         'is_shipment_pending',
         'overdues_value',
         'overdue_no',
-        'courier_id'
+        'courier_id',
+        'balance_quantity',
     ];
     public function partialOrders()
     {

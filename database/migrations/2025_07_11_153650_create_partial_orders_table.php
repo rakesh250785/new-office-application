@@ -51,7 +51,9 @@ return new class extends Migration {
             $table->string('tin_number')->nullable();
             $table->decimal('total_amount', 15, 2)->nullable();
             $table->string('customer_order_no')->nullable();
-
+            $table->text('extra_notes')->nullable();
+            
+            
             $table->softDeletes();
             $table->timestamps();
         });

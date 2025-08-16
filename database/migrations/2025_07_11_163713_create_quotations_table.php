@@ -17,8 +17,8 @@ return new class extends Migration {
             $table->longText('payment_term_condition')->nullable();
             $table->string('lead_from')->nullable();
 
-            $table->string('billing_address')->nullable();
-            $table->text('billing_city')->nullable();
+            $table->text('billing_address')->nullable();
+            $table->string('billing_city')->nullable();
 
             $table->string('billing_mobile')->nullable();
             $table->string('billing_email')->nullable();

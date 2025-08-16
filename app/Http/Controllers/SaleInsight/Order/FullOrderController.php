@@ -463,7 +463,8 @@ class FullOrderController extends Controller
                 'customer_order_no',
                 'overdues_value',
                 'overdue_no',
-                'courier_id'
+                'courier_id',
+                'is_order_closed'
             ])
                 ->with([
                     'orderDetails',

@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('product_id')->default(0);
             $table->unsignedBigInteger('principal_id')->nullable();
             $table->string('part_no')->nullable();
-            $table->string('description')->nullable();
+            $table->text('description')->nullable();
             $table->string('hsn_code')->nullable();
             $table->integer('in_stock')->default(0);
             $table->decimal('price', 15, 2)->nullable();
@@ -36,6 +36,7 @@ return new class extends Migration {
             $table->tinyInteger('partial_order_status')->default(0);
             $table->text('notes')->nullable();
             $table->text('product_specification')->nullable();
+            $table->integer('send_qty')->nullable();
             $table->unsignedBigInteger('delivery_date_id')->default(0);
             $table->softDeletes();
             $table->timestamps();

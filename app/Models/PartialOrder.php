@@ -72,7 +72,6 @@ class PartialOrder extends Model
     }
 
 
-
     public function getCreatedAtAttribute($value)
     {
         return Carbon::parse($value)->format('d-m-Y');
@@ -86,7 +85,7 @@ class PartialOrder extends Model
 
     public function orderDetails()
     {
-        return $this->hasMany(OrderDetails::class, 'order_id', 'id');
+        return $this->hasMany(PartialOrderDetails::class, 'partial_order_id', 'id');
     }
 
     public function ownerDetails()
@@ -107,6 +106,11 @@ class PartialOrder extends Model
     public function principalDetails()
     {
         return $this->belongsTo(Principal::class, 'principal_id');
+    }
+
+    public function productDetails()
+    {
+        return $this->belongsTo(Product::class, 'principal_id');
     }
 
     public function pendingQuotationDetails()
