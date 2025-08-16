@@ -202,8 +202,8 @@ class FullOrderController extends Controller
                 'user_id' => $adminId,
                 'total_amount' => $data['total_amount'] ?? null,
                 'customer_order_no' => $data['customer_order_no'] ?? null,
-                'overdues_value' => $data['customer_order_no'] ?? null,
-                'overdue_no' => $data['customer_order_no'] ?? null,
+                'overdues_value' => $data['overdues_value'] ?? null,
+                'overdue_no' => $data['overdue_no'] ?? null,
                 'is_order_closed' => '0',
                 'courier_id' => $data['courier_id'] ?? null
             ];
@@ -977,7 +977,7 @@ class FullOrderController extends Controller
                 'unique_quotation_no' => 'required',
                 'reason_text' => 'required',
                 'reason_status_id' => 'required',
-                'total_amount'=> 'required',
+                'total_amount' => 'required',
             ]);
 
             # Return validation error
@@ -1081,26 +1081,4 @@ class FullOrderController extends Controller
         }
     }
 
-    public function generatePartialOrderNumber($branchName, $branchId, $context = '')
-    {
-        try {
-            # Get prifix
-            $prefix = substr($branchName, 0, 3) . '/' . ($context ? 'Part-' : '');
-
-            # Get partial order latest info
-            $query = PartialOrder::whereDate('created_at', Carbon::today());
-            if (!Auth::user()->hasPermission('branch_all')) {
-                $query->where('in_branch_id', $branchId);
-            }
-
-            # Update count
-            $count = $query->count() + 1;
-
-            # Return number
-            return $prefix . $count;
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Server error while getting generatePartialOrderNumber', ['exception' => $ex->getMessage()], 500);
-        }
-    }
 }

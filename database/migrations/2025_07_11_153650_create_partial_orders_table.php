@@ -52,8 +52,7 @@ return new class extends Migration {
             $table->decimal('total_amount', 15, 2)->nullable();
             $table->string('customer_order_no')->nullable();
             $table->text('extra_notes')->nullable();
-            
-            
+            $table->integer('partial_order_status')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

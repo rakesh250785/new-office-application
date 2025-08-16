@@ -48,7 +48,8 @@ class PartialOrder extends Model
         'user_id',
         'total_amount',
         'customer_order_no',
-        'extra_notes'
+        'extra_notes',
+        'partial_order_status',
     ];
 
     public function partialOrders()

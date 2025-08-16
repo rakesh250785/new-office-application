@@ -69,8 +69,6 @@ class PartialOrderController extends Controller
                 "unique_quotation_no",
                 'unique_order_no',
                 'customer_order_no',
-                'overdues_value',
-                'overdue_no',
                 'extra_notes',
                 'courier_id',
             ]);
@@ -79,8 +77,6 @@ class PartialOrderController extends Controller
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:orders,id',
                 'customer_order_no' => 'required|string',
-                'overdues_value' => 'required|string',
-                'overdue_no' => 'required|string',
                 "unique_quotation_no" => 'required|string',
                 'product_id' => 'nullable|integer|exists:products,id',
                 'product_description' => 'required|string',
@@ -112,7 +108,7 @@ class PartialOrderController extends Controller
                 'enq_ref' => 'required|string|max:255',
                 'prepard_by' => 'required|string|max:255',
                 'update_status' => 'required|boolean',
-                // 'quotation_id' => 'nullable|integer|exists:quotations,id',
+                'quotation_id' => 'nullable|integer|exists:quotations,id',
                 'product_list' => 'required|array|min:1',
                 'product_list.*.part_no' => 'required|string|max:255',
                 'product_list.*.description' => 'required|string|max:1000',
@@ -137,7 +133,7 @@ class PartialOrderController extends Controller
 
             # Auth user
             $orderId = $data['id'];
-            $branchId = Auth::user()->branch_id;
+            $branchId = Auth::user()['branch_id'];
             $adminUserId = Auth::id();
             $branchName = Branch::where('id', $branchId)->first();
             $pdfFilePath = "order_" . time() . "_" . date('dmy') . ".pdf";
@@ -148,7 +144,6 @@ class PartialOrderController extends Controller
             if ($checkOrderStatus == 0) {
                 return Utility::apiError('Order has been fully completed', [], 221);
             }
-
 
             # Update customer details
             $customerUpdate = Customer::where('id', $data['company_id'])->update([
@@ -186,7 +181,7 @@ class PartialOrderController extends Controller
 
             # Generate unique partial order number
             $dateStr = Carbon::now()->format('dmY');
-            $initials = substr($branchName, 0, 3);
+            $initials = substr($branchName['name'], 0, 3);
             $partialCount = PartialOrder::where('branch_id', $branchId)->whereDate('created_at', Carbon::now()->format('Y-m-d'))->count();
             $uniquePartialNo = $initials . "/" . $dateStr . "/Part-" . ($partialCount + 1);
 
@@ -287,7 +282,7 @@ class PartialOrderController extends Controller
                     'igst' => $igst,
                     'balance_quantity' => $balanceQty ?? 0,
                     'order_type' => 1,
-                    'quantity' => $item['send_qty'] ?? 0,
+                    'quantity' => $item['quantity'] ?? 0,
                     'total' => $totalAmount,
                     'status' => 0,
                     'partial_order_status' => 0,
@@ -322,14 +317,16 @@ class PartialOrderController extends Controller
             }
 
             # Update order details status flags inline
-            $orderDetailQuery = OrderDetails::where('order_id', $orderId)
-                ->where('balance_quantity', '<=', 0);
+            $orderStatus = OrderDetails::where('order_id', $orderId)
+                ->where('balance_quantity', '<=', 0)
+                ->update(['partial_order_status' => 1]);
 
-            if ($orderDetailQuery->exists()) {
-                $orderDetailQuery->update(['partial_order_status' => 1]);
+            if ($orderStatus) {
+                $statusCheck = PartialOrder::where('id', $partialOrderId)->update(['partial_order_status' => 0]);
+                if (!$statusCheck) {
+                    return Utility::apiError('Failed to update partial order status.', [], 221);
+                }
             }
-
-
             # Close the order
             $updateCloseOrder = Order::where(['id' => $orderId, 'unique_order_no' => $data['unique_order_no']])->update([
                 'customer_order_no' => $data['customer_order_no'],
@@ -398,7 +395,7 @@ class PartialOrderController extends Controller
     public function getPartialOrder(Request $request)
     {
         try {
-            // Collect only the relevant inputs
+            # Collect only the relevant inputs
             $data = $request->only([
                 'per_page',
                 'branch_list',
