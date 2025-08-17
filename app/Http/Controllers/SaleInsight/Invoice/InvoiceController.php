@@ -15,105 +15,18 @@ use Symfony\Component\ErrorHandler\Debug;
 
 class InvoiceController extends Controller
 {
-    public function getInvoice(Request $request)
-    {
-        try {
-            $data = $request->all();
-            $query = Invoice::select(
-                'tbl_invoice.in_invoice_id',
-                'p.st_cust_order_num',
-                'tbl_invoice.st_invoice_docs',
-                'tbl_invoice.dt_created',
-                'tbl_invoice.st_invoice_no',
-                'tbl_invoice.in_partorder_id',
-                'p.in_cust_id',
-                'p.st_courier_option',
-                'p.flt_ord_total',
-                'c.st_com_name'
-            )
-                ->join('tbl_partlyorder_gent as p', 'tbl_invoice.in_partorder_id', '=', 'p.in_partparaint_ord_id')
-                ->join('tbl_customer as c', 'p.in_cust_id', '=', 'c.in_cust_id')
-                ->join('tbl_order as o', 'o.in_order_id', '=', 'p.in_partlyorder_id')
-                ->where('tbl_invoice.flg_deleted', 0)
-                ->orderBy('tbl_invoice.in_invoice_id', 'DESC');
-
-            // branch filter
-            if (Auth::user()->branch_id != 1) {
-                $query->where('o.in_branch_id', Auth::user()->branch_id);
-            }
-
-            // date range filter
-            if (!empty($data['date_range'])) {
-                $d = explode('|', $data['date_range']);
-                $from_date = (new Carbon($d[0]))->format('Y-m-d');
-                $to_date = (new Carbon($d[1]))->addDay()->format('Y-m-d');
-
-                $query->whereBetween('tbl_invoice.dt_created', [$from_date, $to_date]);
-            }
-
-            // search filter
-            if (!empty($data['search'])) {
-                $search = $data['search'];
-                $query->where(function ($q) use ($search) {
-                    $q->where('c.st_com_name', 'like', "%$search%")
-                        ->orWhere('p.st_cust_order_num', 'like', "%$search%")
-                        ->orWhere('tbl_invoice.st_invoice_no', 'like', "%$search%");
-                });
-            }
-
-            // pagination (default 10 per page)
-            $perPage = $request->get('per_page', 10);
-            $invoices = $query->paginate($perPage);
-
-            // format output
-            $invoices->getCollection()->transform(function ($invoice) {
-                $actions = [];
-                if (!empty($invoice->st_invoice_docs)) {
-                    $doc_list = array_filter(explode(',', $invoice->st_invoice_docs));
-                    $key = 1;
-                    foreach ($doc_list as $doc) {
-                        $link = url('/orderinvoicedocs/' . $doc);
-                        $actions[] = [
-                            'index' => $key,
-                            'doc' => $doc,
-                            'url' => $link
-                        ];
-                        $key++;
-                    }
-                }
-                $invoice->documents = $actions;
-                unset($invoice->st_invoice_docs);
-
-                return $invoice;
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $invoices
-            ]);
-
-        } catch (Exception $ex) {
-            Log::error($ex);
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong'
-            ], 500);
-        }
-    }
-
-
     public function addUpdateInvoice(Request $request)
     {
         try {
             # Get specific fields 
-            $data = $request->only(['partial_order_id', 'current_follow_date', 'docket_no', 'product_invoice_list', 'invoice_no']);
+            $data = $request->only(['partial_order_id', 'current_follow_date', 'docket_no', 'product_invoice_list', 'invoice_no', 'customer_id', 'customer_order_no']);
 
             # Validation rule
             $validator = Validator::make($request->all(), [
                 'partial_order_id' => 'required|integer|exists:partial_orders,id',
                 'invoice_no' => 'required|string|max:255',
                 'docket_no' => 'required|string|max:255',
-                'product_invoice_list'   => 'required|array',        
+                'product_invoice_list' => 'required|array',
                 'product_invoice_list.*.invoice' => 'file|max:10240',
             ]);
 
@@ -128,10 +41,9 @@ class InvoiceController extends Controller
                 foreach ($request->file('product_invoice_list', []) as $index => $row) {
                     if (isset($row['invoice']) && $row['invoice'] instanceof \Illuminate\Http\UploadedFile) {
                         $file = $row['invoice'];
-                        $extension = $row->getClientOriginalExtension();
+                        $extension = $file->getClientOriginalExtension();
                         $path = public_path('orderinvoicedocs/');
                         $rename_file = 'order_invoice_' . date('Y-m-d') . '_' . time() . '.' . $extension;
-                        $file_list .= ',' . $rename_file;
                         $file->move($path, $rename_file);
                         $docs[] = $rename_file;
                     }
@@ -159,13 +71,57 @@ class InvoiceController extends Controller
             }
 
             # Return response
-            return Utility::apiSuccess('Invoice uploaded successfully', $invoice, 201);
+            return Utility::apiSuccess('Invoice uploaded successfully', [], 200);
 
         } catch (Exception $e) {
             Log::error($e);
             return Utility::apiError('Failed to upload invoice', ['exception' => $e->getMessage()]);
         }
     }
+    public function getInvoice(Request $request)
+    {
+        try {
+            $data = $request->only(['pper_page', 'serach']);
+
+            $query = Invoice::with(['partialOrder', 'customerDetails'])
+                ->whereNull('deleted_at')
+                ->orderBy('id', 'DESC');
+
+            if (!empty($data['date_range'])) {
+                $dates = explode('|', $data['date_range']);
+                $from_date = (new Carbon($dates[0]))->format('Y-m-d');
+                $to_date = (new Carbon($dates[1]))->addDay()->format('Y-m-d');
+                $query->whereBetween('created_at', [$from_date, $to_date]);
+            }
+
+            if (!empty($data['search'])) {
+                $search = $data['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('customerDetails', function ($q2) use ($search) {
+                        $q2->where('company_name', 'like', "%$search%");
+                    })
+                        ->orWhereHas('partialOrder', function ($q2) use ($search) {
+                            $q2->where('customer_order_no', 'like', "%$search%");
+                        })
+                        ->orWhere('invoice_no', 'like', "%$search%");
+                });
+            }
+
+            $perPage = $request->get('per_page', 10);
+
+            $invoiceData = $query->paginate($perPage);
+
+            return Utility::apiSuccess('list_invoices', $invoiceData, 200);
+
+        } catch (\Exception $ex) {
+            Log::error($ex);
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong'
+            ], 500);
+        }
+    }
+
 
 
     public function deleteInvoice(Request $request)
