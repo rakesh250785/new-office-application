@@ -167,6 +167,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
     Route::post('getInvoice', [InvoiceController::class, 'getInvoice']);
     Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);
+    Route::get('/orderinvoicedocs/download/{filename}', [InvoiceController::class, 'downloadInvoice']);
+
 
 });
 

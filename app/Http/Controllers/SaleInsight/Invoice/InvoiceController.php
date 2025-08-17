@@ -81,46 +81,57 @@ class InvoiceController extends Controller
     public function getInvoice(Request $request)
     {
         try {
-            $data = $request->only(['pper_page', 'serach']);
-
+            $data = $request->only(['per_page', 'search', 'date_range']);
+    
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
-
+    
+            // Date range filter
             if (!empty($data['date_range'])) {
                 $dates = explode('|', $data['date_range']);
-                $from_date = (new Carbon($dates[0]))->format('Y-m-d');
-                $to_date = (new Carbon($dates[1]))->addDay()->format('Y-m-d');
+                $from_date = (new Carbon($dates[0]))->startOfDay();
+                $to_date = (new Carbon($dates[1]))->endOfDay();
                 $query->whereBetween('created_at', [$from_date, $to_date]);
             }
-
+    
+            // Search filter
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->whereHas('customerDetails', function ($q2) use ($search) {
                         $q2->where('company_name', 'like', "%$search%");
                     })
-                        ->orWhereHas('partialOrder', function ($q2) use ($search) {
-                            $q2->where('customer_order_no', 'like', "%$search%");
-                        })
-                        ->orWhere('invoice_no', 'like', "%$search%");
+                    ->orWhereHas('partialOrder', function ($q2) use ($search) {
+                        $q2->where('customer_order_no', 'like', "%$search%");
+                    })
+                    ->orWhere('invoice_no', 'like', "%$search%");
                 });
             }
-
+    
             $perPage = $request->get('per_page', 10);
-
             $invoiceData = $query->paginate($perPage);
-
+    
+            $invoiceData->getCollection()->transform(function ($invoice) {
+                $invoice->invoice_docs = collect(explode(',', $invoice->invoice_docs))
+                    ->filter()
+                    ->map(fn($doc, $idx) => [
+                        'id' => $idx + 1,
+                        'file' => $doc,
+                        'download_url' => url("/orderinvoicedocs/download/{$doc}")
+                    ])->values();
+    
+                return $invoice;
+            });
+    
             return Utility::apiSuccess('list_invoices', $invoiceData, 200);
-
-        } catch (\Exception $ex) {
+    
+        } catch (Exception $ex) {
             Log::error($ex);
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong'
-            ], 500);
+            return Utility::apiError('Error deleting invoice', ['exception' => $e->getMessage()]);
         }
     }
+    
 
 
 
