@@ -81,57 +81,62 @@ class InvoiceController extends Controller
     public function getInvoice(Request $request)
     {
         try {
+
+            # Request specific fields
             $data = $request->only(['per_page', 'search', 'date_range']);
-    
+
+            # Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
-    
-            // Date range filter
+
+            # Date range filter
             if (!empty($data['date_range'])) {
                 $dates = explode('|', $data['date_range']);
                 $from_date = (new Carbon($dates[0]))->startOfDay();
                 $to_date = (new Carbon($dates[1]))->endOfDay();
                 $query->whereBetween('created_at', [$from_date, $to_date]);
             }
-    
-            // Search filter
+
+            # Search filter
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->whereHas('customerDetails', function ($q2) use ($search) {
                         $q2->where('company_name', 'like', "%$search%");
                     })
-                    ->orWhereHas('partialOrder', function ($q2) use ($search) {
-                        $q2->where('customer_order_no', 'like', "%$search%");
-                    })
-                    ->orWhere('invoice_no', 'like', "%$search%");
+                        ->orWhereHas('partialOrder', function ($q2) use ($search) {
+                            $q2->where('customer_order_no', 'like', "%$search%");
+                        })
+                        ->orWhere('invoice_no', 'like', "%$search%");
                 });
             }
-    
+
+            # Get data
             $perPage = $request->get('per_page', 10);
             $invoiceData = $query->paginate($perPage);
-    
+
+            # Map invoice
             $invoiceData->getCollection()->transform(function ($invoice) {
                 $invoice->invoice_docs = collect(explode(',', $invoice->invoice_docs))
                     ->filter()
                     ->map(fn($doc, $idx) => [
                         'id' => $idx + 1,
                         'file' => $doc,
-                        'download_url' => url("/orderinvoicedocs/download/{$doc}")
+                        'download_url' => url("/orderinvoicedocs/{$doc}")
                     ])->values();
-    
                 return $invoice;
             });
-    
+
+            # Return response
             return Utility::apiSuccess('list_invoices', $invoiceData, 200);
-    
+
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error deleting invoice', ['exception' => $e->getMessage()]);
+            return Utility::apiError('Error deleting invoice', ['exception' => $ex->getMessage()]);
         }
     }
-    
+
 
 
 
