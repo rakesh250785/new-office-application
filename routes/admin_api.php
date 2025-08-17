@@ -10,6 +10,7 @@ use App\Http\Controllers\Configuration\Reason\ReasonController;
 use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
+use App\Http\Controllers\SaleInsight\Invoice\InvoiceController;
 use App\Http\Controllers\SaleInsight\Order\FullOrderController;
 use App\Http\Controllers\SaleInsight\Order\PartialOrderController;
 use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
@@ -164,6 +165,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     // Route::post('assignPermission', [RolePermissionController::class, 'assignPermission']);
     // Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
 
+    Route::post('getInvoice', [InvoiceController::class, 'getInvoice']);
+    Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);
 
 });
 
