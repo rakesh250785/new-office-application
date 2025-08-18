@@ -165,6 +165,9 @@ class FullOrderController extends Controller
             # PDF path
             $pdfFilePath = 'order_' . time() . '_' . date('dmy') . '.pdf';
 
+            $OrderDate = Carbon::now()->format('Y-m-d 00:00:00');
+
+
             # Prepare order data
             $orderData = [
                 'unique_quotation_no' => $data['unique_quotation_no'],
@@ -192,7 +195,7 @@ class FullOrderController extends Controller
                 'owner_id' => $data['owner_id'] ?? null,
                 'quotation_type_id' => $data['quotation_type_id'] ?? null,
                 'payment_term_condition' => $data['payment_term_condition'] ?? null,
-                'date' => $quotationDate ?? null,
+                'date' => $OrderDate ?? null,
                 'enq_ref' => $data['enq_ref'] ?? null,
                 'prepard_by' => $data['prepard_by'] ?? null,
                 'branch_id' => $branchId ?? null,
@@ -468,7 +471,7 @@ class FullOrderController extends Controller
             ])
                 ->with([
                     'orderDetails',
-                    'companyDetails:id,company_name,email_id',
+                    'companyDetails:id,company_name,customer_name,email_id',
                     'branchDetails:id,name',
                     'currencyDetails:id,code',
                     'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at'

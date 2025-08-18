@@ -185,6 +185,8 @@ class PartialOrderController extends Controller
             $partialCount = PartialOrder::where('branch_id', $branchId)->whereDate('created_at', Carbon::now()->format('Y-m-d'))->count();
             $uniquePartialNo = $initials . "/" . $dateStr . "/Part-" . ($partialCount + 1);
 
+            $partialOrder = Carbon::now()->format('Y-m-d 00:00:00');
+
             # Insert new partial order
             $partialOrderData = [
                 'unique_partial_order_no' => $uniquePartialNo,
@@ -215,7 +217,7 @@ class PartialOrderController extends Controller
                 'owner_id' => $data['owner_id'] ?? null,
                 'quotation_type_id' => $data['quotation_type_id'] ?? null,
                 'payment_term_condition' => $data['payment_term_condition'] ?? null,
-                'date' => $quotationDate ?? null,
+                'date' => $partialOrder ?? null,
                 'enq_ref' => $data['enq_ref'] ?? null,
                 'prepard_by' => $data['prepard_by'] ?? null,
                 'branch_id' => $branchId ?? null,
@@ -384,7 +386,7 @@ class PartialOrderController extends Controller
 
             // dispatch(new ProcessPartialOrder($responsePayload));
 
-            return Utility::apiSuccess('order generated successfully.', [], 200);
+            return Utility::apiSuccess('generated successfully.', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
