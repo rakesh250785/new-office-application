@@ -14,7 +14,7 @@ class Utility
         ], $code);
     }
 
-    public static function apiError($message = 'Error', $errors = [], $code = 422)
+    public static function apiError($message = 'Error', $errors = [], $code = 221)
     {
         return response()->json([
             'status'  => false,

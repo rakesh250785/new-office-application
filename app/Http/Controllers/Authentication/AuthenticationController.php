@@ -8,7 +8,6 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -65,4 +64,5 @@ class AuthenticationController extends Controller
             return Utility::apiError('JWT Logout error: ' . $ex->getMessage(), [], 221);
         }
     }
+
 }

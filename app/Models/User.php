@@ -26,7 +26,8 @@ class User extends Authenticatable implements JWTSubject
         'cc_email',
         'remember_token',
         'token',
-        'role_id'
+        'role_id',
+        'profile_image'
     ];
 
     protected $hidden = [
@@ -65,5 +66,12 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'branch_id');
+    }
+
+
 }
 
