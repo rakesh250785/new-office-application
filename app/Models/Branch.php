@@ -14,4 +14,8 @@ class Branch extends Model
         'updated_at',
         'deleted_at',
     ];
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class, 'branch_id');
+    }
 }

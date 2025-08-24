@@ -28,4 +28,9 @@ class Owner extends Model
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class, 'owner_id');
+    }
 }

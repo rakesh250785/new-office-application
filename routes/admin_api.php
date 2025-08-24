@@ -8,6 +8,7 @@ use App\Http\Controllers\Configuration\Notification\NotificationController;
 use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Configuration\Reason\ReasonController;
+use App\Http\Controllers\Dashboard\QuotationSummaryController;
 use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Authentication\AuthenticationController;
 use App\Http\Controllers\ClientUser\RolePermission\RolePermissionController;
+
 
 # Public route
 Route::prefix('admin')->group(function () {
@@ -177,5 +179,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('updatePassWword', [ProfileController::class, 'updatePassWword']);
     
 
+    # Report
+    Route::post('quotationStatusReport', [QuotationSummaryController::class, 'quotationStatusReport']);
+    Route::post('quotationBranchReport', [QuotationSummaryController::class, 'quotationBranchReport']);
+    Route::post('quotationOwnerReport', [QuotationSummaryController::class, 'quotationOwnerReport']);
 });
 

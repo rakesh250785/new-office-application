@@ -76,6 +76,7 @@ class Quotation extends Model
     {
         return $this->belongsTo(Owner::class, 'owner_id');
     }
+    
 
     public function branchDetails()
     {
