@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class QuotationController extends Controller
+class PerformanceSummaryController extends Controller
 {
     //
 }
