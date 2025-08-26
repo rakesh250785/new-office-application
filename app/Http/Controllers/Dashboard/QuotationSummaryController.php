@@ -6,6 +6,7 @@ use App\Helpers\Utility;
 use App\Models\Owner;
 use App\Models\QuotationDetail;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
@@ -223,63 +224,63 @@ class QuotationSummaryController extends Controller
     public function quotationPrincipalDealerReport(Request $request)
     {
         try {
+
+            # Request input
             $data = $request->validate([
                 'start_date' => ['nullable', 'date'],
                 'end_date' => ['nullable', 'date'],
             ]);
 
+            # Date filter
             $end = !empty($data['end_date']) ? Carbon::parse($data['end_date'])->endOfDay() : now()->endOfDay();
             $start = !empty($data['start_date']) ? Carbon::parse($data['start_date'])->startOfDay() : (clone $end)->subMonths(5)->startOfMonth();
 
+            # Month buckets
             $months = [];
             for ($c = (clone $start)->startOfMonth(), $s = (clone $end)->startOfMonth(); $c <= $s; $c->addMonth()) {
                 $months[] = ['ym' => $c->format('Y-m'), 'label' => $c->format('M')];
             }
             $monthsOut = array_column($months, 'label');
+            $monthKeys = array_column($months, 'ym');
+            $zeroRow = array_fill_keys($monthKeys, 0.0);
 
-            $authorizedRows = QuotationDetail::query()
-                ->with(['principal:id,type,type_id', 'principal.principalType:id,type'])
-                // ->whereHas('principal.principalType', function ($q) {
-                //     $q->where('type', 'Authorized');
-                // })
-                // ->when(!empty($data['start_date']) || !empty($data['end_date']), function ($q) use ($start, $end) {
-                //     $q->whereBetween('created_at', [$start, $end]);
-                // })
-                // ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
-                // ->addSelect('principal_id')
-                // ->selectRaw('SUM(total) as total_amount')
-                // ->groupBy('ym', 'principal_id')
-                ->get();
-
-            return $authorizedRows;
-            $principalNames = [];
-            foreach ($authorizedRows->load('principal:id,name') as $r) {
-                $principalNames[$r->principal_id] = optional($r->principal)->name ?? 'Unknown';
-            }
-
-            $authorizedByPrincipal = [];
-            foreach ($authorizedRows as $r) {
-                $name = $principalNames[$r->principal_id] ?? 'Unknown';
-                $authorizedByPrincipal[$name][$r->ym] = (float) $r->total_amount;
-            }
-
-            $dealerRows = QuotationDetail::with(['principal:id,type_id', 'principal.principalType:id,type'])
-                ->whereHas('principal.principalType', function ($q) {
-                    $q->where('type', 'Dealers');
-                })
+            # One query with proper aliases
+            $rows = QuotationDetail::query()
+                ->join('principals as p', 'p.id', '=', 'quotation_details.principal_id')
+                ->join('principal_types as pt', 'pt.id', '=', 'p.type_id')
                 ->when(!empty($data['start_date']) || !empty($data['end_date']), function ($q) use ($start, $end) {
-                    $q->whereBetween('created_at', [$start, $end]);
+                    $q->whereBetween('quotation_details.created_at', [$start, $end]);
                 })
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
-                ->selectRaw('SUM(total) as total_amount')
-                ->groupBy('ym')
+                ->selectRaw("DATE_FORMAT(quotation_details.created_at, '%Y-%m') as ym")
+                ->selectRaw('SUM(quotation_details.total) as total_amount')
+                ->selectRaw('pt.type as ptype')
+                ->selectRaw('p.id as principal_id')
+                ->selectRaw('p.type as principal_name')
+                ->groupBy('ym', 'ptype', 'principal_id', 'principal_name')
                 ->get();
 
-            $dealerByMonth = [];
-            foreach ($dealerRows as $r) {
-                $dealerByMonth[$r->ym] = (float) $r->total_amount;
+            # Accumulate data
+            $authorizedByPrincipal = [];
+            $dealerByMonth = $zeroRow;
+
+            foreach ($rows as $r) {
+                $ym = $r->ym;
+                $sum = (float) $r->total_amount;
+
+                if ($r->ptype === 'Authorized') {
+                    $name = $r->principal_name ?: 'Unknown';
+                    $authorizedByPrincipal[$name] ??= $zeroRow;
+                    if (isset($authorizedByPrincipal[$name][$ym])) {
+                        $authorizedByPrincipal[$name][$ym] += $sum;
+                    }
+                } elseif ($r->ptype === 'Dealers') {
+                    if (isset($dealerByMonth[$ym])) {
+                        $dealerByMonth[$ym] += $sum;
+                    }
+                }
             }
 
+            # Shape output
             $principalsOut = [];
             foreach ($authorizedByPrincipal as $name => $perMonth) {
                 $principalsOut[] = [
@@ -295,16 +296,23 @@ class QuotationSummaryController extends Controller
                 'color' => $this->colorFromString('Dealer'),
             ];
 
-            return response()->json([
+            # Response 
+            $response = [
                 'months' => $monthsOut,
                 'principals' => $principalsOut,
                 'dealer' => $dealerOut,
-            ]);
+            ];
+
+            # Return response
+            return Utility::apiSuccess('Authorized vs dealer data', $response, 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Error quotationOwnerReport', ['exception' => $ex->getMessage()]);
         }
     }
+
+
+
     private function colorFromString(string $key, int $s = 65, int $l = 55): string
     {
         $hash = crc32(strtoupper($key));
