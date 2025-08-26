@@ -177,11 +177,11 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('updateProfile', [ProfileController::class, 'updateProfile']);
     Route::post('getProfile', [ProfileController::class, 'getProfile']);
     Route::post('updatePassWword', [ProfileController::class, 'updatePassWword']);
-    
 
     # Report
     Route::post('quotationStatusReport', [QuotationSummaryController::class, 'quotationStatusReport']);
     Route::post('quotationBranchReport', [QuotationSummaryController::class, 'quotationBranchReport']);
     Route::post('quotationOwnerReport', [QuotationSummaryController::class, 'quotationOwnerReport']);
+    Route::post('quotationPrincipalDealerReport', [QuotationSummaryController::class, 'quotationPrincipalDealerReport']);
 });
 

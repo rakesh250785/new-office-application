@@ -150,6 +150,7 @@ class QuotationDetailController extends Controller
             $quotationData = [
                 'unique_quotation_no' => $quotationNumber,
                 'company_id' => $data['company_id'] ?? null,
+                'principal_id' => $data['principal_id'] ?? null,
                 'billing_address' => $data['billing_address'],
                 'billing_city' => $data['billing_city'],
                 'billing_mobile' => $data['billing_mobile'],

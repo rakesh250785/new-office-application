@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Helpers\Utility;
 use App\Models\Owner;
+use App\Models\QuotationDetail;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\PendingQuotation;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 use Exception;
 class QuotationSummaryController extends Controller
@@ -219,6 +220,136 @@ class QuotationSummaryController extends Controller
         }
     }
 
+    public function quotationPrincipalDealerReport(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'start_date' => ['nullable', 'date'],
+                'end_date' => ['nullable', 'date'],
+            ]);
+
+            $end = !empty($data['end_date']) ? Carbon::parse($data['end_date'])->endOfDay() : now()->endOfDay();
+            $start = !empty($data['start_date']) ? Carbon::parse($data['start_date'])->startOfDay() : (clone $end)->subMonths(5)->startOfMonth();
+
+            $months = [];
+            for ($c = (clone $start)->startOfMonth(), $s = (clone $end)->startOfMonth(); $c <= $s; $c->addMonth()) {
+                $months[] = ['ym' => $c->format('Y-m'), 'label' => $c->format('M')];
+            }
+            $monthsOut = array_column($months, 'label');
+
+            $authorizedRows = QuotationDetail::query()
+                ->with(['principal:id,type,type_id', 'principal.principalType:id,type'])
+                // ->whereHas('principal.principalType', function ($q) {
+                //     $q->where('type', 'Authorized');
+                // })
+                // ->when(!empty($data['start_date']) || !empty($data['end_date']), function ($q) use ($start, $end) {
+                //     $q->whereBetween('created_at', [$start, $end]);
+                // })
+                // ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
+                // ->addSelect('principal_id')
+                // ->selectRaw('SUM(total) as total_amount')
+                // ->groupBy('ym', 'principal_id')
+                ->get();
+
+            return $authorizedRows;
+            $principalNames = [];
+            foreach ($authorizedRows->load('principal:id,name') as $r) {
+                $principalNames[$r->principal_id] = optional($r->principal)->name ?? 'Unknown';
+            }
+
+            $authorizedByPrincipal = [];
+            foreach ($authorizedRows as $r) {
+                $name = $principalNames[$r->principal_id] ?? 'Unknown';
+                $authorizedByPrincipal[$name][$r->ym] = (float) $r->total_amount;
+            }
+
+            $dealerRows = QuotationDetail::with(['principal:id,type_id', 'principal.principalType:id,type'])
+                ->whereHas('principal.principalType', function ($q) {
+                    $q->where('type', 'Dealers');
+                })
+                ->when(!empty($data['start_date']) || !empty($data['end_date']), function ($q) use ($start, $end) {
+                    $q->whereBetween('created_at', [$start, $end]);
+                })
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
+                ->selectRaw('SUM(total) as total_amount')
+                ->groupBy('ym')
+                ->get();
+
+            $dealerByMonth = [];
+            foreach ($dealerRows as $r) {
+                $dealerByMonth[$r->ym] = (float) $r->total_amount;
+            }
+
+            $principalsOut = [];
+            foreach ($authorizedByPrincipal as $name => $perMonth) {
+                $principalsOut[] = [
+                    'name' => $name,
+                    'data' => array_map(fn($m) => round($perMonth[$m['ym']] ?? 0, 2), $months),
+                    'color' => $this->colorFromString($name),
+                ];
+            }
+
+            $dealerOut = [
+                'name' => 'Dealer',
+                'data' => array_map(fn($m) => round($dealerByMonth[$m['ym']] ?? 0, 2), $months),
+                'color' => $this->colorFromString('Dealer'),
+            ];
+
+            return response()->json([
+                'months' => $monthsOut,
+                'principals' => $principalsOut,
+                'dealer' => $dealerOut,
+            ]);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error quotationOwnerReport', ['exception' => $ex->getMessage()]);
+        }
+    }
+    private function colorFromString(string $key, int $s = 65, int $l = 55): string
+    {
+        $hash = crc32(strtoupper($key));
+        $h = $hash % 360;
+        return $this->hslToHex($h, $s, $l);
+    }
+
+    private function hslToHex(int $h, int $s, int $l): string
+    {
+        $s /= 100;
+        $l /= 100;
+        $c = (1 - abs(2 * $l - 1)) * $s;
+        $x = $c * (1 - abs(fmod($h / 60, 2) - 1));
+        $m = $l - $c / 2;
+
+        $r = $g = $b = 0;
+        if ($h < 60) {
+            $r = $c;
+            $g = $x;
+            $b = 0;
+        } elseif ($h < 120) {
+            $r = $x;
+            $g = $c;
+            $b = 0;
+        } elseif ($h < 180) {
+            $r = 0;
+            $g = $c;
+            $b = $x;
+        } elseif ($h < 240) {
+            $r = 0;
+            $g = $x;
+            $b = $c;
+        } elseif ($h < 300) {
+            $r = $x;
+            $g = 0;
+            $b = $c;
+        } else {
+            $r = $c;
+            $g = 0;
+            $b = $x;
+        }
+
+        $to255 = fn($v) => (int) round(($v + $m) * 255);
+        return sprintf("#%02X%02X%02X", $to255($r), $to255($g), $to255($b));
+    }
     private function niceCeil(float $n): float
     {
         if ($n <= 0)
@@ -234,8 +365,4 @@ class QuotationSummaryController extends Controller
         }
         return 10 * $base;
     }
-
-
-
-
 }
