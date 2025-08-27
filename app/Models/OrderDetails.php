@@ -36,4 +36,16 @@ class OrderDetails extends Model
         'created_at',
         'updated_at',
     ];
+
+
+    public function principal()
+    {
+        return $this->belongsTo(Principal::class, 'principal_id');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
 }

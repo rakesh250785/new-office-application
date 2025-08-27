@@ -18,4 +18,21 @@ class Branch extends Model
     {
         return $this->hasMany(Quotation::class, 'branch_id');
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function orderDetails()
+    {
+        return $this->hasManyThrough(
+            OrderDetails::class,
+            Order::class,
+            'branch_id',
+            'order_id',
+            'id',
+            'id'
+        );
+    }
 }

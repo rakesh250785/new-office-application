@@ -8,6 +8,7 @@ use App\Http\Controllers\Configuration\Notification\NotificationController;
 use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Configuration\Reason\ReasonController;
+use App\Http\Controllers\Dashboard\OrderSummaryController;
 use App\Http\Controllers\Dashboard\QuotationSummaryController;
 use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
@@ -159,14 +160,6 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('listPermissions', [RolePermissionController::class, 'listPermissions']);
     Route::post('addUpdateRole', [RolePermissionController::class, 'addUpdateRole']);
     Route::post('deleteRole', [RolePermissionController::class, 'deleteRole']);
-    // Route::post('storeRole', [RolePermissionController::class, 'storeRole']);
-    // Route::post('deleteRole', [RolePermissionController::class, 'listPermissions']);
-    // Route::post('storePermission', [RolePermissionController::class, 'storePermission']);
-    // Route::put('updatePermission', [RolePermissionController::class, 'updatePermission']);
-    // Route::delete('deletePermission', [RolePermissionController::class, 'deletePermission']);
-    // Route::post('assignRole', [RolePermissionController::class, 'assignRole']);
-    // Route::post('assignPermission', [RolePermissionController::class, 'assignPermission']);
-    // Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
 
     Route::post('getInvoice', [InvoiceController::class, 'getInvoice']);
     Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);
@@ -178,10 +171,16 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('getProfile', [ProfileController::class, 'getProfile']);
     Route::post('updatePassWword', [ProfileController::class, 'updatePassWword']);
 
-    # Report
+    # Quotation Summary Report
     Route::post('quotationStatusReport', [QuotationSummaryController::class, 'quotationStatusReport']);
     Route::post('quotationBranchReport', [QuotationSummaryController::class, 'quotationBranchReport']);
     Route::post('quotationOwnerReport', [QuotationSummaryController::class, 'quotationOwnerReport']);
     Route::post('quotationPrincipalDealerReport', [QuotationSummaryController::class, 'quotationPrincipalDealerReport']);
+
+
+    # Order Summary Report
+    Route::post('principalWiseOrder', [OrderSummaryController::class, 'principalWiseOrder']);
+    Route::post('companyWiseOrder', [OrderSummaryController::class, 'companyWiseOrder']);
+    Route::post('branchWiseOrders', [OrderSummaryController::class, 'branchWiseOrders']);
 });
 

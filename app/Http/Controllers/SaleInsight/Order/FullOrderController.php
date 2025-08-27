@@ -278,7 +278,7 @@ class FullOrderController extends Controller
                     'unique_order_no' => $orderNumber,
                     'unique_quotation_no' => $data['unique_quotation_no'],
                     'product_id' => $data['product_id'] ?? 0,
-                    'principal_id' => $data['principal_id'] ?? null,
+                    'principal_id' => $item['principal_id'] ?? null,
                     'part_no' => $item['part_no'] ?? '',
                     'description' => $item['description'] ?? '',
                     'hsn_code' => $item['hsn_code'] ?? '',

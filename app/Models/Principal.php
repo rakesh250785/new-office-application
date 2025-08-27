@@ -32,4 +32,11 @@ class Principal extends Model
     {
         return $this->belongsTo(PrincipalType::class, 'type_id');
     }
+
+    public function orderDetails()
+    {
+        return $this->hasMany(OrderDetails::class, 'principal_id');
+    }
+
+    
 }

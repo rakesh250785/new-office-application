@@ -116,4 +116,14 @@ class Order extends Model
     {
         return $this->hasOne(PendingQuotation::class, 'quotation_id', 'id');
     }
+
+    public function company()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function details()
+    {
+        return $this->hasMany(OrderDetails::class);
+    }
 }

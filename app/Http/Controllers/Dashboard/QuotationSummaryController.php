@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\Owner;
 use App\Models\QuotationDetail;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;

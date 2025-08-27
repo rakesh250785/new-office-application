@@ -77,5 +77,22 @@ class Customer extends Model
         return $this->hasMany(PartialOrder::class, 'customer_id', 'id');
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function orderDetails()
+    {
+        return $this->hasManyThrough(
+            OrderDetails::class,
+            Order::class,
+            'company_id',
+            'order_id',
+            'id',
+            'id'
+        );
+    }
+
 }
 
