@@ -208,7 +208,9 @@ class FullOrderController extends Controller
                 'overdues_value' => $data['overdues_value'] ?? null,
                 'overdue_no' => $data['overdue_no'] ?? null,
                 'is_order_closed' => '0',
-                'courier_id' => $data['courier_id'] ?? null
+                'courier_id' => $data['courier_id'] ?? null,
+                'is_shipment_pending' => 1,
+
             ];
 
             # Update customer info

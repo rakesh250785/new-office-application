@@ -177,10 +177,13 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('quotationOwnerReport', [QuotationSummaryController::class, 'quotationOwnerReport']);
     Route::post('quotationPrincipalDealerReport', [QuotationSummaryController::class, 'quotationPrincipalDealerReport']);
 
-
     # Order Summary Report
     Route::post('principalWiseOrder', [OrderSummaryController::class, 'principalWiseOrder']);
     Route::post('companyWiseOrder', [OrderSummaryController::class, 'companyWiseOrder']);
     Route::post('branchWiseOrders', [OrderSummaryController::class, 'branchWiseOrders']);
+    Route::post('statusWiseOrders', [OrderSummaryController::class, 'statusWiseOrders']);
+    Route::post('pendingDispatchReasons', [OrderSummaryController::class, 'pendingDispatchReasons']);
+
+
 });
 

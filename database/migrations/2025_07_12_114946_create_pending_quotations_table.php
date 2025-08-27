@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('quotation_id');
             $table->string('unique_quotation_no');
+            $table->string('unique_order_no')->nullable();
             $table->text('reason');
             $table->string('status_code');
             $table->date('follow_up_date');

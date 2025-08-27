@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Dashboard;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Order;
 use App\Models\OrderDetails;
-use DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Exception;
@@ -148,6 +148,93 @@ class OrderSummaryController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Error branchWiseOrders', ['exception' => $ex->getMessage()]);
+        }
+    }
+
+    public function statusWiseOrders(Request $request)
+    {
+        try {
+            # Request fields
+            $data = $request->only(['date_from', 'date_to']);
+
+            # Get Partial query
+            $partialSub = OrderDetails::query()
+                ->select('order_id')
+                ->where('partial_order_status', '<>', 1)
+                ->groupBy('order_id');
+
+            # Order query
+            $row = Order::query()
+                ->leftJoinSub($partialSub, 'partial_orders', function ($join) {
+                    $join->on('partial_orders.order_id', '=', 'orders.id');
+                })
+                ->when($data['date_from'] ?? null, fn($q) => $q->whereDate('orders.created_at', '>=', $data['date_from']))
+                ->when($data['date_to'] ?? null, fn($q) => $q->whereDate('orders.created_at', '<=', $data['date_to']))
+                ->selectRaw("
+                SUM(CASE WHEN orders.is_order_closed = '1' THEN 1 ELSE 0 END) AS close_count,
+                SUM(CASE WHEN orders.is_order_closed = '0' AND partial_orders.order_id IS NOT NULL THEN 1 ELSE 0 END) AS partial_count,
+                SUM(CASE WHEN orders.is_order_closed = '0' AND partial_orders.order_id IS NULL AND orders.is_shipment_pending = 1 THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN orders.is_shipment_pending = 0 THEN 1 ELSE 0 END) AS dispatched_count
+            ")
+                ->first();
+
+            # Paylaod
+            $payload = [
+                'series' => [
+                    (int) ($row->pending_count ?? 0),
+                    (int) ($row->partial_count ?? 0),
+                    (int) ($row->dispatched_count ?? 0),
+                    (int) ($row->close_count ?? 0),
+                ],
+            ];
+
+            # Return response
+            return Utility::apiSuccess('Order status list', $payload, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error branchWiseOrders', ['exception' => $ex->getMessage()]);
+        }
+    }
+
+    public function pendingDispatchReasons(Request $request)
+    {
+        try {
+            # Request fields
+            $data = $request->only(['date_from', 'date_to']);
+
+            # Date filter
+            $from = $data['date_from'] ?? null;
+            $to = $data['date_to'] ?? null;
+
+            # Get data
+            $rows = Order::query()
+                ->from('orders as o')
+                ->join('pending_quotations as pq', 'pq.unique_quotation_no', '=', 'o.unique_quotation_no')
+                ->leftJoin('reasons as r', 'r.id', '=', 'pq.reason_status_id')
+                ->when($from, fn($q) => $q->whereDate('o.created_at', '>=', $from))
+                ->when($to, fn($q) => $q->whereDate('o.created_at', '<=', $to))
+                ->where('o.is_order_closed', '0')
+                ->where('o.is_shipment_pending', 1)
+                ->selectRaw('COALESCE(NULLIF(TRIM(r.name), ""), "Unspecified") as reason_name')
+                ->selectRaw('COUNT(DISTINCT o.id) as orders_count')
+                ->groupBy('reason_name')
+                ->orderByDesc('orders_count')
+                ->get();
+
+            # Format data
+            $categories = $rows->pluck('reason_name')->values()->all();
+            $series = $rows->pluck('orders_count')->map(fn($n) => (int) $n)->values()->all();
+
+            # Retun response
+            return Utility::apiSuccess('Pending to dispatch reasons', [
+                'categories' => $categories,
+                'series' => $series,
+                'total' => array_sum($series),
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error pendingDispatchReasons', ['exception' => $ex->getMessage()]);
         }
     }
 

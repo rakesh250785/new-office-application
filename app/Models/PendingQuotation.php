@@ -14,6 +14,7 @@ class PendingQuotation extends Model
     protected $fillable = [
         'quotation_id',
         'unique_quotation_no',
+        'unique_order_no',
         'reason',
         'total_amount',
         'status_code',
