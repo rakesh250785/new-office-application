@@ -54,17 +54,25 @@ class ProfileController extends Controller
                 'name',
                 'last_name',
                 'profile_image',
+                'email'
             ]);
 
             # Get user id
             $id = Auth::id();
 
             # Validate user info
-            $validator = Validator::make($data, [
+
+            $rules = [
                 'name' => 'required|string|max:100',
                 'last_name' => 'required|string|max:100',
-                'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-            ]);
+                'email' => 'required|email|max:150',
+            ];
+
+            if ($request->hasFile('profile_image')) {
+                $rules['profile_image'] = 'file|image|mimes:jpg,jpeg,png|max:5120';
+            }
+
+            $validator = Validator::make($data, $rules);
 
             # Return if fail
             if ($validator->fails()) {

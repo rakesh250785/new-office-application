@@ -9,6 +9,7 @@ use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Configuration\Reason\ReasonController;
 use App\Http\Controllers\Dashboard\OrderSummaryController;
+use App\Http\Controllers\Dashboard\PerformanceSummaryController;
 use App\Http\Controllers\Dashboard\QuotationSummaryController;
 use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
@@ -148,12 +149,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/deleteOrder', [FullOrderController::class, 'deleteOrder']);
     Route::post('/addOrderReason', [FullOrderController::class, 'addOrderReason']);
 
-
     # Partial rder
     Route::post('/storePartialOrder', [PartialOrderController::class, 'storePartialOrder']);
     Route::post('/getPartialOrder', [PartialOrderController::class, 'getPartialOrder']);
     Route::post('/deletePartialOrder', [PartialOrderController::class, 'deletePartialOrder']);
-
 
     # Role and permission
     Route::post('listRolesWithPermissions', [RolePermissionController::class, 'listRolesWithPermissions']);
@@ -164,7 +163,6 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('getInvoice', [InvoiceController::class, 'getInvoice']);
     Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);
     Route::get('/orderinvoicedocs/download/{filename}', [InvoiceController::class, 'downloadInvoice']);
-
 
     # Profile details
     Route::post('updateProfile', [ProfileController::class, 'updateProfile']);
@@ -184,6 +182,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('statusWiseOrders', [OrderSummaryController::class, 'statusWiseOrders']);
     Route::post('pendingDispatchReasons', [OrderSummaryController::class, 'pendingDispatchReasons']);
 
-
+    # Performance Report
+    Route::post('getSaleReport', [PerformanceSummaryController::class, 'getSaleReport']);
 });
 
