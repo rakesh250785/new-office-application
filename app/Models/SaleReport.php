@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PerformanceReport extends Model
+class SaleReport extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected $table = 'performance_reports';
 
     protected $fillable = [
         'qtr',
@@ -29,8 +31,8 @@ class PerformanceReport extends Model
     ];
 
     protected $casts = [
-        'invoice_date' => 'date',
-        'qty' => 'double',
-        'amount' => 'decimal:2',
+        'invoice_date' => 'date:Y-m-d', // auto format as Y-m-d
+        'qty'          => 'integer',    // ✅ integer, not double
+        'amount'       => 'decimal:2',  // ✅ correct
     ];
 }

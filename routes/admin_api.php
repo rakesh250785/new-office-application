@@ -184,5 +184,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
     # Performance Report
     Route::post('getSaleReport', [PerformanceSummaryController::class, 'getSaleReport']);
+    Route::post('importSaleData', [PerformanceSummaryController::class, 'importSaleData']);
+    Route::post('exportSaleData', [PerformanceSummaryController::class, 'exportSaleData']);
+    Route::post('branchSummaryReport', [PerformanceSummaryController::class, 'branchSummaryReport']);
+    Route::post('principalSummaryReport', [PerformanceSummaryController::class, 'principalSummaryReport']);
 });
 

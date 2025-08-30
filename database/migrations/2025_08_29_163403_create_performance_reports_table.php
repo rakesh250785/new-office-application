@@ -31,7 +31,7 @@ return new class extends Migration {
             $table->decimal('amount', 15, 2)->default(0);
 
             $table->unique(['invoice', 'part_no'], 'uniq_invoice_part');
-
+            $table->index(['fy_year', 'branch']);
             $table->timestamps();
             $table->softDeletes();
         });
