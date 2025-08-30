@@ -190,6 +190,6 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('principalSummaryReport', [PerformanceSummaryController::class, 'principalSummaryReport']);
     Route::post('customerSummaryReport', [PerformanceSummaryController::class, 'customerSummaryReport']);
     Route::post('categorySummaryReport', [PerformanceSummaryController::class, 'categorySummaryReport']);
-
+    Route::post('authorisedSummaryReport', [PerformanceSummaryController::class, 'authorisedSummaryReport']);
 });
 

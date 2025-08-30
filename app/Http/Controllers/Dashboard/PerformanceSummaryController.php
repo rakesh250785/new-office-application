@@ -533,4 +533,106 @@ class PerformanceSummaryController extends Controller
             return Utility::apiError('Error categorySummaryReport', ['exception' => $ex->getMessage()]);
         }
     }
+
+    public function authorisedSummaryReport(Request $request)
+    {
+        try {
+            $years = $request->input('years');
+            $month = $request->input('month');
+            $quarter = $request->input('quarter');
+            $perPage = $request->input('per_page', 10);
+
+            if (empty($years) || !is_array($years)) {
+                $currentYear = now()->year;
+                $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+                $years = [
+                    ($fyStart - 2) . '-' . ($fyStart - 1),
+                    ($fyStart - 1) . '-' . $fyStart,
+                    $fyStart . '-' . ($fyStart + 1),
+                ];
+            }
+
+            $monthNames = [
+                1 => 'January',
+                2 => 'February',
+                3 => 'March',
+                4 => 'April',
+                5 => 'May',
+                6 => 'June',
+                7 => 'July',
+                8 => 'August',
+                9 => 'September',
+                10 => 'October',
+                11 => 'November',
+                12 => 'December',
+            ];
+            $quarterMap = [
+                'Q1' => ['April', 'May', 'June'],
+                'Q2' => ['July', 'August', 'September'],
+                'Q3' => ['October', 'November', 'December'],
+                'Q4' => ['January', 'February', 'March'],
+            ];
+            $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
+
+            $selects = ['authorised'];
+            foreach ($years as $y) {
+                $selects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
+            }
+
+            if (count($years) >= 2) {
+                $prevYear = $years[count($years) - 2];
+                $currYear = $years[count($years) - 1];
+                $selects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $selects[] = "NULL as growth";
+            }
+
+            $query = DB::table('performance_reports');
+            if ($month && isset($monthNames[(int) $month])) {
+                $query->where('month', $monthNames[(int) $month]);
+            } elseif ($quarter && !empty($quarterMonths)) {
+                $query->whereIn('month', $quarterMonths);
+            }
+
+            $rows = (clone $query)
+                ->selectRaw(implode(", ", $selects))
+                ->groupBy('authorised')
+                ->orderBy('authorised')
+                ->paginate($perPage);
+
+            $totalSelects = ["'Total' as authorised"];
+            foreach ($years as $y) {
+                $totalSelects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
+            }
+            if (count($years) >= 2) {
+                $totalSelects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $totalSelects[] = "NULL as growth";
+            }
+
+            $totals = (clone $query)->selectRaw(implode(", ", $totalSelects))->first();
+
+            $headers = array_merge(['authorised'], $years, ['growth']);
+
+            return Utility::apiSuccess('Authorised summary report', [
+                'headers' => $headers,
+                'pagination' => $rows,
+                'total' => $totals,
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error authorisedSummaryReport', ['exception' => $ex->getMessage()]);
+        }
+    }
 }
