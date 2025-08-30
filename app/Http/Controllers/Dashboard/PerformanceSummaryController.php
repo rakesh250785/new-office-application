@@ -6,6 +6,7 @@ use App\Exports\SaleReportExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\SaleReport;
+use DB;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Log;
 
 class PerformanceSummaryController extends Controller
 {
-
     public function getSaleReport(Request $request)
     {
         try {
@@ -122,68 +122,101 @@ class PerformanceSummaryController extends Controller
     {
         try {
             $years = $request->input('years');
+            $month = $request->input('month');
+            $quarter = $request->input('quarter');
+            $perPage = $request->input('per_page', 10);
 
+            // Default years
             if (empty($years) || !is_array($years)) {
                 $currentYear = now()->year;
                 $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
 
                 $years = [
-                    ($fyStart - 2) . '-' . $fyStart - 1,
-                    $fyStart - 1 . '-' . ($fyStart - 1 + 1),
+                    ($fyStart - 2) . '-' . ($fyStart - 1),
+                    ($fyStart - 1) . '-' . ($fyStart),
                     ($fyStart) . '-' . ($fyStart + 1),
                 ];
             }
 
+            // Month & Quarter mapping
+            $monthNames = [
+                1 => 'January',
+                2 => 'February',
+                3 => 'March',
+                4 => 'April',
+                5 => 'May',
+                6 => 'June',
+                7 => 'July',
+                8 => 'August',
+                9 => 'September',
+                10 => 'October',
+                11 => 'November',
+                12 => 'December',
+            ];
+            $quarterMap = [
+                'Q1' => ['April', 'May', 'June'],
+                'Q2' => ['July', 'August', 'September'],
+                'Q3' => ['October', 'November', 'December'],
+                'Q4' => ['January', 'February', 'March'],
+            ];
+            $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
+
+            // Select fields
             $selects = ['branch'];
             foreach ($years as $y) {
                 $selects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
             }
 
-            $rows = SaleReport::query()
+            if (count($years) >= 2) {
+                $prevYear = $years[count($years) - 2];
+                $currYear = $years[count($years) - 1];
+                $selects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $selects[] = "NULL as growth";
+            }
+
+            // Query with filters
+            $query = DB::table('performance_reports');
+            if ($month && isset($monthNames[(int) $month])) {
+                $query->where('month', $monthNames[(int) $month]);
+            } elseif ($quarter && !empty($quarterMonths)) {
+                $query->whereIn('month', $quarterMonths);
+            }
+
+            $rows = (clone $query)
                 ->selectRaw(implode(", ", $selects))
                 ->groupBy('branch')
                 ->orderBy('branch')
-                ->get();
+                ->paginate($perPage);
 
-            $summary = $rows->map(function ($row) use ($years) {
-                $rowArr = $row->toArray();
-                $count = count($years);
-
-                if ($count >= 2) {
-                    $prev = $rowArr[$years[$count - 2]] ?? 0;
-                    $curr = $rowArr[$years[$count - 1]] ?? 0;
-                    $rowArr['growth'] = $prev > 0
-                        ? round((($curr - $prev) / $prev) * 100, 2)
-                        : null;
-                } else {
-                    $rowArr['growth'] = null;
-                }
-
-                return $rowArr;
-            });
-
-            $totals = ['branch' => 'Total'];
+            // Totals
+            $totalSelects = ["'Total' as branch"];
             foreach ($years as $y) {
-                $totals[$y] = $summary->sum($y);
+                $totalSelects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
             }
-
             if (count($years) >= 2) {
-                $prevTotal = $totals[$years[count($years) - 2]] ?? 0;
-                $currTotal = $totals[$years[count($years) - 1]] ?? 0;
-                $totals['growth'] = $prevTotal > 0
-                    ? round((($currTotal - $prevTotal) / $prevTotal) * 100, 2)
-                    : null;
+                $totalSelects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
             } else {
-                $totals['growth'] = null;
+                $totalSelects[] = "NULL as growth";
             }
 
-            $summary->push($totals);
-
+            $totals = (clone $query)->selectRaw(implode(", ", $totalSelects))->first();
             $headers = array_merge(['branch'], $years, ['growth']);
 
             return Utility::apiSuccess('Branch summary report', [
                 'headers' => $headers,
-                'data' => $summary->values(),
+                'pagination' => $rows,
+                'total' => $totals,
             ], 200);
 
         } catch (Exception $ex) {
@@ -192,72 +225,102 @@ class PerformanceSummaryController extends Controller
         }
     }
 
+
+
+
     public function principalSummaryReport(Request $request)
     {
         try {
             $years = $request->input('years');
+            $month = $request->input('month');
+            $quarter = $request->input('quarter');
+            $perPage = $request->input('per_page', 10);
 
             if (empty($years) || !is_array($years)) {
                 $currentYear = now()->year;
                 $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
-
                 $years = [
-                    ($fyStart - 2) . '-' . $fyStart - 1,
-                    $fyStart - 1 . '-' . ($fyStart - 1 + 1),
+                    ($fyStart - 2) . '-' . ($fyStart - 1),
+                    ($fyStart - 1) . '-' . ($fyStart),
                     ($fyStart) . '-' . ($fyStart + 1),
                 ];
             }
+
+            $monthNames = [
+                1 => 'January',
+                2 => 'February',
+                3 => 'March',
+                4 => 'April',
+                5 => 'May',
+                6 => 'June',
+                7 => 'July',
+                8 => 'August',
+                9 => 'September',
+                10 => 'October',
+                11 => 'November',
+                12 => 'December',
+            ];
+            $quarterMap = [
+                'Q1' => ['April', 'May', 'June'],
+                'Q2' => ['July', 'August', 'September'],
+                'Q3' => ['October', 'November', 'December'],
+                'Q4' => ['January', 'February', 'March'],
+            ];
+            $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
 
             $selects = ['principal_name as principal'];
             foreach ($years as $y) {
                 $selects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
             }
 
-            $rows = SaleReport::query()
+            if (count($years) >= 2) {
+                $prevYear = $years[count($years) - 2];
+                $currYear = $years[count($years) - 1];
+                $selects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $selects[] = "NULL as growth";
+            }
+
+            $query = DB::table('performance_reports');
+            if ($month && isset($monthNames[(int) $month])) {
+                $query->where('month', $monthNames[(int) $month]);
+            } elseif ($quarter && !empty($quarterMonths)) {
+                $query->whereIn('month', $quarterMonths);
+            }
+
+            $rows = (clone $query)
                 ->selectRaw(implode(", ", $selects))
                 ->groupBy('principal_name')
                 ->orderBy('principal_name')
-                ->get();
+                ->paginate($perPage);
 
-            $summary = $rows->map(function ($row) use ($years) {
-                $rowArr = $row->toArray();
-                $count = count($years);
-
-                if ($count >= 2) {
-                    $prev = $rowArr[$years[$count - 2]] ?? 0;
-                    $curr = $rowArr[$years[$count - 1]] ?? 0;
-                    $rowArr['growth'] = $prev > 0
-                        ? round((($curr - $prev) / $prev) * 100, 2)
-                        : null;
-                } else {
-                    $rowArr['growth'] = null;
-                }
-
-                return $rowArr;
-            });
-
-            $totals = ['principal' => 'Total'];
+            $totalSelects = ["'Total' as principal"];
             foreach ($years as $y) {
-                $totals[$y] = $summary->sum($y);
+                $totalSelects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
             }
-
             if (count($years) >= 2) {
-                $prevTotal = $totals[$years[count($years) - 2]] ?? 0;
-                $currTotal = $totals[$years[count($years) - 1]] ?? 0;
-                $totals['growth'] = $prevTotal > 0
-                    ? round((($currTotal - $prevTotal) / $prevTotal) * 100, 2)
-                    : null;
+                $totalSelects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
             } else {
-                $totals['growth'] = null;
+                $totalSelects[] = "NULL as growth";
             }
 
-            $summary->push($totals);
-
+            $totals = (clone $query)->selectRaw(implode(", ", $totalSelects))->first();
             $headers = array_merge(['principal'], $years, ['growth']);
 
             return Utility::apiSuccess('Principal summary report', [
                 'headers' => $headers,
-                'data' => $summary->values(),
+                'pagination' => $rows,
+                'total' => $totals,
             ], 200);
 
         } catch (Exception $ex) {
@@ -266,5 +329,208 @@ class PerformanceSummaryController extends Controller
         }
     }
 
-    
+
+
+    public function customerSummaryReport(Request $request)
+    {
+        try {
+            $years = $request->input('years');
+            $month = $request->input('month');
+            $quarter = $request->input('quarter');
+            $perPage = $request->input('per_page', 10);
+
+            if (empty($years) || !is_array($years)) {
+                $currentYear = now()->year;
+                $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+                $years = [
+                    ($fyStart - 2) . '-' . ($fyStart - 1),
+                    ($fyStart - 1) . '-' . ($fyStart),
+                    ($fyStart) . '-' . ($fyStart + 1),
+                ];
+            }
+
+            $monthNames = [
+                1 => 'January',
+                2 => 'February',
+                3 => 'March',
+                4 => 'April',
+                5 => 'May',
+                6 => 'June',
+                7 => 'July',
+                8 => 'August',
+                9 => 'September',
+                10 => 'October',
+                11 => 'November',
+                12 => 'December',
+            ];
+            $quarterMap = [
+                'Q1' => ['April', 'May', 'June'],
+                'Q2' => ['July', 'August', 'September'],
+                'Q3' => ['October', 'November', 'December'],
+                'Q4' => ['January', 'February', 'March'],
+            ];
+            $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
+
+            $selects = ['customer_name as customer'];
+            foreach ($years as $y) {
+                $selects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
+            }
+
+            if (count($years) >= 2) {
+                $prevYear = $years[count($years) - 2];
+                $currYear = $years[count($years) - 1];
+                $selects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $selects[] = "NULL as growth";
+            }
+
+            $query = DB::table('performance_reports');
+            if ($month && isset($monthNames[(int) $month])) {
+                $query->where('month', $monthNames[(int) $month]);
+            } elseif ($quarter && !empty($quarterMonths)) {
+                $query->whereIn('month', $quarterMonths);
+            }
+
+            $rows = (clone $query)
+                ->selectRaw(implode(", ", $selects))
+                ->groupBy('customer_name')
+                ->orderBy('customer_name')
+                ->paginate($perPage);
+
+            $totalSelects = ["'Total' as customer"];
+            foreach ($years as $y) {
+                $totalSelects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
+            }
+            if (count($years) >= 2) {
+                $totalSelects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $totalSelects[] = "NULL as growth";
+            }
+
+            $totals = (clone $query)->selectRaw(implode(", ", $totalSelects))->first();
+            $headers = array_merge(['customer'], $years, ['growth']);
+
+            return Utility::apiSuccess('Customer summary report', [
+                'headers' => $headers,
+                'pagination' => $rows,
+                'total' => $totals,
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error customerSummaryReport', ['exception' => $ex->getMessage()]);
+        }
+    }
+
+
+    public function categorySummaryReport(Request $request)
+    {
+        try {
+            $years = $request->input('years');
+            $month = $request->input('month');
+            $quarter = $request->input('quarter');
+            $perPage = $request->input('per_page', 10);
+
+            if (empty($years) || !is_array($years)) {
+                $currentYear = now()->year;
+                $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+                $years = [
+                    ($fyStart - 2) . '-' . ($fyStart - 1),
+                    ($fyStart - 1) . '-' . ($fyStart),
+                    ($fyStart) . '-' . ($fyStart + 1),
+                ];
+            }
+
+            $monthNames = [
+                1 => 'January',
+                2 => 'February',
+                3 => 'March',
+                4 => 'April',
+                5 => 'May',
+                6 => 'June',
+                7 => 'July',
+                8 => 'August',
+                9 => 'September',
+                10 => 'October',
+                11 => 'November',
+                12 => 'December',
+            ];
+            $quarterMap = [
+                'Q1' => ['April', 'May', 'June'],
+                'Q2' => ['July', 'August', 'September'],
+                'Q3' => ['October', 'November', 'December'],
+                'Q4' => ['January', 'February', 'March'],
+            ];
+            $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
+
+            $selects = ['category'];
+            foreach ($years as $y) {
+                $selects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
+            }
+
+            if (count($years) >= 2) {
+                $prevYear = $years[count($years) - 2];
+                $currYear = $years[count($years) - 1];
+                $selects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $selects[] = "NULL as growth";
+            }
+
+            $query = DB::table('performance_reports');
+            if ($month && isset($monthNames[(int) $month])) {
+                $query->where('month', $monthNames[(int) $month]);
+            } elseif ($quarter && !empty($quarterMonths)) {
+                $query->whereIn('month', $quarterMonths);
+            }
+
+            $rows = (clone $query)
+                ->selectRaw(implode(", ", $selects))
+                ->groupBy('category')
+                ->orderBy('category')
+                ->paginate($perPage);
+
+            $totalSelects = ["'Total' as category"];
+            foreach ($years as $y) {
+                $totalSelects[] = "SUM(CASE WHEN fy_year = '{$y}' THEN amount ELSE 0 END) as `{$y}`";
+            }
+            if (count($years) >= 2) {
+                $totalSelects[] = "CASE 
+                WHEN SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END) > 0
+                THEN ROUND(((SUM(CASE WHEN fy_year = '{$currYear}' THEN amount ELSE 0 END) -
+                             SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END))
+                             / SUM(CASE WHEN fy_year = '{$prevYear}' THEN amount ELSE 0 END)) * 100, 2)
+                ELSE NULL END as growth";
+            } else {
+                $totalSelects[] = "NULL as growth";
+            }
+
+            $totals = (clone $query)->selectRaw(implode(", ", $totalSelects))->first();
+            $headers = array_merge(['category'], $years, ['growth']);
+
+            return Utility::apiSuccess('Category summary report', [
+                'headers' => $headers,
+                'pagination' => $rows,
+                'total' => $totals,
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error categorySummaryReport', ['exception' => $ex->getMessage()]);
+        }
+    }
 }

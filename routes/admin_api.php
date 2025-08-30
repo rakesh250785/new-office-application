@@ -188,5 +188,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('exportSaleData', [PerformanceSummaryController::class, 'exportSaleData']);
     Route::post('branchSummaryReport', [PerformanceSummaryController::class, 'branchSummaryReport']);
     Route::post('principalSummaryReport', [PerformanceSummaryController::class, 'principalSummaryReport']);
+    Route::post('customerSummaryReport', [PerformanceSummaryController::class, 'customerSummaryReport']);
+    Route::post('categorySummaryReport', [PerformanceSummaryController::class, 'categorySummaryReport']);
+
 });
 
