@@ -105,150 +105,97 @@ class SupplierController extends Controller
     public function getSupplier(Request $request)
     {
         try {
-            $data = $request->only([
-                'page',
-                'per_page',
-                'owner',
-                'branch',
-                'principal',
-                'source',
-                'product',
-                'currency',
-                'search',
-            ]);
+            # Get page info
+            $page = max((int) $request->input('page', 1), 1);
+            $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
+            $search = trim($request->input('search', ''));
 
-            $page = max((int) ($data['page'] ?? 1), 1);
-            $perPage = max((int) ($data['per_page'] ?? config('constant.per_page', 15)), 1);
+            # Get filter info
+            $filters = [
+                'owner' => $request->input('owner', []),
+                'branch' => $request->input('branch', []),
+                'principal' => $request->input('principal', []),
+                'source' => $request->input('source', []),
+                'product' => $request->input('product', []),
+                'currency' => $request->input('currency', []),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+            ];
 
-            // Base query with joins
-            $baseQuery = Supplier::query()
-                ->join('products', 'products.id', '=', 'suppliers.product_id')
-                ->whereNull('suppliers.deleted_at');
-
-            // --- Apply filters ---
-            if (!empty($data['owner'])) {
-                $baseQuery->whereIn('suppliers.user_id', $data['owner']);
-            }
-
-            if (!empty($data['branch'])) {
-                $baseQuery->whereIn('suppliers.branch_id', $data['branch']);
-            }
-
-            if (!empty($data['principal'])) {
-                $baseQuery->whereIn('suppliers.principal_id', $data['principal']);
-            }
-
-            if (!empty($data['product'])) {
-                $baseQuery->whereIn('suppliers.product_id', $data['product']);
-            }
-
-            if (!empty($data['source'])) {
-                $baseQuery->whereIn('suppliers.source_id', $data['source']);
-            }
-
-            if (!empty($data['currency'])) {
-                $baseQuery->whereIn('suppliers.currency_id', $data['currency']);
-            }
-
-            if (!empty($data['search'])) {
-                $search = '%' . $data['search'] . '%';
-                $baseQuery->where(function ($q) use ($search) {
-                    $q->where('products.part_no', 'like', $search)
-                        ->orWhere('products.description', 'like', $search);
-                });
-            }
-
-            // Step 1: Paginate distinct part_no
-            $partNoListQuery = (clone $baseQuery)
-                ->select('products.part_no')
-                ->distinct();
-
-            $totalGroups = DB::table(DB::raw("({$partNoListQuery->toSql()}) as grouped"))
-                ->mergeBindings($partNoListQuery->getQuery())
-                ->count();
-
-            $partNos = DB::table(DB::raw("({$partNoListQuery->toSql()}) as grouped"))
-                ->mergeBindings($partNoListQuery->getQuery())
-                ->offset(($page - 1) * $perPage)
-                ->limit($perPage)
-                ->pluck('part_no');
-
-            // Step 2: Fetch full supplier data
-            $supplierQuery = Supplier::query()
-                ->select([
-                    'id',
-                    'product_id',
-                    'branch_id',
-                    'user_id',
-                    'currency_id',
-                    'principal_id',
-                    'source_id',
-                    'rate_fc',
-                    'factor_fc',
-                    'total_cost',
-                    'discount',
-                    'net_price',
-                    'custom_price',
-                    'date',
-                    'deleted_at',
-                    'created_at',
-                    'updated_at'
-                ])
-                ->whereNull('deleted_at')
-                ->whereHas('product', function ($q) use ($partNos) {
-                    $q->whereIn('part_no', $partNos);
-                })
+            # Build base query
+            $query = Supplier::query()
                 ->with([
                     'product:id,part_no,description',
                     'principal:id,type',
                     'source:id,name',
                     'currency:id,name',
-                    'branch:id,name'
+                    'branch:id,name',
                 ])
-                ->orderByDesc('id');
+                ->whereNull('suppliers.deleted_at');
 
-            // Apply filters again
-            if (!empty($data['owner'])) {
-                $supplierQuery->whereIn('user_id', $data['owner']);
+            # Apply filters
+            if (!empty($filters['owner'])) {
+                $query->whereIn('suppliers.user_id', $filters['owner']);
+            }
+            if (!empty($filters['branch'])) {
+                $query->whereIn('suppliers.branch_id', $filters['branch']);
+            }
+            if (!empty($filters['principal'])) {
+                $query->whereIn('suppliers.principal_id', $filters['principal']);
+            }
+            if (!empty($filters['product'])) {
+                $query->whereIn('suppliers.product_id', $filters['product']);
+            }
+            if (!empty($filters['source'])) {
+                $query->whereIn('suppliers.source_id', $filters['source']);
+            }
+            if (!empty($filters['currency'])) {
+                $query->whereIn('suppliers.currency_id', $filters['currency']);
+            }
+            if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+                $query->whereBetween('suppliers.date', [$filters['start_date'], $filters['end_date']]);
+            } elseif (!empty($filters['start_date'])) {
+                $query->whereDate('suppliers.date', '>=', $filters['start_date']);
+            } elseif (!empty($filters['end_date'])) {
+                $query->whereDate('suppliers.date', '<=', $filters['end_date']);
             }
 
-            if (!empty($data['branch'])) {
-                $supplierQuery->whereIn('branch_id', $data['branch']);
-            }
-
-            if (!empty($data['principal'])) {
-                $supplierQuery->whereIn('principal_id', $data['principal']);
-            }
-
-            if (!empty($data['product'])) {
-                $supplierQuery->whereIn('product_id', $data['product']);
-            }
-
-            if (!empty($data['source'])) {
-                $supplierQuery->whereIn('source_id', $data['source']);
-            }
-
-            if (!empty($data['currency'])) {
-                $supplierQuery->whereIn('currency_id', $data['currency']);
-            }
-
-            if (!empty($data['search'])) {
-                $search = '%' . $data['search'] . '%';
-                $supplierQuery->whereHas('product', function ($q) use ($search) {
-                    $q->where('part_no', 'like', $search)
-                        ->orWhere('description', 'like', $search);
+            # Apply search
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('product', function ($q2) use ($search) {
+                        $q2->where('part_no', 'like', "%$search%")
+                            ->orWhere('description', 'like', "%$search%");
+                    })
+                        ->orWhere('suppliers.rate_fc', 'like', "%$search%")
+                        ->orWhere('suppliers.factor_fc', 'like', "%$search%")
+                        ->orWhere('suppliers.total_cost', 'like', "%$search%")
+                        ->orWhere('suppliers.discount', 'like', "%$search%")
+                        ->orWhere('suppliers.net_price', 'like', "%$search%")
+                        ->orWhere('suppliers.custom_price', 'like', "%$search%")
+                        ->orWhereHas('principal', fn($q2) => $q2->where('type', 'like', "%$search%"))
+                        ->orWhereHas('source', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                        ->orWhereHas('currency', fn($q2) => $q2->where('name', 'like', "%$search%"))
+                        ->orWhereHas('branch', fn($q2) => $q2->where('name', 'like', "%$search%"));
                 });
             }
 
-            // Step 3: Group by part_no
-            $result = $supplierQuery->get()->groupBy(fn($item) => $item->product->part_no);
+            # Group results by part_no
+            $suppliers = $query
+                ->orderByDesc('id')
+                ->get()
+                ->groupBy(fn($item) => $item->product->part_no);
 
+            $totalGroups = $suppliers->count();
+            $paged = $suppliers->forPage($page, $perPage);
+
+            # Return response
             return Utility::apiSuccess('Supplier list grouped by part_no', [
                 'current_page' => $page,
                 'per_page' => $perPage,
                 'total' => $totalGroups,
                 'last_page' => ceil($totalGroups / $perPage),
-                'data' => $result,
+                'data' => $paged,
             ], 200);
 
         } catch (Exception $ex) {
@@ -256,8 +203,6 @@ class SupplierController extends Controller
             return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
         }
     }
-
-
 
     public function deleteSupplier(Request $request)
     {

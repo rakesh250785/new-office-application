@@ -68,6 +68,11 @@ class Product extends Model
         return $this->belongsTo(Brand::class, 'brand_id');
     }
 
+    public function details()
+    {
+        return $this->belongsTo(ProductDetail::class, 'brand_id');
+    }
+
     public function parameterField()
     {
 
