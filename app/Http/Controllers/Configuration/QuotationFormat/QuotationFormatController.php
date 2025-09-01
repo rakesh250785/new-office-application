@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Configuration\QuotationFormat;
 
+use App\Exports\QuotationFormatExport;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\QuotationFormat;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Exports\Export;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
@@ -94,7 +93,7 @@ class QuotationFormatController extends Controller
     public function getQuotationFormat(Request $request)
     {
         try {
-            # Get specific fields
+            # Extract request fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -105,12 +104,32 @@ class QuotationFormatController extends Controller
                 'search',
             ]);
 
-            # Load query with branch relationship
-            $query = QuotationFormat::with([
-                'branch' => function ($q) {
-                    $q->select('id', 'name');
-                }
-            ])->whereNull('deleted_at');
+            # Export file
+            if (!empty($data['download'])) {
+                $columns = [
+                    'email' => 'Email',
+                    'mobile' => 'Mobile',
+                    'billing_address' => 'Billing Address',
+                    'branch_address' => 'Branch Address',
+                    'notes' => 'Notes',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'quotation_format_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new QuotationFormatExport($data, $columns, QuotationFormat::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+            # Base query with relationships
+            $query = QuotationFormat::with('branch:id,name')
+                ->whereNull('deleted_at');
 
             # Global free-text search
             if (!empty($data['search'])) {
@@ -129,46 +148,32 @@ class QuotationFormatController extends Controller
 
             # Branch filter
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Date filter
+            # Date range filter
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
-            # Export logic
-            if (!empty($data['download'])) {
-                $columns = [
-                    'email' => 'Email',
-                    'mobile' => 'Mobile',
-                    'billing_address' => 'Billing Address',
-                    'branch_address' => 'Branch Address',
-                    'notes' => 'Notes',
-                    'branch.name' => 'Branch Name',
-                    'created_at' => 'Date',
-                ];
-
-                $filename = 'quotation_format_' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
-            # Pagination
+            # Normal paginated response
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $quotationFormatData = $query->orderByDesc('id')->paginate($perPage);
 
-            # Retunr response
-            return Utility::apiSuccess('List Quotation Format', $quotationFormatData, 200);
+            # Return response
+            return Utility::apiSuccess('Quotation Format list fetched successfully', $quotationFormatData, 200);
         } catch (Exception $ex) {
-            Log::error($ex);
+            Log::error('Quotation Format fetch error: ' . $ex->getMessage(), ['trace' => $ex->getTraceAsString()]);
             return Utility::apiError('Something went wrong in quotation format', [
-                'exception' => $ex->getMessage()
-            ]);
+                'exception' => $ex->getMessage(),
+            ], 500);
         }
     }
+
+
 
     public function deleteQuotationFormat(Request $request)
     {
