@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Vendor\Supplier;
 
+use App\Exports\SupplierExport;
 use App\Http\Controllers\Controller;
 use DB;
 use Illuminate\Http\Request;
@@ -110,19 +111,50 @@ class SupplierController extends Controller
             $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
             $search = trim($request->input('search', ''));
 
-            # Get filter info
+            # Get filters
             $filters = [
-                'owner' => $request->input('owner', []),
-                'branch' => $request->input('branch', []),
-                'principal' => $request->input('principal', []),
-                'source' => $request->input('source', []),
-                'product' => $request->input('product', []),
-                'currency' => $request->input('currency', []),
+                'owner' => (array) $request->input('owner', []),
+                'branch' => (array) $request->input('branch', []),
+                'principal' => (array) $request->input('principal', []),
+                'source' => (array) $request->input('source', []),
+                'product' => (array) $request->input('product', []),
+                'currency' => (array) $request->input('currency', []),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
+                'search' => $search,
             ];
 
-            # Build base query
+            # If export requested
+            if ($request->boolean('download')) {
+                $columns = [
+                    'product.part_no' => 'Part No',
+                    'product.description' => 'Description',
+                    'principal.type' => 'Principal',
+                    'source.name' => 'Source',
+                    'currency.name' => 'Currency',
+                    'branch.name' => 'Branch',
+                    'rate_fc' => 'Rate FC',
+                    'factor_fc' => 'Factor FC',
+                    'total_cost' => 'Total Cost',
+                    'discount' => 'Discount',
+                    'net_price' => 'Net Price',
+                    'custom_price' => 'Custom Price',
+                    'date' => 'Date',
+                ];
+
+                $filename = 'suppliers_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new SupplierExport($filters, $columns, Supplier::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+
+            # Base query
             $query = Supplier::query()
                 ->with([
                     'product:id,part_no,description',
@@ -134,22 +166,22 @@ class SupplierController extends Controller
                 ->whereNull('suppliers.deleted_at');
 
             # Apply filters
-            if (!empty($filters['owner'])) {
+            if ($filters['owner']) {
                 $query->whereIn('suppliers.user_id', $filters['owner']);
             }
-            if (!empty($filters['branch'])) {
+            if ($filters['branch']) {
                 $query->whereIn('suppliers.branch_id', $filters['branch']);
             }
-            if (!empty($filters['principal'])) {
+            if ($filters['principal']) {
                 $query->whereIn('suppliers.principal_id', $filters['principal']);
             }
-            if (!empty($filters['product'])) {
+            if ($filters['product']) {
                 $query->whereIn('suppliers.product_id', $filters['product']);
             }
-            if (!empty($filters['source'])) {
+            if ($filters['source']) {
                 $query->whereIn('suppliers.source_id', $filters['source']);
             }
-            if (!empty($filters['currency'])) {
+            if ($filters['currency']) {
                 $query->whereIn('suppliers.currency_id', $filters['currency']);
             }
             if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
@@ -160,9 +192,10 @@ class SupplierController extends Controller
                 $query->whereDate('suppliers.date', '<=', $filters['end_date']);
             }
 
-            # Apply search
-            if ($search !== '') {
-                $query->where(function ($q) use ($search) {
+            # Search filter
+            if ($filters['search'] !== '') {
+                $query->where(function ($q) use ($filters) {
+                    $search = $filters['search'];
                     $q->whereHas('product', function ($q2) use ($search) {
                         $q2->where('part_no', 'like', "%$search%")
                             ->orWhere('description', 'like', "%$search%");
@@ -180,11 +213,8 @@ class SupplierController extends Controller
                 });
             }
 
-            # Group results by part_no
-            $suppliers = $query
-                ->orderByDesc('id')
-                ->get()
-                ->groupBy(fn($item) => $item->product->part_no);
+            # Normal grouped + paginated response
+            $suppliers = $query->orderByDesc('id')->get()->groupBy(fn($item) => $item->product->part_no);
 
             $totalGroups = $suppliers->count();
             $paged = $suppliers->forPage($page, $perPage);
@@ -203,6 +233,7 @@ class SupplierController extends Controller
             return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
         }
     }
+
 
     public function deleteSupplier(Request $request)
     {
