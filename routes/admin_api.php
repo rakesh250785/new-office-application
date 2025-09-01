@@ -11,6 +11,7 @@ use App\Http\Controllers\Configuration\Reason\ReasonController;
 use App\Http\Controllers\Dashboard\OrderSummaryController;
 use App\Http\Controllers\Dashboard\PerformanceSummaryController;
 use App\Http\Controllers\Dashboard\QuotationSummaryController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Product\Brand\BrandController;
 use App\Http\Controllers\Product\Product\ProductController;
 use App\Http\Controllers\Product\USP\UspController;
@@ -191,5 +192,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('customerSummaryReport', [PerformanceSummaryController::class, 'customerSummaryReport']);
     Route::post('categorySummaryReport', [PerformanceSummaryController::class, 'categorySummaryReport']);
     Route::post('authorisedSummaryReport', [PerformanceSummaryController::class, 'authorisedSummaryReport']);
+
+    Route::get('/download-export/{filename}', [ExportController::class, 'downloadExport']);
+
 });
 

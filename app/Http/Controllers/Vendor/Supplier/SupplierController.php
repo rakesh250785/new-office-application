@@ -108,35 +108,46 @@ class SupplierController extends Controller
             $data = $request->only([
                 'page',
                 'per_page',
-                'principal_list',
-                'product_list',
-                'source_list',
-                'currency_list',
+                'owner',
+                'branch',
+                'principal',
+                'source',
+                'product',
+                'currency',
                 'search',
             ]);
 
             $page = max((int) ($data['page'] ?? 1), 1);
             $perPage = max((int) ($data['per_page'] ?? config('constant.per_page', 15)), 1);
 
-            // Build filtered supplier base
+            // Base query with joins
             $baseQuery = Supplier::query()
                 ->join('products', 'products.id', '=', 'suppliers.product_id')
                 ->whereNull('suppliers.deleted_at');
 
-            if (!empty($data['principal_list'])) {
-                $baseQuery->whereIn('suppliers.principal_id', $data['principal_list']);
+            // --- Apply filters ---
+            if (!empty($data['owner'])) {
+                $baseQuery->whereIn('suppliers.user_id', $data['owner']);
             }
 
-            if (!empty($data['product_list'])) {
-                $baseQuery->whereIn('suppliers.product_id', $data['product_list']);
+            if (!empty($data['branch'])) {
+                $baseQuery->whereIn('suppliers.branch_id', $data['branch']);
             }
 
-            if (!empty($data['source_list'])) {
-                $baseQuery->whereIn('suppliers.source_id', $data['source_list']);
+            if (!empty($data['principal'])) {
+                $baseQuery->whereIn('suppliers.principal_id', $data['principal']);
             }
 
-            if (!empty($data['currency_list'])) {
-                $baseQuery->whereIn('suppliers.currency_id', $data['currency_list']);
+            if (!empty($data['product'])) {
+                $baseQuery->whereIn('suppliers.product_id', $data['product']);
+            }
+
+            if (!empty($data['source'])) {
+                $baseQuery->whereIn('suppliers.source_id', $data['source']);
+            }
+
+            if (!empty($data['currency'])) {
+                $baseQuery->whereIn('suppliers.currency_id', $data['currency']);
             }
 
             if (!empty($data['search'])) {
@@ -147,7 +158,7 @@ class SupplierController extends Controller
                 });
             }
 
-            // Step 1: Paginate unique part_no list
+            // Step 1: Paginate distinct part_no
             $partNoListQuery = (clone $baseQuery)
                 ->select('products.part_no')
                 ->distinct();
@@ -162,7 +173,7 @@ class SupplierController extends Controller
                 ->limit($perPage)
                 ->pluck('part_no');
 
-            // Step 2: Fetch full supplier data for selected partNos
+            // Step 2: Fetch full supplier data
             $supplierQuery = Supplier::query()
                 ->select([
                     'id',
@@ -197,20 +208,28 @@ class SupplierController extends Controller
                 ->orderByDesc('id');
 
             // Apply filters again
-            if (!empty($data['principal_list'])) {
-                $supplierQuery->whereIn('principal_id', $data['principal_list']);
+            if (!empty($data['owner'])) {
+                $supplierQuery->whereIn('user_id', $data['owner']);
             }
 
-            if (!empty($data['product_list'])) {
-                $supplierQuery->whereIn('product_id', $data['product_list']);
+            if (!empty($data['branch'])) {
+                $supplierQuery->whereIn('branch_id', $data['branch']);
             }
 
-            if (!empty($data['source_list'])) {
-                $supplierQuery->whereIn('source_id', $data['source_list']);
+            if (!empty($data['principal'])) {
+                $supplierQuery->whereIn('principal_id', $data['principal']);
             }
 
-            if (!empty($data['currency_list'])) {
-                $supplierQuery->whereIn('currency_id', $data['currency_list']);
+            if (!empty($data['product'])) {
+                $supplierQuery->whereIn('product_id', $data['product']);
+            }
+
+            if (!empty($data['source'])) {
+                $supplierQuery->whereIn('source_id', $data['source']);
+            }
+
+            if (!empty($data['currency'])) {
+                $supplierQuery->whereIn('currency_id', $data['currency']);
             }
 
             if (!empty($data['search'])) {
@@ -221,7 +240,7 @@ class SupplierController extends Controller
                 });
             }
 
-            // Step 3: Group results by part_no
+            // Step 3: Group by part_no
             $result = $supplierQuery->get()->groupBy(fn($item) => $item->product->part_no);
 
             return Utility::apiSuccess('Supplier list grouped by part_no', [
@@ -237,6 +256,7 @@ class SupplierController extends Controller
             return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
         }
     }
+
 
 
     public function deleteSupplier(Request $request)

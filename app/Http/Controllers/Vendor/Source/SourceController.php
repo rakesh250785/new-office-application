@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Vendor\Source;
 
+use App\Exports\SourceExport;
+use App\Models\Branch;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Source;
 use Illuminate\Http\Request;
-use App\Exports\Export;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
@@ -71,7 +71,7 @@ class SourceController extends Controller
     {
         try {
 
-            # Get specific fields
+            # Request specific fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -82,57 +82,64 @@ class SourceController extends Controller
                 'search',
             ]);
 
-            # Base query with branch relationship
-            $query = Source::with('branch:id,name')->whereNull('deleted_at');
+            # If download is true
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Source Name',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
 
-            # Apply free-text search
+                $filename = 'source_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new SourceExport($data, $columns, Source::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+
+            # List Records
+            $query = Source::with('branch:id,name')->whereNull('deleted_at');
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                        ->orWhereHas('branch', function ($b) use ($search) {
-                            $b->where('name', 'like', "%$search%");
-                        });
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
                 });
             }
 
-            # Filter by branches
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Filter by date range
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
-            # Export as Excel if requested
-            if (!empty($data['download'])) {
-                $columns = [
-                    'name' => 'Name',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'source' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
-            # Paginate results
+            # Get paginated records
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $notificationData = $query->orderByDesc('id')->paginate($perPage);
+            $sourceData = $query->orderByDesc('id')->paginate($perPage);
 
             # Return response
-            return Utility::apiSuccess('Source list fetched successfully', $notificationData, 200);
+            return Utility::apiSuccess('Source list fetched successfully', $sourceData);
+
         } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to fetch notifications', [
+            Log::error('Source fetch error: ' . $ex->getMessage(), ['trace' => $ex->getTraceAsString()]);
+            return Utility::apiError('Failed to fetch sources', [
                 'exception' => $ex->getMessage()
-            ]);
+            ], 500);
         }
     }
+
+
+
 
     public function deleteSource(Request $request)
     {

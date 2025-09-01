@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Vendor\Courier;
 
 use App\Http\Controllers\Controller;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use App\Helpers\Utility;
 use App\Models\Courier;
-use App\Exports\Export;
+use App\Exports\CourierExport;
 use App\Models\Branch;
 use Carbon\Carbon;
 use Exception;
@@ -96,7 +95,7 @@ class CourierController extends Controller
     public function getCourier(Request $request)
     {
         try {
-            # Get requested fields
+            # Request specific fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -108,32 +107,45 @@ class CourierController extends Controller
                 'branch_list'
             ]);
 
-            # Validate fields
+            # Download
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Name',
+                    'created_at' => 'Date',
+                ];
+                $filename = 'courier_' . now()->format('Ymd_His') . '.xlsx';
+                (new CourierExport($data, $columns))->queue("exports/{$filename}", 'public');
+
+                $fileUrl = url("storage/exports/{$filename}");
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => $fileUrl,
+                ]);
+            }
+
+            # Validation rule
             $validator = Validator::make($data, [
                 'branch_id' => 'nullable|integer|exists:branches,id',
                 'page' => 'nullable|integer|min:1',
                 'per_page' => 'nullable|integer|min:1|max:100',
             ]);
 
-
             # Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Get courier data
+            # Filter query
             $query = Courier::whereNull('deleted_at');
 
             if (!empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);
             }
 
-            # Courier name filter
             if (!empty($data['courier_name'])) {
                 $query->where('name', 'like', '%' . $data['courier_name'] . '%');
             }
 
-            # Date range filter
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
@@ -141,28 +153,20 @@ class CourierController extends Controller
                 ]);
             }
 
-            # Get data
-
-            if (!empty($data['download'])) {
-                $columns = [
-                    'name' => 'Name',
-                    'created_at' => 'Date',
-                ];
-
-                $filename = strtolower('Courier') . '_' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
+            # Paginated records
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $courierData = $query->orderBy('id', 'desc')->paginate($perPage);
 
-            # Return response
+            # Return resonse
             return Utility::apiSuccess('Courier data fetched', $courierData);
         } catch (Exception $ex) {
             Log::error('Courier fetch error: ' . $ex->getMessage());
-            return Utility::apiError('Failed to fetch couriers.', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Failed to fetch couriers.', [
+                'exception' => $ex->getMessage()
+            ], 500);
         }
     }
+
 
     public function deleteCourier(Request $request)
     {
