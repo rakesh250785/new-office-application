@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Configuration\Principal;
 
+use App\Exports\PrincipalExport;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -89,14 +90,10 @@ class PrincipalController extends Controller
                 'search',
             ]);
 
-            # Load query with branch relationship
+            # Load query with relationships
             $query = Principal::with([
-                'branch' => function ($q) {
-                    $q->select('id', 'name');
-                },
-                'principalType' => function ($q) {
-                    $q->select('id', 'type');
-                }
+                'branch:id,name',
+                'principalType:id,type',
             ])->whereNull('deleted_at');
 
             # Global free-text search
@@ -104,12 +101,8 @@ class PrincipalController extends Controller
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('type', 'like', "%$search%")
-                        ->orWhereHas('branch', function ($b) use ($search) {
-                            $b->where('name', 'like', "%$search%");
-                        })
-                        ->orWhereHas('principal_type', function ($b) use ($search) {
-                            $b->where('type', 'like', "%$search%");
-                        });
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"))
+                        ->orWhereHas('principalType', fn($p) => $p->where('type', 'like', "%$search%"));
                 });
             }
 
@@ -126,32 +119,41 @@ class PrincipalController extends Controller
                 ]);
             }
 
-            # Export logic
+            # ✅ Export logic
             if (!empty($data['download'])) {
                 $columns = [
-                    'name' => 'Principal Name',
-                    'principal.type' => 'Principal Type',
+                    'type' => 'Principal Name',
+                    'principalType.type' => 'Principal Type',
                     'branch.name' => 'Branch Name',
                     'created_at' => 'Date',
                 ];
 
-                $filename = strtolower('principal') . '_' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
+                $filename = 'principal_' . now()->format('Ymd_His') . '.xlsx';
+
+                # Use queued export (async like SourceExport)
+                (new PrincipalExport($data, $columns, Principal::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
             }
 
             # Pagination
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $PrincipalData = $query->orderByDesc('id')->paginate($perPage);
 
-            # Retunr response
-            return Utility::apiSuccess('List principal ', $PrincipalData, 200);
+            return Utility::apiSuccess('List principal', $PrincipalData, 200);
+
         } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Something went wrong in principal ', [
+            Log::error('Principal fetch error: ' . $ex->getMessage(), ['trace' => $ex->getTraceAsString()]);
+            return Utility::apiError('Something went wrong in principal', [
                 'exception' => $ex->getMessage()
             ]);
         }
     }
+
 
     public function deletePrincipal(Request $request)
     {
