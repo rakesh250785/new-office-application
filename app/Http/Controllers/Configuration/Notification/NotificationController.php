@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Configuration\Notification;
 
+use App\Exports\NotificationExport;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -82,8 +83,7 @@ class NotificationController extends Controller
     public function getNotification(Request $request)
     {
         try {
-
-            # Get specific fields
+            # Extract request data
             $data = $request->only([
                 'page',
                 'per_page',
@@ -94,10 +94,32 @@ class NotificationController extends Controller
                 'search',
             ]);
 
-            # Base query with branch relationship
-            $query = Notification::with('branch:id,name')->whereNull('deleted_at');
+            # Export handling
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Name',
+                    'email' => 'Email',
+                    'email_list' => 'Email List',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
 
-            # Apply free-text search
+                $filename = 'notification_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new NotificationExport($data, $columns, Notification::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+            # Base query with branch relationship
+            $query = Notification::with('branch:id,name')
+                ->whereNull('deleted_at');
+
+            # Free-text search
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
@@ -110,12 +132,12 @@ class NotificationController extends Controller
                 });
             }
 
-            # Filter by branches
+            # Branch filter
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Filter by date range
+            # Date filter
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
@@ -123,32 +145,22 @@ class NotificationController extends Controller
                 ]);
             }
 
-            # Export as Excel if requested
-            if (!empty($data['download'])) {
-                $columns = [
-                    'name' => 'Name',
-                    'email' => 'Email',
-                    'email_list' => 'Email List',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'notification_' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
-            # Paginate results
+            # Paginate response
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
-            # Return response
             return Utility::apiSuccess('Notification list fetched successfully', $notificationData, 200);
+
         } catch (Exception $ex) {
-            Log::error($ex);
+            Log::error('Notification fetch error: ' . $ex->getMessage(), [
+                'trace' => $ex->getTraceAsString()
+            ]);
             return Utility::apiError('Failed to fetch notifications', [
                 'exception' => $ex->getMessage()
             ]);
         }
     }
+
 
     public function deleteNotification(Request $request)
     {
