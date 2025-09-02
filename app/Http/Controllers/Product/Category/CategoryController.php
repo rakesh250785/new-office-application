@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Product\Category;
 
-use App\Exports\Export;
+use App\Exports\CategoryExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
-use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Category;
+use App\Models\Category as Categories;
 use App\Models\Parameter;
 use Exception;
 
@@ -59,7 +59,7 @@ class CategoryController extends Controller
             ];
 
             # Update or create category
-            $category = Category::updateOrCreate(
+            $category = Categories::updateOrCreate(
                 ['id' => $data['category_id'] ?? null],
                 $payload
             );
@@ -85,7 +85,6 @@ class CategoryController extends Controller
     public function getCategory(Request $request)
     {
         try {
-
             # Get specific fields
             $data = $request->only([
                 'page',
@@ -97,8 +96,31 @@ class CategoryController extends Controller
                 'search',
             ]);
 
-            # Get category info
-            $query = Category::with('branch:id,name')->whereNull('deleted_at');
+            # Export logic
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Category Name',
+                    'description' => 'Description',
+                    'parameter_fields' => 'Parameters',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'category_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new CategoryExport($data, $columns, Categories::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+
+            # Base query
+            $query = Categories::with('branch:id,name')
+                ->whereNull('deleted_at');
 
             # Search logic including parameter_name
             if (!empty($data['search'])) {
@@ -106,14 +128,11 @@ class CategoryController extends Controller
                 $paramIds = Parameter::where('parameter_name', 'like', "%$search%")
                     ->pluck('id')
                     ->toArray();
+
                 $query->where(function ($q) use ($search, $paramIds) {
                     $q->where('name', 'like', "%$search%")
                         ->orWhere('description', 'like', "%$search%")
-                        ->orWhereHas(
-                            'branch',
-                            fn($b) =>
-                            $b->where('name', 'like', "%$search%")
-                        );
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
 
                     if (!empty($paramIds)) {
                         foreach ($paramIds as $id) {
@@ -123,7 +142,7 @@ class CategoryController extends Controller
                 });
             }
 
-            # Filter branch list
+            # Branch filter
             if (!empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);
             }
@@ -132,50 +151,19 @@ class CategoryController extends Controller
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
-            }
-
-            # Export handling
-            if (!empty($data['download'])) {
-                $records = $query->get();
-                $paramIds = $records->flatMap(
-                    fn($row) =>
-                    explode(',', $row->parameter_field)
-                )->filter()->unique();
-                $paramMap = Parameter::whereIn('id', $paramIds)
-                    ->pluck('parameter_name', 'id');
-                $records->transform(function ($row) use ($paramMap) {
-                    $ids = array_map('trim', explode(',', $row->parameter_field));
-                    $row->parameter_fields = collect($ids)
-                        ->map(fn($id) => $paramMap[$id] ?? null)
-                        ->filter()
-                        ->implode(', ');
-                    return $row;
-                });
-
-                $columns = [
-                    'name' => 'Category Name',
-                    'description' => 'Description',
-                    'parameter_fields' => 'Parameters',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-
-                $filename = 'categories_' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($records, $columns), $filename);
             }
 
             # Paginated API response
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $paginator = $query->orderByDesc('id')->paginate($perPage);
-            $items = $paginator->getCollection();
 
-            # Extract parameter IDs and get parameter_fields 
-            $paramIds = $items->flatMap(
-                fn($row) =>
-                explode(',', $row->parameter_field)
-            )->filter()->unique();
+            # Transform parameter fields for API
+            $items = $paginator->getCollection();
+            $paramIds = $items->flatMap(fn($row) => explode(',', $row->parameter_field))
+                ->filter()
+                ->unique();
 
             $paramMap = Parameter::whereIn('id', $paramIds)->pluck('parameter_name', 'id');
 
@@ -189,7 +177,6 @@ class CategoryController extends Controller
                 return $row;
             });
 
-            # Return response
             return Utility::apiSuccess('Category list fetched successfully', $paginator, 200);
 
         } catch (Exception $ex) {
@@ -199,6 +186,8 @@ class CategoryController extends Controller
             ]);
         }
     }
+
+
 
     public function deleteCategory(Request $request)
     {
@@ -218,7 +207,7 @@ class CategoryController extends Controller
             }
 
             # Soft delete record
-            $deleted = Category::where('id', $data['id'])->delete();
+            $deleted = Categories::where('id', $data['id'])->delete();
 
             # Retunr if fail
             if (!$deleted) {
