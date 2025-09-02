@@ -93,20 +93,41 @@ class UspController extends Controller
                 'end_date',
                 'download',
                 'branch_list',
+                'principal_list',
+                'category_list',
                 'search',
             ]);
 
-            # Load query with branch relationship
+
+            # Async Export
+            if (!empty($data['download'])) {
+                $columns = [
+                    'usp_type' => 'USP Type',
+                    'packing_details' => 'Packing Details',
+                    'usp_brand' => 'USP Brand',
+                    'principal.type' => 'Principal',
+                    'categoryType.type' => 'Category',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'usp_' . now()->format('Ymd_His') . '.xlsx';
+
+                # Queue async export to avoid timeout/PDO issues
+                (new UspExport($data, $columns, Usp::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+            # Base query with relationships
             $query = Usp::with([
-                'branch' => function ($q) {
-                    $q->select('id', 'name');
-                },
-                'principal' => function ($q) {
-                    $q->select('id', 'type');
-                },
-                'categoryType' => function ($q) {
-                    $q->select('id', 'type');
-                }
+                'branch:id,name',
+                'principal:id,type',
+                'categoryType:id,type'
             ])->whereNull('deleted_at');
 
             # Global free-text search
@@ -116,22 +137,25 @@ class UspController extends Controller
                     $q->where('usp_type', 'like', "%$search%")
                         ->orWhere('packing_details', 'like', "%$search%")
                         ->orWhere('usp_brand', 'like', "%$search%")
-
-                        ->orWhereHas('branch', function ($b) use ($search) {
-                            $b->where('name', 'like', "%$search%");
-                        })
-                        ->orWhereHas('principal', function ($b) use ($search) {
-                            $b->where('type', 'like', "%$search%");
-                        })
-                        ->orWhereHas('categoryType', function ($b) use ($search) {
-                            $b->where('type', 'like', "%$search%");
-                        });
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"))
+                        ->orWhereHas('principal', fn($b) => $b->where('type', 'like', "%$search%"))
+                        ->orWhereHas('categoryType', fn($b) => $b->where('type', 'like', "%$search%"));
                 });
             }
 
             # Branch filter
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
+            }
+
+            # Principal filter
+            if (!empty($data['principal_list'])) {
+                $query->whereIn('principal_id', (array) $data['principal_list']);
+            }
+
+            # Category filter
+            if (!empty($data['category_list'])) {
+                $query->whereIn('category_id', (array) $data['category_list']);
             }
 
             # Date filter
@@ -142,35 +166,20 @@ class UspController extends Controller
                 ]);
             }
 
-            # Export logic
-            if (!empty($data['download'])) {
-                $columns = [
-                    'usp_type' => 'Usp Type',
-                    'packing_details' => 'Packing Details',
-                    'usp_brand' => 'USP Brand',
-                    'principal.type' => 'Principal',
-                    'categoryType.type' => 'Category Type',
-                    'branch.name' => 'Branch Name',
-                    'created_at' => 'Date',
-                ];
-
-                $filename = 'usp' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
-            # Pagination
+            # Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $usp = $query->orderByDesc('id')->paginate($perPage);
+            $uspData = $query->orderByDesc('id')->paginate($perPage);
 
-            # Retunr response
-            return Utility::apiSuccess('List Quotation Format', $usp, 200);
+            return Utility::apiSuccess('USP list fetched successfully', $uspData, 200);
+
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Something went wrong in usp', [
+            return Utility::apiError('Something went wrong in USP', [
                 'exception' => $ex->getMessage()
             ]);
         }
     }
+
 
     public function deleteUSP(Request $request)
     {
