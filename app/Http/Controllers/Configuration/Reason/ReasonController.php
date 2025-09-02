@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Configuration\Reason;
 
+use App\Exports\ReasonExport;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -73,8 +74,7 @@ class ReasonController extends Controller
     public function getReason(Request $request)
     {
         try {
-
-            # Get specific fields
+            # Extract filters
             $data = $request->only([
                 'page',
                 'per_page',
@@ -85,26 +85,45 @@ class ReasonController extends Controller
                 'search',
             ]);
 
+
+            # Export logic
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Reason Name',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'reason_' . now()->format('Ymd_His') . '.xlsx';
+
+                # Queue async export (no PDO serialization issues)
+                (new ReasonExport($data, $columns, Reason::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
             # Base query with branch relationship
             $query = Reason::with('branch:id,name')->whereNull('deleted_at');
 
-            # Apply free-text search
+            # Free-text search
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                        ->orWhereHas('branch', function ($b) use ($search) {
-                            $b->where('name', 'like', "%$search%");
-                        });
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
                 });
             }
 
-            # Filter by branches
+            # Branch filter
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Filter by date range
+            # Date filter
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
@@ -112,28 +131,17 @@ class ReasonController extends Controller
                 ]);
             }
 
-            # Export as Excel if requested
-            if (!empty($data['download'])) {
-                $columns = [
-                    'name' => 'Name',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'brand' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
-            # Paginate results
+            # Paginate
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $notificationData = $query->orderByDesc('id')->paginate($perPage);
+            $reasonData = $query->orderByDesc('id')->paginate($perPage);
 
-            # Return response
-            return Utility::apiSuccess('Reason list fetched successfully', $notificationData, 200);
+            return Utility::apiSuccess('Reason list fetched successfully', $reasonData, 200);
+
         } catch (Exception $ex) {
-            Log::error($ex);
-            return Utility::apiError('Failed to fetch notifications', [
+            Log::error('Reason fetch error: ' . $ex->getMessage(), ['trace' => $ex->getTraceAsString()]);
+            return Utility::apiError('Failed to fetch reasons', [
                 'exception' => $ex->getMessage()
-            ]);
+            ], 500);
         }
     }
 

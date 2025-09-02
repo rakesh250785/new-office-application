@@ -90,6 +90,28 @@ class PrincipalController extends Controller
                 'search',
             ]);
 
+            # Export logic
+            if (!empty($data['download'])) {
+                $columns = [
+                    'type' => 'Principal Name',
+                    'principalType.type' => 'Principal Type',
+                    'branch.name' => 'Branch Name',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'principal_' . now()->format('Ymd_His') . '.xlsx';
+
+                # Use queued export (async like SourceExport)
+                (new PrincipalExport($data, $columns, Principal::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+
             # Load query with relationships
             $query = Principal::with([
                 'branch:id,name',
@@ -116,27 +138,6 @@ class PrincipalController extends Controller
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay()
-                ]);
-            }
-
-            # ✅ Export logic
-            if (!empty($data['download'])) {
-                $columns = [
-                    'type' => 'Principal Name',
-                    'principalType.type' => 'Principal Type',
-                    'branch.name' => 'Branch Name',
-                    'created_at' => 'Date',
-                ];
-
-                $filename = 'principal_' . now()->format('Ymd_His') . '.xlsx';
-
-                # Use queued export (async like SourceExport)
-                (new PrincipalExport($data, $columns, Principal::class))
-                    ->queue("exports/{$filename}", 'public');
-
-                return Utility::apiSuccess('Export started. You will get a download link soon.', [
-                    'file' => $filename,
-                    'url' => url("storage/exports/{$filename}"),
                 ]);
             }
 
