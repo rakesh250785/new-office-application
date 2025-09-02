@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Product\Brand;
 
+use App\Exports\BrandExport;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -72,8 +73,6 @@ class BrandController extends Controller
     public function getBrand(Request $request)
     {
         try {
-
-            # Get specific fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -84,26 +83,40 @@ class BrandController extends Controller
                 'search',
             ]);
 
-            # Base query with branch relationship
+            # Export logic (async)
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Brand Name',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'brand_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new BrandExport($data, $columns, Brand::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+            # Normal listing
             $query = Brand::with('branch:id,name')->whereNull('deleted_at');
 
-            # Apply free-text search
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                        ->orWhereHas('branch', function ($b) use ($search) {
-                            $b->where('name', 'like', "%$search%");
-                        });
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
                 });
             }
 
-            # Filter by branches
             if (!empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);
             }
 
-            # Filter by date range
             if (!empty($data['start_date']) && !empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
@@ -111,30 +124,19 @@ class BrandController extends Controller
                 ]);
             }
 
-            # Export as Excel if requested
-            if (!empty($data['download'])) {
-                $columns = [
-                    'name' => 'Name',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'brand' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
-            # Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $notificationData = $query->orderByDesc('id')->paginate($perPage);
+            $brands = $query->orderByDesc('id')->paginate($perPage);
 
-            # Return response
-            return Utility::apiSuccess('Brand list fetched successfully', $notificationData, 200);
+            return Utility::apiSuccess('Brand list fetched successfully', $brands, 200);
+
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed to fetch notifications', [
+            return Utility::apiError('Failed to fetch brand list', [
                 'exception' => $ex->getMessage()
             ]);
         }
     }
+
 
     public function deleteBrand(Request $request)
     {
