@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Product\Parameter;
 
+use App\Exports\ParameterExport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
@@ -104,6 +105,27 @@ class ParameterController extends Controller
                 'search',
             ]);
 
+            # Export as Excel (async queue)
+            if (!empty($data['download'])) {
+                $columns = [
+                    'parameter_name' => 'Parameter Name',
+                    'column_name' => 'Column Name',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'parameter_' . now()->format('Ymd_His') . '.xlsx';
+
+                # Queue async export (safe for big data)
+                (new ParameterExport($data, $columns, Parameter::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
             # Base query with branch relationship
             $query = Parameter::with('branch:id,name')->whereNull('deleted_at');
 
@@ -121,7 +143,7 @@ class ParameterController extends Controller
 
             # Filter by branches
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
             # Filter by date range
@@ -132,31 +154,21 @@ class ParameterController extends Controller
                 ]);
             }
 
-            # Export as Excel if requested
-            if (!empty($data['download'])) {
-                $columns = [
-                    'parameter_name' => 'Parameter Name',
-                    'column_name' => 'Column Name',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'parameter' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
             # Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $notificationData = $query->orderByDesc('id')->paginate($perPage);
+            $parameterData = $query->orderByDesc('id')->paginate($perPage);
 
             # Return response
-            return Utility::apiSuccess('Notification list fetched successfully', $notificationData, 200);
+            return Utility::apiSuccess('Parameter list fetched successfully', $parameterData, 200);
+
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed to fetch notifications', [
+            return Utility::apiError('Failed to fetch parameters', [
                 'exception' => $ex->getMessage()
             ]);
         }
     }
+
 
     /**
      * Delete a parameter.
