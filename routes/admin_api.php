@@ -127,6 +127,9 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateProduct', [ProductController::class, 'addUpdateProduct']);
     Route::post('/getProduct', [ProductController::class, 'getProduct']);
     Route::post('/deleteProduct', [ProductController::class, 'deleteProduct']);
+    Route::post('/uploadProductFile', [ProductController::class, 'uploadProductFile']);
+    Route::post('/importStatus', [ProductController::class, 'importStatus']);
+
 
     # Users
     Route::post('/addUpdateUser', [UserController::class, 'addUpdateUser']);

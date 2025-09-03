@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers\Product\Product;
+use App\Imports\ProductUploadImport;
+use App\Models\ImportJob;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -11,6 +13,7 @@ use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception, Log;
 use App\Exports\Export;
+use App\Imports\HeaderCheckImport;
 
 class ProductController extends Controller
 {
@@ -276,4 +279,78 @@ class ProductController extends Controller
             return Utility::apiError('Error deleting product.', ['exception' => $ex->getMessage()], 500);
         }
     }
+
+    public function uploadProductFile(Request $request)
+    {
+        try {
+            # Validation error
+            $request->validate([
+                'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+                'upload_type' => 'required|in:price,quantity',
+            ]);
+
+            # Check header
+            $import = new HeaderCheckImport;
+            Excel::import($import, $request->file('file'));
+
+            $headers = array_map('strtolower', $import->headers);
+            $expected = ['part_no', $request->upload_type];
+            $missing = array_diff($expected, $headers);
+
+            # Return if error
+            if (!empty($missing)) {
+                return Utility::apiError("Invalid file header. Missing: " . implode(", ", $missing), 221);
+            }
+
+            # Get total file row
+            $totalRows = Excel::toCollection(new HeaderCheckImport, $request->file('file'))[0]->count();
+
+            # Miantain import
+            $job = ImportJob::create([
+                'file_name' => $request->file('file')->getClientOriginalName(),
+                'upload_type' => $request->upload_type,
+                'status' => 'pending',
+                'total_rows' => $totalRows,
+                'processed_rows' => 0,
+            ]);
+
+            # Process for import
+            Excel::import(new ProductUploadImport($request->upload_type, $job->id),
+                $request->file('file')
+            );
+            # Return response
+            return Utility::apiSuccess('File uploaded successfully. Processing started.', [
+                'job_id' => $job->id,
+            ]);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error uploadProductFile product.', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function importStatus($id)
+    {
+
+        try {
+            $job = ImportJob::find($id);
+
+            if (!$job) {
+                return response()->json([
+                    'code' => 404,
+                    'message' => 'Job not found',
+                ], 404);
+            }
+
+            return Utility::apiSuccess('File uploaded successfully. Processing started.', [
+                'status' => $job->status,
+                'processed_rows' => $job->processed_rows,
+                'total_rows' => $job->total_rows,
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('Error importStatus product.', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
 }
