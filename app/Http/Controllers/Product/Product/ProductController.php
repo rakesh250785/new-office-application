@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Product\Product;
+use App\Exports\ProductExport;
 use App\Imports\ProductUploadImport;
 use App\Models\ImportJob;
 use Maatwebsite\Excel\Facades\Excel;
@@ -12,8 +13,8 @@ use App\Models\Product;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception, Log;
-use App\Exports\Export;
 use App\Imports\HeaderCheckImport;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -48,7 +49,11 @@ class ProductController extends Controller
 
             # Validation rule
             $rules = [
-                'part_no' => 'required|string|unique:products,part_no' . ($data['part_no'] ? ',' . $data['part_no'] . ',part_no' : ''),
+                'part_no' => [
+                    'required',
+                    'string',
+                    Rule::unique('products', 'part_no')->ignore($data['product_id']), // ignore current id
+                ],
                 'hsn_no' => 'required|string',
                 'principal_id' => 'required',
                 'category_id' => 'required',
@@ -63,6 +68,7 @@ class ProductController extends Controller
                 'specification' => 'required',
                 'product_id' => 'nullable|numeric|exists:products,id',
             ];
+
 
             # Apply validation rule
             $validator = Validator::make($data, $rules, [
@@ -149,6 +155,38 @@ class ProductController extends Controller
             # Request specific fields
             $data = $request->only(['search', 'download', 'per_page', 'start_date', 'end_date', 'principal_list', 'brand_list', 'category_list']);
 
+            if (!empty($data['download'])) {
+                $columns = [
+                    'part_no' => 'Part No.',
+                    'hsn_no' => 'HSN No.',
+                    'price' => 'Price',
+                    'uom' => 'UOM',
+                    'igst_rate' => 'IGST Rate',
+                    'discount' => 'Discount',
+                    'description' => 'Description',
+                    'additional_description' => 'Additional Description',
+                    'category.name' => 'Category',
+                    'brand.name' => 'Brand',
+                    'principal.type' => 'Principal',
+                    'quantity' => 'Quantity',
+                    'price_updated_at' => 'Price Updated Date',
+                    'quantity_updated_at' => 'Quantity Updated Date',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'product_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new ProductExport($data, $columns, Product::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+
             # Get products
             $query = Product::with('principal:id,type', 'category:id,name', 'brand:id,name')
                 ->whereNull('deleted_at')
@@ -191,16 +229,16 @@ class ProductController extends Controller
 
             # Apply individual filters
             if (!empty($data['principal_list'])) {
-                $query->where('principal_id', $data['principal_list']);
+                $query->whereIn('principal_id', $data['principal_list']);
             }
             if (!empty($data['category_list'])) {
-                $query->where('category_id', $data['category_list']);
+                $query->whereIn('category_id', $data['category_list']);
             }
             if (!empty($data['brand_list'])) {
-                $query->where('brand_id', $data['brand_list']);
+                $query->whereIn('brand_id', $data['brand_list']);
             }
             if (!empty($data['branch_list'])) {
-                $query->where('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', $data['branch_list']);
             }
 
             # Date filter
@@ -209,29 +247,6 @@ class ProductController extends Controller
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay()
                 ]);
-            }
-
-            if (!empty($data['download'])) {
-                $columns = [
-                    'part_no' => 'Part No.',
-                    'hsn_no' => 'HSN No.',
-                    'price' => 'Price',
-                    'uom' => 'UOM',
-                    'igst_rate' => 'IGST Rate',
-                    'discount' => 'Discount',
-                    'description' => 'Description',
-                    'additional_description' => 'Additional Description',
-                    'category.name' => 'Category',
-                    'brand.name' => 'Brand',
-                    'principal.name' => 'Principal',
-                    'quantity' => 'Quantity',
-                    'price_updated_at' => 'Price Updated Date',
-                    'quantity_updated_at' => 'Quantity Updated Date',
-                    'branch.name' => 'Branch Name',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'product' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
             }
 
             $perPage = (int) ($data['per_page'] ?? 15);
@@ -315,7 +330,8 @@ class ProductController extends Controller
             ]);
 
             # Process for import
-            Excel::import(new ProductUploadImport($request->upload_type, $job->id),
+            Excel::import(
+                new ProductUploadImport($request->upload_type, $job->id),
                 $request->file('file')
             );
             # Return response

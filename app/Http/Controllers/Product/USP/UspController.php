@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Product\USP;
 
+use App\Exports\UspExport;
 use App\Models\Usp;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Exports\Export;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
