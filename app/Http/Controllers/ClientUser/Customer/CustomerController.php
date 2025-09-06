@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\ClientUser\Customer;
+use App\Exports\CustomerExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Country;
@@ -116,7 +117,7 @@ class CustomerController extends Controller
     public function getCustomer(Request $request)
     {
         try {
-            # Extract filters and pagination
+            # Extract incoming inputs
             $data = $request->only([
                 'page',
                 'per_page',
@@ -128,7 +129,45 @@ class CustomerController extends Controller
                 'search',
             ]);
 
-            # Base query with relationships
+            $page = max((int) ($data['page'] ?? 1), 1);
+            $perPage = max((int) ($data['per_page'] ?? config('constant.per_page', 15)), 1);
+            $search = isset($data['search']) ? trim($data['search']) : '';
+            $startDate = $data['start_date'] ?? null;
+            $endDate = $data['end_date'] ?? null;
+
+            if (!empty($data['download'])) {
+                $columns = [
+                    'customer_name' => 'Customer Name',
+                    'company_name' => 'Company Name',
+                    'email_id' => 'Email',
+                    'mobile_no' => 'Mobile',
+                    'landline_no' => 'Landline',
+                    'address' => 'Address',
+                    'city' => 'City',
+                    'pin_code' => 'Pincode',
+                    'gst_number' => 'GST Number',
+                    'other_state' => 'Other State',
+                    'classification.name' => 'Classification',
+                    'owner.name' => 'Owner',
+                    'state.name' => 'State',
+                    'country.name' => 'Country',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Created At',
+                ];
+
+                $filename = 'customer_' . now()->format('Ymd_His') . '.xlsx';
+
+                # queue the export (uses same pattern as your Owner example)
+                (new CustomerExport($data, $columns, Customer::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
+            # Build base query with relationships
             $query = Customer::with([
                 'owner:id,name',
                 'branch:id,name',
@@ -137,48 +176,55 @@ class CustomerController extends Controller
                 'country:id,name'
             ])->whereNull('deleted_at');
 
-            # Filter by owner ID
+            # Apply date filters (created_at)
+            if (!empty($startDate)) {
+                $query->whereDate('created_at', '>=', $startDate);
+            }
+            if (!empty($endDate)) {
+                $query->whereDate('created_at', '<=', $endDate);
+            }
+
+            # Apply branch filter
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Filter by owner ID
+            # Apply owner filter
             if (!empty($data['owner_list'])) {
-                $query->whereIn('owner_id', $data['owner_list']);
+                $query->whereIn('owner_id', (array) $data['owner_list']);
             }
 
-            # Search across multiple columns + relationships
-            if (!empty($data['search'])) {
-                $search = '%' . $data['search'] . '%';
-                $query->where(function ($q) use ($search) {
-                    $q->where('customer_name', 'like', $search)
-                        ->orWhere('company_name', 'like', $search)
-                        ->orWhere('address', 'like', $search)
-                        ->orWhere('city', 'like', $search)
-                        ->orWhere('pin_code', 'like', $search)
-                        ->orWhere('gst_number', 'like', $search)
-                        ->orWhere('mobile_no', 'like', $search)
-                        ->orWhere('landline_no', 'like', $search)
-                        ->orWhere('other_state', 'like', $search)
-                        ->orWhereHas('classification', fn($b) => $b->where('name', 'like', $search))
-                        ->orWhereHas('country', fn($b) => $b->where('name', 'like', $search))
-                        ->orWhereHas('state', fn($b) => $b->where('name', 'like', $search))
-                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', $search))
-                        ->orWhereHas('owner', fn($o) => $o->where('name', 'like', $search));
+            # Search across fields & relations
+            if ($search !== '') {
+                $like = '%' . $search . '%';
+                $query->where(function ($q) use ($like) {
+                    $q->where('customer_name', 'like', $like)
+                        ->orWhere('company_name', 'like', $like)
+                        ->orWhere('address', 'like', $like)
+                        ->orWhere('city', 'like', $like)
+                        ->orWhere('pin_code', 'like', $like)
+                        ->orWhere('gst_number', 'like', $like)
+                        ->orWhere('mobile_no', 'like', $like)
+                        ->orWhere('landline_no', 'like', $like)
+                        ->orWhere('other_state', 'like', $like)
+                        ->orWhereHas('classification', fn($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('country', fn($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('state', fn($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('owner', fn($o) => $o->where('name', 'like', $like));
                 });
             }
 
-            # Execute query
-            $perPage = $data['per_page'] ?? config('constant.per_page', 15);
-            $customer = $query->orderByDesc('id')->paginate($perPage);
+            # Paginate and return
+            $customer = $query->orderByDesc('id')->paginate($perPage, ['*'], 'page', $page);
 
-            # Return response
             return Utility::apiSuccess('Customer list fetched successfully.', $customer, 200);
         } catch (Exception $ex) {
             Log::error($ex);
             return Utility::apiError('Failed to fetch customers.', ['exception' => $ex->getMessage()], 500);
         }
     }
+
 
     public function deleteCustomer(Request $request)
     {
