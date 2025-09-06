@@ -256,5 +256,197 @@ class LandingDshboardController extends Controller
         }
     }
 
+    public function topCompaniesByWeekday(Request $request)
+    {
+        try {
+
+            # Limit
+            $limit = (int) $request->input('limit', 7);
+            $now = Carbon::now();
+
+            # Date filter
+            $from = $now->copy()->startOfMonth()->toDateTimeString();
+            $to = $now->copy()->endOfMonth()->toDateTimeString();
+
+            # Fetch counts grouped by company_id and weekday (DAYOFWEEK: 1=Sun,2=Mon,...7=Sat)
+            $rows = DB::table('orders')
+                ->select(
+                    'orders.company_id',
+                    DB::raw('DAYOFWEEK(orders.created_at) AS dow'),
+                    DB::raw('COUNT(*) AS cnt')
+                )
+                ->whereBetween('orders.created_at', [$from, $to])
+                ->groupBy('orders.company_id', 'dow')
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return Utility::apiSuccess('TopCompaniesByWeekday', [
+                    'categories' => ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                    'series' => [],
+                ], 200);
+            }
+
+            # Aggregate into [company_id => [dow => cnt, ...], total => totalCount]
+            $companies = [];
+            foreach ($rows as $r) {
+                $cid = (int) $r->company_id;
+                $dow = (int) $r->dow;
+                $cnt = (int) $r->cnt;
+
+                if (!isset($companies[$cid])) {
+                    $companies[$cid] = ['tot' => 0, 'by_dow' => array_fill(1, 7, 0)];
+                }
+                $companies[$cid]['by_dow'][$dow] = $cnt;
+                $companies[$cid]['tot'] += $cnt;
+            }
+
+            # Sort companies by total desc and pick top N
+            uasort($companies, function ($a, $b) {
+                return $b['tot'] <=> $a['tot'];
+            });
+            $top = array_slice($companies, 0, $limit, true);
+
+            # Get company names
+            $companyIds = array_keys($top);
+            $names = DB::table('customers')
+                ->whereIn('id', $companyIds ?: [0])
+                ->pluck('company_name', 'id')
+                ->toArray();
+
+            # Convert to Apex-friendly series: data must be Mon..Sun order.
+            # DAYOFWEEK: 1=Sun,2=Mon,...7=Sat -> map to Mon..Sun indices
+            $series = [];
+            foreach ($top as $cid => $data) {
+                $byDow = $data['by_dow'];
+                $mon = $byDow[2] ?? 0;
+                $tue = $byDow[3] ?? 0;
+                $wed = $byDow[4] ?? 0;
+                $thu = $byDow[5] ?? 0;
+                $fri = $byDow[6] ?? 0;
+                $sat = $byDow[7] ?? 0;
+                $sun = $byDow[1] ?? 0;
+
+                $series[] = [
+                    'name' => $names[$cid] ?? 'Unknown',
+                    'data' => [$mon, $tue, $wed, $thu, $fri, $sat, $sun],
+                    'total' => $data['tot'],
+                ];
+            }
+
+            # Optionally return top N list and categories
+            $response = [
+                'categories' => ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                'series' => $series,
+            ];
+
+            # Return api response
+            return Utility::apiSuccess('TopCompaniesByWeekday', $response, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('TopCompaniesByWeekday', [
+                'status' => false,
+                'code' => 500,
+                'message' => 'Error computing top companies by weekday',
+                'error' => $ex->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function topPrincipalsMonthWise(Request $request)
+    {
+        try {
+            # Limit and month
+            $limit = (int) $request->input('limit', 5);
+            $now = Carbon::now();
+            $year = (int) $now->year;
+            $currentMonth = (int) $now->month;
+
+            # Find top principals by orders in the current month (use order_details.principal_id)
+            $topThisMonth = DB::table('order_details')
+                ->join('orders', 'order_details.order_id', '=', 'orders.id')
+                ->select('order_details.principal_id', DB::raw('COUNT(*) as tot'))
+                ->whereYear('orders.created_at', $year)
+                ->whereMonth('orders.created_at', $currentMonth)
+                ->groupBy('order_details.principal_id')
+                ->orderByDesc('tot')
+                ->limit($limit)
+                ->pluck('tot', 'principal_id')
+                ->toArray();
+
+            # if no data, return empty series
+            if (empty($topThisMonth)) {
+                return Utility::apiSuccess('TopPrincipalsMonthWise', [
+                    'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    'series' => [],
+                ], 200);
+            }
+
+            $principalIds = array_keys($topThisMonth);
+
+            # Fetch month-wise counts for those principals for the current year (group by MONTH(orders.created_at))
+            $rows = DB::table('order_details')
+                ->join('orders', 'order_details.order_id', '=', 'orders.id')
+                ->select(
+                    'order_details.principal_id',
+                    DB::raw('MONTH(orders.created_at) as m'),
+                    DB::raw('COUNT(*) as cnt')
+                )
+                ->whereIn('order_details.principal_id', $principalIds)
+                ->whereYear('orders.created_at', $year)
+                ->groupBy('order_details.principal_id', 'm')
+                ->get();
+
+            # Build a map principal_id => [month => cnt]
+            $map = [];
+            foreach ($rows as $r) {
+                $pid = (int) $r->principal_id;
+                $m = (int) $r->m; // 1..12
+                $cnt = (int) $r->cnt;
+                if (!isset($map[$pid])) {
+                    $map[$pid] = array_fill(1, 12, 0);
+                }
+                $map[$pid][$m] = $cnt;
+            }
+
+            # Get principal names (if you have principals table). Fallback to id.
+            $names = DB::table('principals')
+                ->whereIn('id', $principalIds)
+                ->pluck('type', 'id')
+                ->toArray();
+
+            # Build the series in the order of topThisMonth (preserve ranking)
+            $series = [];
+            foreach ($topThisMonth as $pid => $tot) {
+                $monthly = isset($map[$pid]) ? $map[$pid] : array_fill(1, 12, 0);
+                $data = [];
+                for ($m = 1; $m <= 12; $m++) {
+                    $data[] = (int) ($monthly[$m] ?? 0);
+                }
+
+                $series[] = [
+                    'name' => $names[$pid] ?? ('Principal ' . $pid),
+                    'data' => $data,
+                    'total' => (int) $tot,
+                ];
+            }
+
+            $response = [
+                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                'series' => $series,
+            ];
+
+            # Return response
+            return Utility::apiSuccess('TopPrincipalsMonthWise', $response, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('TopPrincipalsMonthWise', [
+                'status' => false,
+                'code' => 500,
+                'message' => 'Error computing top principals month-wise',
+                'error' => $ex->getMessage(),
+            ], 500);
+        }
+    }
+
 
 }

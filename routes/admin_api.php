@@ -204,5 +204,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('todayQuotationKpi', [LandingDshboardController::class, 'todayQuotationKpi']);
     Route::post('todayPrincipalOrdersKpi', [LandingDshboardController::class, 'todayPrincipalOrdersKpi']);
     Route::post('todayPartialOrdersKpi', [LandingDshboardController::class, 'todayPartialOrdersKpi']);
+    Route::post('topCompaniesByWeekday', [LandingDshboardController::class, 'topCompaniesByWeekday']);
+    Route::post('topPrincipalsMonthWise', [LandingDshboardController::class, 'topPrincipalsMonthWise']);
 });
 
