@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\ClientUser\User;
 
 use App\Exports\Export;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessUser;
@@ -134,7 +135,7 @@ class UserController extends Controller
     {
         try {
             # Get specific fields
-            $data = $request->only(['search', 'per_page', 'branch_list', 'download']);
+            $data = $request->only(['search', 'per_page', 'branch_list', 'download', 'start_date', 'end_date']);
 
             # Base query with branch relation
             $query = User::with('branch:id,name');
@@ -157,6 +158,14 @@ class UserController extends Controller
                             $q2->where('name', 'like', "%{$search}%");
                         });
                 });
+            }
+
+            # Filter by date range
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
             }
 
             # Export logic
