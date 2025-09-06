@@ -25,6 +25,7 @@ class Product extends Model
         'quantity_updated_at',
         'branch_id',
         'user_id',
+        'image'
     ];
 
     public function getCreatedAtAttribute($value)
