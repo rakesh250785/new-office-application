@@ -139,7 +139,7 @@ class PartialOrderController extends Controller
             $pdfFilePath = "order_" . time() . "_" . date('dmy') . ".pdf";
 
             # Check if order fully completed
-            $checkOrderStatus = OrderDetails::whereNull('deleted_at')->where('order_id', $orderId)->where('partial_order_status', 0)->count();
+            $checkOrderStatus = OrderDetails::whereNull('deleted_at')->where('order_id', $orderId)->where('partial_order_status', 1)->count();
 
             if ($checkOrderStatus == 0) {
                 return Utility::apiError('Order has been fully completed', [], 221);
@@ -287,7 +287,7 @@ class PartialOrderController extends Controller
                     'quantity' => $item['quantity'] ?? 0,
                     'total' => $totalAmount,
                     'status' => 0,
-                    'partial_order_status' => 1,
+                    'partial_order_status' => $balanceQty == 0 ? 0 : 1,
                     'notes' => $item['notes'] ?? null,
                     'product_specification' => $item['product_specification'] ?? null,
                     'delivery_date_id' => $item['delivery_date_id'] ?? 0,
@@ -333,7 +333,7 @@ class PartialOrderController extends Controller
             $updateCloseOrder = Order::where(['id' => $orderId, 'unique_order_no' => $data['unique_order_no']])->update([
                 'customer_order_no' => $data['customer_order_no'],
                 'is_order_closed' => '1',
-                'is_shipment_pending' => 0,
+                'is_shipment_pending' => '0',
                 'pdf_name' => $pdfFilePath,
             ]);
 

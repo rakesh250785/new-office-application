@@ -294,7 +294,7 @@ class FullOrderController extends Controller
                     'quantity' => $item['quantity'],
                     'total' => $totalAmount,
                     'status' => 0,
-                    'partial_order_status' => 0,
+                    'partial_order_status' => (int) $item['quantity'] == 1 ? 0 : 1,
                     'notes' => $item['notes'] ?? null,
                     'product_specification' => $item['product_specification'] ?? null,
                     'delivery_date_id' => $item['delivery_date_id'] ?? 0,

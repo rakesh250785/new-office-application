@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dashboard\LandingDshboardController;
 use App\Http\Controllers\Authentication\ProfileController;
 use App\Http\Controllers\ClientUser\Customer\CustomerController;
 use App\Http\Controllers\ClientUser\Owner\OwnerController;
@@ -198,5 +199,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
     Route::get('/download-export/{filename}', [ExportController::class, 'downloadExport']);
 
+    # Landing dashboard
+    Route::post('todayOrdersKpi', [LandingDshboardController::class, 'todayOrdersKpi']);
+    Route::post('todayQuotationKpi', [LandingDshboardController::class, 'todayQuotationKpi']);
+    Route::post('todayPrincipalOrdersKpi', [LandingDshboardController::class, 'todayPrincipalOrdersKpi']);
+    Route::post('todayPartialOrdersKpi', [LandingDshboardController::class, 'todayPartialOrdersKpi']);
 });
 
