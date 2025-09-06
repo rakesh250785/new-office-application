@@ -448,5 +448,82 @@ class LandingDshboardController extends Controller
         }
     }
 
+    public function topProductsCurrentMonth(Request $request)
+    {
+        try {
+
+            # Limit and date filter
+            $limit = (int) $request->input('limit', 5);
+            $now = Carbon::now();
+            $year = (int) $now->year;
+            $month = (int) $now->month;
+
+            # Order deatails
+            $rows = DB::table('order_details')
+                ->join('orders', 'order_details.order_id', '=', 'orders.id')
+                ->select('order_details.product_id', DB::raw('COALESCE(SUM(order_details.total), 0) as total'))
+                ->whereYear('orders.created_at', $year)
+                ->whereMonth('orders.created_at', $month)
+                ->groupBy('order_details.product_id')
+                ->orderByDesc('total')
+                ->limit($limit)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return Utility::apiSuccess('TopProductsCurrentMonth', [
+                    'labels' => [],
+                    'series' => [],
+                    'totals' => [],
+                    'percentages' => [],
+                ], 200);
+            }
+
+            # product id
+            $productIds = $rows->pluck('product_id')->toArray();
+            $names = DB::table('products')
+                ->whereIn('id', $productIds)
+                ->pluck('part_no', 'id')
+                ->toArray();
+
+
+            $labels = [];
+            $series = [];
+            $totals = [];
+
+            foreach ($rows as $r) {
+                $pid = (int) $r->product_id;
+                $amount = (int) $r->total;
+                $labels[] = $names[$pid] ?? ('Product ' . $pid);
+                $series[] = $amount;
+                $totals[] = ['product_id' => $pid, 'name' => $names[$pid] ?? ('Product ' . $pid), 'value' => $amount];
+            }
+
+            $sum = array_sum($series);
+            $percentages = array_map(function ($v) use ($sum) {
+                return $sum > 0 ? round(($v / $sum) * 100, 2) : 0;
+            }, $series);
+
+            # Response
+            $response = [
+                'labels' => $labels,
+                'series' => $series,
+                'percentages' => $percentages,
+                'totals' => $totals,
+            ];
+
+            # Return response
+            return Utility::apiSuccess('TopProductsCurrentMonth', $response, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+            return Utility::apiError('TopProductsCurrentMonth', [
+                'status' => false,
+                'code' => 500,
+                'message' => 'Error computing top products current month',
+                'error' => $ex->getMessage(),
+            ], 500);
+        }
+    }
+
+
 
 }

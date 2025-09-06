@@ -167,7 +167,6 @@ class FullOrderController extends Controller
 
             $OrderDate = Carbon::now()->format('Y-m-d 00:00:00');
 
-
             # Prepare order data
             $orderData = [
                 'unique_quotation_no' => $data['unique_quotation_no'],
@@ -279,7 +278,7 @@ class FullOrderController extends Controller
                     'quotation_id' => $data['quotation_id'],
                     'unique_order_no' => $orderNumber,
                     'unique_quotation_no' => $data['unique_quotation_no'],
-                    'product_id' => $data['product_id'] ?? 0,
+                    'product_id' => $item['product_id'] ?? 0,
                     'principal_id' => $item['principal_id'] ?? null,
                     'part_no' => $item['part_no'] ?? '',
                     'description' => $item['description'] ?? '',
