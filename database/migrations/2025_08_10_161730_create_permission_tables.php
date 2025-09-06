@@ -22,8 +22,8 @@ return new class extends Migration {
         Schema::create($tableNames['permissions'], function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->bigIncrements('id');
-            $table->string('module_name', 100); 
-            $table->string('name', 191);       
+            $table->string('module_name', 100);
+            $table->string('name', 191);
             $table->string('guard_name', 191);
             $table->timestamps();
 
@@ -39,6 +39,9 @@ return new class extends Migration {
             }
             $table->string('name', 191);
             $table->string('guard_name', 191);
+            $table->integer('branch_id');
+
+
             $table->timestamps();
             if ($teams || config('permission.testing')) {
                 $table->unique([$columnNames['team_foreign_key'], 'name', 'guard_name']);

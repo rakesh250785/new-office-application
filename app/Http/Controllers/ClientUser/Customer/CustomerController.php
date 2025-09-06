@@ -4,13 +4,10 @@ namespace App\Http\Controllers\ClientUser\Customer;
 use App\Exports\CustomerExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
-use App\Models\Country;
-use App\Models\States;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use Exception, Log;
-
 use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller

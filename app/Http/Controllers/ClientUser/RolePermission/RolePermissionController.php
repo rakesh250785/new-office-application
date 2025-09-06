@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\ClientUser\RolePermission;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -9,6 +10,8 @@ use App\Models\User;
 use App\Helpers\Utility;
 use Validator;
 use Exception, Log;
+use Illuminate\Support\Facades\Auth;
+
 class RolePermissionController extends Controller
 {
 
@@ -39,7 +42,8 @@ class RolePermissionController extends Controller
             # Update or create
             $role = Role::updateOrCreate(
                 ['id' => $data['id']],
-                ['name' => $data['name']]
+                ['name' => $data['name'], 'branch_id' => Auth::user()['branch_id']],
+
             );
 
             # Map permission
@@ -90,6 +94,9 @@ class RolePermissionController extends Controller
                 'page',
                 'per_page',
                 'search',
+                'start_date',
+                'end_date',
+                'branch_list',
             ]);
 
             # Config pagination
@@ -103,6 +110,19 @@ class RolePermissionController extends Controller
             if (!empty($data['search'])) {
                 $search = $data['search'];
                 $query->where('name', 'like', "%{$search}%");
+            }
+
+            # Filter by date range
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            # Filter by branch_id
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', $data['branch_list']);
             }
 
             # Get records
