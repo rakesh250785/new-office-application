@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\ClientUser\Owner;
 
+use App\Exports\OwnerExport;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Owner;
 use Illuminate\Http\Request;
-use App\Exports\Export;
 use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
@@ -86,6 +85,25 @@ class OwnerController extends Controller
                 'search',
             ]);
 
+            # Export logic (async)
+            if (!empty($data['download'])) {
+                $columns = [
+                    'name' => 'Name',
+                    'description' => 'Description',
+                    'branch.name' => 'Branch',
+                    'created_at' => 'Date',
+                ];
+                $filename = 'owner_' . now()->format('Ymd_His') . '.xlsx';
+
+                (new OwnerExport($data, $columns, Owner::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
+
             # Base query with branch relationship
             $query = Owner::with('branch:id,name')->whereNull('deleted_at');
 
@@ -113,19 +131,7 @@ class OwnerController extends Controller
                     Carbon::parse($data['end_date'])->endOfDay()
                 ]);
             }
-
-            # Export as Excel if requested
-            if (!empty($data['download'])) {
-                $columns = [
-                    'name' => 'Name',
-                    'description' => 'Description',
-                    'branch.name' => 'Branch',
-                    'created_at' => 'Date',
-                ];
-                $filename = 'owner' . now()->format('Ymd_His') . '.xlsx';
-                return Excel::download(new Export($query, $columns), $filename);
-            }
-
+             
             # Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $notificationData = $query->orderByDesc('id')->paginate($perPage);
