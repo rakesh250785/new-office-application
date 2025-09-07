@@ -9,11 +9,11 @@ class QuotationDetail extends Model
     protected $table = "quotation_details";
     protected $primaryKey = 'id';
     protected $fillable = [
-        'order_id', //
-        'order_type', //
+        'order_id', 
+        'order_type', 
         'quotation_id',
         'unique_quotation_no',
-        'unique_order_no', //
+        'unique_order_no',
         'product_id',
         'principal_id',
         'part_no',
@@ -28,8 +28,8 @@ class QuotationDetail extends Model
         'balance_quantity',
         'total',
         'notes',
-        'status', //
-        'partial_order_status', //
+        'status',
+        'partial_order_status',
         'product_specification',
         'delivery_date_id',
         'deleted_at',

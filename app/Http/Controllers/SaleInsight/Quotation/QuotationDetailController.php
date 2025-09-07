@@ -340,16 +340,17 @@ class QuotationDetailController extends Controller
     public function getQuotation(Request $request)
     {
         try {
-            // Collect only the relevant inputs
             $data = $request->only([
                 'per_page',
                 'branch_list',
                 'owner_list',
                 'currency_list',
-                'quotation_status_list',
                 'principal_list',
-                'date_range',
-                'search.value'
+                'status_list',
+                'search',
+                'start_date',
+                'end_date',
+                'download',
             ]);
 
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
@@ -362,7 +363,6 @@ class QuotationDetailController extends Controller
                 'owner_id',
                 'currency_id',
                 'company_id',
-                'branch_id',
                 'total_amount',
                 'created_at',
                 'billing_state_id',
@@ -381,77 +381,50 @@ class QuotationDetailController extends Controller
                 'shipping_state_id',
                 'shipping_landline',
                 'product_description',
-                'lead_from',
                 'notification_id',
                 'quotation_type_id',
-                'owner_id',
                 'payment_term_condition',
                 'date',
                 'prepard_by',
                 'pdf_name',
                 'enq_ref',
-                'currency_id',
-                'company_id',
                 'delivery_date_id',
-                'total_amount',
-                'is_order_pending'
+                'is_order_pending',
             ])
                 ->with([
                     'quotationDetails',
+                    'quotationDetails.principal:id,type',
                     'companyDetails:id,company_name,email_id',
                     'branchDetails:id,name',
                     'currencyDetails:id,code',
-                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at'
+                    'ownerDetails:id,name',
+                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
                 ])
                 ->whereNull('deleted_at')
-                ->when(
-                    !empty($data['branch_list']),
-                    fn($q) =>
-                    $q->whereIn('branch_id', $data['branch_list'])
-                )
-                ->when(
-                    !empty($data['owner_list']),
-                    fn($q) =>
-                    $q->whereIn('owner_id', $data['owner_list'])
-                )
-                ->when(
-                    !empty($data['currency_list']),
-                    fn($q) =>
-                    $q->whereIn('currency_id', $data['currency_list'])
-                )
-                ->when(
-                    !empty($data['quotation_status_list']),
-                    fn($q) =>
-                    $q->whereIn('is_order_pending', $data['quotation_status_list'])
-                )
-                ->when(
-                    !empty($data['principal_list']),
-                    fn($q) =>
-                    $q->whereIn('principal_id', $data['principal_list'])
-                )
-                ->when(!empty($data['date_range']), function ($q) use ($data) {
-                    [$from, $to] = explode('|', $data['date_range']);
-                    $q->whereBetween('dt_date_created', [
-                        Carbon::parse($from)->startOfDay(),
-                        Carbon::parse($to)->endOfDay()
+                ->when(!empty($data['branch_list']), fn($q) => $q->whereIn('branch_id', (array) $data['branch_list']))
+                ->when(!empty($data['owner_list']), fn($q) => $q->whereIn('owner_id', (array) $data['owner_list']))
+                ->when(!empty($data['currency_list']), fn($q) => $q->whereIn('currency_id', (array) $data['currency_list']))
+                ->when(!empty($data['status_list']), fn($q) => $q->whereIn('is_order_pending', (array) $data['status_list']))
+                ->when(!empty($data['principal_list']), fn($q) => $q->whereHas('quotationDetails', fn($d) => $d->whereIn('principal_id', (array) $data['principal_list'])))
+                ->when(!empty($data['start_date']) && !empty($data['end_date']), function ($q) use ($data) {
+                    $q->whereBetween('created_at', [
+                        Carbon::parse($data['start_date'])->startOfDay(),
+                        Carbon::parse($data['end_date'])->endOfDay()
                     ]);
                 })
-                ->when(!empty($data['search.value']), function ($q) use ($data) {
-                    $term = $data['search.value'];
+                ->when(!empty($data['search']), function ($q) use ($data) {
+                    $term = $data['search'];
                     $q->where(function ($sub) use ($term) {
-                        $sub->where('in_quot_num', 'like', "%{$term}%")
-                            ->orWhere('fl_nego_amt', 'like', "%{$term}%")
+                        $sub->where('unique_quotation_no', 'like', "%{$term}%")
                             ->orWhere('lead_from', 'like', "%{$term}%")
-                            ->orWhereHas(
-                                'customer',
-                                fn($c) =>
-                                $c->where('st_com_name', 'like', "%{$term}%")
-                            )
-                            ->orWhereHas(
-                                'quotationDetails',
-                                fn($d) =>
-                                $d->where('st_part_no', 'like', "%{$term}%")
-                            );
+                            ->orWhere('total_amount', 'like', "%{$term}%")
+                            ->orWhereHas('ownerDetails', fn($o) => $o->where('name', 'like', "%{$term}%"))
+                            ->orWhereHas('currencyDetails', fn($c) => $c->where('code', 'like', "%{$term}%"))
+                            ->orWhereHas('companyDetails', fn($c) => $c->where('customer_name', 'like', "%{$term}%"))
+                            ->orWhereHas('quotationDetails', function ($d) use ($term) {
+                                $d->where('part_no', 'like', "%{$term}%")
+                                    ->orWhereHas('principal', fn($p) => $p->where('type', 'like', "%{$term}%"));
+                            });
                     });
                 })
                 ->orderByDesc('id');
