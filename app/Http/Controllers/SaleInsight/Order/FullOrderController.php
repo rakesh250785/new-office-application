@@ -409,16 +409,18 @@ class FullOrderController extends Controller
     public function getOrder(Request $request)
     {
         try {
-            // Collect only the relevant inputs
             $data = $request->only([
                 'per_page',
                 'branch_list',
                 'owner_list',
                 'currency_list',
-                'quotation_status_list',
                 'principal_list',
-                'date_range',
-                'search.value'
+                'status_list',
+                'search',
+                'start_date',
+                'end_date',
+                'download',
+                'page',
             ]);
 
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
@@ -432,7 +434,6 @@ class FullOrderController extends Controller
                 'owner_id',
                 'currency_id',
                 'company_id',
-                'branch_id',
                 'total_amount',
                 'created_at',
                 'billing_state_id',
@@ -451,94 +452,103 @@ class FullOrderController extends Controller
                 'shipping_state_id',
                 'shipping_landline',
                 'product_description',
-                'lead_from',
                 'notification_id',
                 'quotation_type_id',
-                'owner_id',
                 'payment_term_condition',
                 'date',
                 'prepard_by',
                 'pdf_name',
                 'enq_ref',
-                'currency_id',
-                'company_id',
                 'delivery_date_id',
-                'total_amount',
                 'customer_order_no',
                 'overdues_value',
                 'overdue_no',
                 'courier_id',
-                'is_order_closed'
+                'is_order_closed',
             ])
                 ->with([
                     'orderDetails',
+                    'orderDetails.principal:id,type',
                     'companyDetails:id,company_name,customer_name,email_id',
                     'branchDetails:id,name',
                     'currencyDetails:id,code',
+                    'ownerDetails:id,name',
                     'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at'
                 ])
-                ->whereNull('deleted_at')
-                ->when(
-                    !empty($data['branch_list']),
-                    fn($q) =>
-                    $q->whereIn('branch_id', $data['branch_list'])
-                )
-                ->when(
-                    !empty($data['owner_list']),
-                    fn($q) =>
-                    $q->whereIn('owner_id', $data['owner_list'])
-                )
-                ->when(
-                    !empty($data['currency_list']),
-                    fn($q) =>
-                    $q->whereIn('currency_id', $data['currency_list'])
-                )
-                ->when(
-                    !empty($data['quotation_status_list']),
-                    fn($q) =>
-                    $q->whereIn('is_order_pending', $data['quotation_status_list'])
-                )
-                ->when(
-                    !empty($data['principal_list']),
-                    fn($q) =>
-                    $q->whereIn('principal_id', $data['principal_list'])
-                )
-                ->when(!empty($data['date_range']), function ($q) use ($data) {
-                    [$from, $to] = explode('|', $data['date_range']);
-                    $q->whereBetween('dt_date_created', [
-                        Carbon::parse($from)->startOfDay(),
-                        Carbon::parse($to)->endOfDay()
-                    ]);
-                })
-                ->when(!empty($data['search.value']), function ($q) use ($data) {
-                    $term = $data['search.value'];
-                    $q->where(function ($sub) use ($term) {
-                        $sub->where('in_quot_num', 'like', "%{$term}%")
-                            ->orWhere('fl_nego_amt', 'like', "%{$term}%")
-                            ->orWhere('lead_from', 'like', "%{$term}%")
-                            ->orWhereHas(
-                                'customer',
-                                fn($c) =>
-                                $c->where('st_com_name', 'like', "%{$term}%")
-                            )
-                            ->orWhereHas(
-                                'quotationDetails',
-                                fn($d) =>
-                                $d->where('st_part_no', 'like', "%{$term}%")
-                            );
-                    });
-                })
-                ->orderByDesc('id');
+                ->whereNull('deleted_at');
 
-            $quotationData = $query->paginate($perPage);
+            // Apply array filters (if provided)
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', (array) $data['branch_list']);
+            }
 
-            return Utility::apiSuccess('list_quotation', $quotationData, 200);
+            if (!empty($data['owner_list'])) {
+                $query->whereIn('owner_id', (array) $data['owner_list']);
+            }
 
+            if (!empty($data['currency_list'])) {
+                $query->whereIn('currency_id', (array) $data['currency_list']);
+            }
+
+            if (!empty($data['status_list'])) {
+                // filter on is_order_pending (kept consistent with getQuotation)
+                $query->whereIn('is_order_closed', (array) $data['status_list']);
+            }
+
+            if (!empty($data['principal_list'])) {
+                $query->whereHas('orderDetails', function ($d) use ($data) {
+                    $d->whereIn('principal_id', (array) $data['principal_list']);
+                });
+            }
+
+            // Date filter (start_date & end_date) - same style as getQuotation
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
+            }
+
+            // Search filter - mirror getQuotation searching behaviour
+            if (!empty($data['search'])) {
+                $term = $data['search'];
+                $query->where(function ($sub) use ($term) {
+                    $sub->where('unique_order_no', 'like', "%{$term}%")
+                        ->orWhere('unique_quotation_no', 'like', "%{$term}%")
+                        ->orWhere('customer_order_no', 'like', "%{$term}%")
+                        ->orWhere('lead_from', 'like', "%{$term}%")
+                        ->orWhereHas('ownerDetails', function ($o) use ($term) {
+                            $o->where('name', 'like', "%{$term}%");
+                        })
+                        ->orWhereHas('currencyDetails', function ($c) use ($term) {
+                            $c->where('code', 'like', "%{$term}%");
+                        })
+                        ->orWhereHas('companyDetails', function ($c) use ($term) {
+                            $c->where('company_name', 'like', "%{$term}%")
+                                ->orWhere('customer_name', 'like', "%{$term}%");
+                        })
+                        ->orWhereHas('orderDetails', function ($d) use ($term) {
+                            $d->where('part_no', 'like', "%{$term}%")
+                                ->orWhereHas('principal', function ($p) use ($term) {
+                                    $p->where('type', 'like', "%{$term}%");
+                                });
+                        });
+                });
+            }
+
+            $query->orderByDesc('id');
+
+            // Pagination (if download requested you might want different handling — kept consistent with getQuotation)
+            $orderData = $query->paginate($perPage);
+
+            return Utility::apiSuccess('list_order', $orderData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed getQuotation server error', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Failed getOrder server error', ['exception' => $ex->getMessage()], 500);
         }
     }
+
+
 
 
     public function deletePendingQuotation($id)
