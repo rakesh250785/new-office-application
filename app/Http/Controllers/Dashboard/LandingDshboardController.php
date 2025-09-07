@@ -355,87 +355,61 @@ class LandingDshboardController extends Controller
     public function topPrincipalsMonthWise(Request $request)
     {
         try {
-            # Limit and month
-            $limit = (int) $request->input('limit', 5);
             $now = Carbon::now();
             $year = (int) $now->year;
-            $currentMonth = (int) $now->month;
 
-            # Find top principals by orders in the current month (use order_details.principal_id)
-            $topThisMonth = DB::table('order_details')
-                ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                ->select('order_details.principal_id', DB::raw('COUNT(*) as tot'))
-                ->whereYear('orders.created_at', $year)
-                ->whereMonth('orders.created_at', $currentMonth)
-                ->groupBy('order_details.principal_id')
-                ->orderByDesc('tot')
-                ->limit($limit)
-                ->pluck('tot', 'principal_id')
-                ->toArray();
+            $months = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec'
+            ];
 
-            # if no data, return empty series
-            if (empty($topThisMonth)) {
-                return Utility::apiSuccess('TopPrincipalsMonthWise', [
-                    'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    'series' => [],
-                ], 200);
-            }
+            $counts = [];
+            $topPrincipalNames = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $top = DB::table('order_details')
+                    ->join('orders', 'order_details.order_id', '=', 'orders.id')
+                    ->leftJoin('principals', 'order_details.principal_id', '=', 'principals.id')
+                    ->select(
+                        'order_details.principal_id',
+                        DB::raw('COALESCE(principals.type, principals.type) as principal_name'),
+                        DB::raw('COUNT(*) as cnt')
+                    )
+                    ->whereYear('orders.created_at', $year)
+                    ->whereMonth('orders.created_at', $m)
+                    ->groupBy('order_details.principal_id', 'principal_name')
+                    ->orderByDesc('cnt')
+                    ->first();
 
-            $principalIds = array_keys($topThisMonth);
-
-            # Fetch month-wise counts for those principals for the current year (group by MONTH(orders.created_at))
-            $rows = DB::table('order_details')
-                ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                ->select(
-                    'order_details.principal_id',
-                    DB::raw('MONTH(orders.created_at) as m'),
-                    DB::raw('COUNT(*) as cnt')
-                )
-                ->whereIn('order_details.principal_id', $principalIds)
-                ->whereYear('orders.created_at', $year)
-                ->groupBy('order_details.principal_id', 'm')
-                ->get();
-
-            # Build a map principal_id => [month => cnt]
-            $map = [];
-            foreach ($rows as $r) {
-                $pid = (int) $r->principal_id;
-                $m = (int) $r->m; // 1..12
-                $cnt = (int) $r->cnt;
-                if (!isset($map[$pid])) {
-                    $map[$pid] = array_fill(1, 12, 0);
+                if ($top) {
+                    $counts[] = (int) $top->cnt;
+                    $topPrincipalNames[] = $top->principal_name ?? ('Principal ' . $top->principal_id);
+                } else {
+                    $counts[] = 0;
+                    $topPrincipalNames[] = null;
                 }
-                $map[$pid][$m] = $cnt;
-            }
-
-            # Get principal names (if you have principals table). Fallback to id.
-            $names = DB::table('principals')
-                ->whereIn('id', $principalIds)
-                ->pluck('type', 'id')
-                ->toArray();
-
-            # Build the series in the order of topThisMonth (preserve ranking)
-            $series = [];
-            foreach ($topThisMonth as $pid => $tot) {
-                $monthly = isset($map[$pid]) ? $map[$pid] : array_fill(1, 12, 0);
-                $data = [];
-                for ($m = 1; $m <= 12; $m++) {
-                    $data[] = (int) ($monthly[$m] ?? 0);
-                }
-
-                $series[] = [
-                    'name' => $names[$pid] ?? ('Principal ' . $pid),
-                    'data' => $data,
-                    'total' => (int) $tot,
-                ];
             }
 
             $response = [
-                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                'series' => $series,
+                'categories' => $months,
+                'series' => [
+                    [
+                        'name' => 'Top Principal Orders',
+                        'data' => $counts,
+                    ],
+                ],
+                'top_principals' => $topPrincipalNames,
             ];
 
-            # Return response
             return Utility::apiSuccess('TopPrincipalsMonthWise', $response, 200);
         } catch (Exception $ex) {
             Log::error($ex);
@@ -447,6 +421,8 @@ class LandingDshboardController extends Controller
             ], 500);
         }
     }
+
+
 
     public function topProductsCurrentMonth(Request $request)
     {
@@ -523,7 +499,4 @@ class LandingDshboardController extends Controller
             ], 500);
         }
     }
-
-
-
 }

@@ -268,7 +268,7 @@ class QuotationDetailController extends Controller
                     $productList[] = [
                         'quotation_id' => $quotationId,
                         'unique_quotation_no' => $quotationNumber,
-                        'product_id' => $data['product_id'] ?? 0,
+                        'product_id' => $item['product_id'] ?? 0,
                         'principal_id' => $item['principal_id'] ?? null,
                         'part_no' => $item['part_no'] ?? '',
                         'description' => $item['description'] ?? '',
