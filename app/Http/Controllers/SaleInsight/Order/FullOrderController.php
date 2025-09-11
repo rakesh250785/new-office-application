@@ -49,7 +49,7 @@ class FullOrderController extends Controller
                 "billing_address",
                 "billing_city",
                 "billing_state_id",
-                "billing_mobile",
+                "billing_mobile",   
                 "billing_email",
                 "billing_landline",
                 "billing_pin_code",

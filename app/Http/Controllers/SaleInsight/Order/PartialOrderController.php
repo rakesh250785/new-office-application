@@ -403,10 +403,10 @@ class PartialOrderController extends Controller
                 'branch_list',
                 'owner_list',
                 'currency_list',
-                'quotation_status_list',
                 'principal_list',
-                'date_range',
-                'search.value'
+                'start_date',
+                'end_date',
+                'search'
             ]);
 
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
@@ -480,37 +480,39 @@ class PartialOrderController extends Controller
                     $q->whereIn('currency_id', $data['currency_list'])
                 )
                 ->when(
-                    !empty($data['quotation_status_list']),
-                    fn($q) =>
-                    $q->whereIn('is_order_pending', $data['quotation_status_list'])
-                )
-                ->when(
                     !empty($data['principal_list']),
                     fn($q) =>
                     $q->whereIn('principal_id', $data['principal_list'])
                 )
-                ->when(!empty($data['date_range']), function ($q) use ($data) {
-                    [$from, $to] = explode('|', $data['date_range']);
-                    $q->whereBetween('dt_date_created', [
-                        Carbon::parse($from)->startOfDay(),
-                        Carbon::parse($to)->endOfDay()
+                ->when(!empty($data['start_date']) && !empty($data['end_date']), function ($q) use ($data) {
+                    $q->whereBetween('created_at', [
+                        Carbon::parse($data['start_date'])->startOfDay(),
+                        Carbon::parse($data['end_date'])->endOfDay()
                     ]);
                 })
-                ->when(!empty($data['search.value']), function ($q) use ($data) {
-                    $term = $data['search.value'];
+                ->when(!empty($data['search']), function ($q) use ($data) {
+                    $term = $data['search'];
                     $q->where(function ($sub) use ($term) {
-                        $sub->where('in_quot_num', 'like', "%{$term}%")
-                            ->orWhere('fl_nego_amt', 'like', "%{$term}%")
-                            ->orWhere('lead_from', 'like', "%{$term}%")
+                        $sub->where('unique_quotation_no', 'like', "%{$term}%")
+                            ->orWhere('unique_order_no', 'like', "%{$term}%")
+                            ->orWhere('unique_partial_order_no', 'like', "%{$term}%")
                             ->orWhereHas(
-                                'customer',
+                                'companyDetails',
                                 fn($c) =>
-                                $c->where('st_com_name', 'like', "%{$term}%")
+                                $c->where('customer_name', 'like', "%{$term}%")
                             )
                             ->orWhereHas(
-                                'quotationDetails',
+                                'orderDetails',
                                 fn($d) =>
-                                $d->where('st_part_no', 'like', "%{$term}%")
+                                $d->where('part_no', 'like', "%{$term}%")
+                                    ->orWhere('hsn_code', 'like', "%{$term}%")
+                                    ->orWhere('description', 'like', "%{$term}%")
+                                    ->orWhere('in_stock', 'like', "%{$term}%")
+                                    ->orWhere('send_qty', 'like', "%{$term}%")
+                                    ->orWhere('balance_quantity', 'like', "%{$term}%")
+                                    ->orWhere('total', 'like', "%{$term}%")
+                                    ->orWhere('quantity', 'like', "%{$term}%")
+                                    ->orWhere('net_price', 'like', "%{$term}%")
                             );
                     });
                 })

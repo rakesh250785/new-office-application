@@ -36,5 +36,10 @@ class PartialOrderDetails extends Model
         'deleted_at',
     ];
 
+    public function productDetails()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
 }
 

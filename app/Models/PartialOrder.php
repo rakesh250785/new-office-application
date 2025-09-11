@@ -109,11 +109,6 @@ class PartialOrder extends Model
         return $this->belongsTo(Principal::class, 'principal_id');
     }
 
-    public function productDetails()
-    {
-        return $this->belongsTo(Product::class, 'principal_id');
-    }
-
     public function pendingQuotationDetails()
     {
         return $this->hasOne(PendingQuotation::class, 'quotation_id', 'id');
