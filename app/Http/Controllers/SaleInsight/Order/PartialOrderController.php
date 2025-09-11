@@ -402,6 +402,7 @@ class PartialOrderController extends Controller
                 'per_page',
                 'branch_list',
                 'owner_list',
+                'branch_list',
                 'currency_list',
                 'principal_list',
                 'start_date',
@@ -484,6 +485,7 @@ class PartialOrderController extends Controller
                     fn($q) =>
                     $q->whereIn('principal_id', $data['principal_list'])
                 )
+
                 ->when(!empty($data['start_date']) && !empty($data['end_date']), function ($q) use ($data) {
                     $q->whereBetween('created_at', [
                         Carbon::parse($data['start_date'])->startOfDay(),
@@ -496,6 +498,8 @@ class PartialOrderController extends Controller
                         $sub->where('unique_quotation_no', 'like', "%{$term}%")
                             ->orWhere('unique_order_no', 'like', "%{$term}%")
                             ->orWhere('unique_partial_order_no', 'like', "%{$term}%")
+                            ->orWhere('customer_order_no', 'like', "%{$term}%")
+
                             ->orWhereHas(
                                 'companyDetails',
                                 fn($c) =>
