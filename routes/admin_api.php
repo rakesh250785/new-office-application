@@ -6,6 +6,7 @@ use App\Http\Controllers\ClientUser\Customer\CustomerController;
 use App\Http\Controllers\ClientUser\Owner\OwnerController;
 use App\Http\Controllers\ClientUser\User\UserController;
 use App\Http\Controllers\Configuration\Notification\NotificationController;
+use App\Http\Controllers\NotificationPush\NotificationPushController;
 use App\Http\Controllers\Configuration\Principal\PrincipalController;
 use App\Http\Controllers\Configuration\QuotationFormat\QuotationFormatController;
 use App\Http\Controllers\Configuration\Reason\ReasonController;
@@ -207,5 +208,14 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('topCompaniesByWeekday', [LandingDshboardController::class, 'topCompaniesByWeekday']);
     Route::post('topPrincipalsMonthWise', [LandingDshboardController::class, 'topPrincipalsMonthWise']);
     Route::post('topProductsCurrentMonth', [LandingDshboardController::class, 'topProductsCurrentMonth']);
+
+    # Notification
+
+    Route::post('notifications', [NotificationPushController::class, 'notifications']);
+    Route::post('markRead', [NotificationPushController::class, 'markRead']);
+    Route::post('markAllRead', [NotificationPushController::class, 'markAllRead']);
+    Route::post('notifications/stream', [NotificationPushController::class, 'stream']);
+    Route::post('pollNotifications', [NotificationPushController::class, 'pollNotifications']);
+
 });
 

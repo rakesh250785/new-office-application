@@ -5,8 +5,11 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class Notification extends Model
+class NotificationEmail extends Model
 {
+
+    protected $table = "notification_emails";
+
     protected $fillable = [
         'name',
         'email',
@@ -18,6 +21,8 @@ class Notification extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    
 
     public function getCreatedAtAttribute($value)
     {

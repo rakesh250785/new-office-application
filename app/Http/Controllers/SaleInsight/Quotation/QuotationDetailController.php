@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\SaleInsight\Quotation;
 
 use App\Models\ReasonType;
+use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\EntityCreated;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Config;
@@ -98,7 +101,7 @@ class QuotationDetailController extends Controller
                 'shipping_landline' => 'required|string|max:15',
                 'company_id' => 'required|integer|exists:customers,id',
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
-                'notification_id' => 'required|integer|exists:notifications,id',
+                'notification_id' => 'required|integer|exists:notification_emails,id',
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
@@ -662,7 +665,6 @@ class QuotationDetailController extends Controller
                     'notify_group' => 'required',
                     'select_owner' => 'required',
                     'auto_pop_addr' => 'required',
-                    'auto_pop_state' => 'required',
                     'auto_pop_city' => 'required',
                     'auto_pop_pincod' => 'required',
                     'auto_pop_email' => 'required',

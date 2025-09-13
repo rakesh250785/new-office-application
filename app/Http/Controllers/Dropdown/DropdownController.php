@@ -10,7 +10,7 @@ use App\Models\Category;
 use App\Models\Classification;
 use App\Models\Courier;
 use App\Models\Customer;
-use App\Models\Notification;
+use App\Models\NotificationEmail;
 use App\Models\OrderReason;
 use App\Models\OrderStatus;
 use App\Models\Parameter;
@@ -193,7 +193,7 @@ class DropdownController extends Controller
     {
         try {
             # Get currency
-            $notifiaction = Notification::pluck('name', 'id')->toArray();
+            $notifiaction = NotificationEmail::pluck('name', 'id')->toArray();
 
             # Return response
             return Utility::apiSuccess('DD getNotificationDD', $notifiaction, 200);

@@ -6,7 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use App\Observers\RolePermissionObserver;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\PermissionRegistrar;
+use App\Models\Quotation;
+use App\Observers\QuotationObserver;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -24,5 +25,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Role::observe(RolePermissionObserver::class);
         Permission::observe(RolePermissionObserver::class);
+
+        Quotation::observe(classes: QuotationObserver::class);
+        // repeat for Order, PartialOrder, Invoice
     }
 }

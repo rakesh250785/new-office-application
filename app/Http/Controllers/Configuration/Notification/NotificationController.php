@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
+use App\Models\NotificationEmail;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Exports\Export;
@@ -59,7 +59,7 @@ class NotificationController extends Controller
             ];
 
             # Create or update record
-            $notification = Notification::updateOrCreate(
+            $notification = NotificationEmail::updateOrCreate(
                 ['id' => $data['notification_id'] ?? null],
                 $payload
             );
@@ -106,7 +106,7 @@ class NotificationController extends Controller
 
                 $filename = 'notification_' . now()->format('Ymd_His') . '.xlsx';
 
-                (new NotificationExport($data, $columns, Notification::class))
+                (new NotificationExport($data, $columns, NotificationEmail::class))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [
@@ -116,7 +116,7 @@ class NotificationController extends Controller
             }
 
             # Base query with branch relationship
-            $query = Notification::with('branch:id,name')
+            $query = NotificationEmail::with('branch:id,name')
                 ->whereNull('deleted_at');
 
             # Free-text search
@@ -180,7 +180,7 @@ class NotificationController extends Controller
             }
 
             # Soft delete record
-            $deleted = Notification::where('id', $data['id'])->delete();
+            $deleted = NotificationEmail::where('id', $data['id'])->delete();
 
             # Retunr if fail
             if (!$deleted) {
