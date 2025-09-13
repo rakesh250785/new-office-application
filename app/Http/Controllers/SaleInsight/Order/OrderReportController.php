@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SaleInsight\Order;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -18,74 +19,95 @@ class OrderReportController extends Controller
     public function getOrderReport(Request $request)
     {
         try {
-            # Get specific fields
+            # Accept the filters
             $params = $request->only([
-                'branch_id',
-                'date_range',
+                'branch_list',
+                'owner_list',
+                'currency_list',
+                'principal_list',
+                'start_date',
+                'end_date',
                 'search',
                 'per_page',
                 'page'
             ]);
 
-            # Validation rule
+            # Validation rules
             $validator = Validator::make($params, [
-                'branch_id' => 'nullable|integer',
+                'branch_list' => 'nullable|array',
+                'branch_list.*' => 'integer',
+                'owner_list' => 'nullable|array',
+                'owner_list.*' => 'integer',
+                'currency_list' => 'nullable|array',
+                'currency_list.*' => 'integer',
+                'principal_list' => 'nullable|array',
+                'principal_list.*' => 'integer',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
                 'date_range' => 'nullable|string',
                 'search' => 'nullable|string',
                 'per_page' => 'nullable|integer|min:1',
                 'page' => 'nullable|integer|min:1',
             ]);
 
-            # Return validation error
+            # Return validation return
             if ($validator->fails()) {
                 return Utility::apiError('Invalid filters', $validator->errors(), 422);
             }
 
-            # Get order report
+            # Build base query
             $query = Order::with(['customer', 'details', 'quotation', 'owner'])
                 ->whereNull('deleted_at')
                 ->orderByDesc('id');
 
-            # Get permission based branch filter
-            if (!Auth::user()->hasPermission('branch_all')) {
-                $query->where('in_branch_id', Auth::user()->branch_id);
+            # Apply filters (arrays are expected from frontend; cast to array to be safe)
+            if (!empty($params['branch_list'])) {
+                $query->whereIn('branch_id', (array) $params['branch_list']);
             }
 
-            # Filter branch
-            if (!empty($params['branch_id'])) {
-                $query->where('in_branch_id', $params['branch_id']);
+            if (!empty($params['owner_list'])) {
+                $query->whereIn('owner_id', (array) $params['owner_list']);
             }
 
-            # Filter date range
-            if (!empty($params['date_range'])) {
-                [$from, $to] = explode('|', $params['date_range']);
-                $query->whereBetween('dt_created', [
-                    date('Y-m-d', strtotime($from)),
-                    date('Y-m-d', strtotime($to . ' +1 day')),
-                ]);
+            if (!empty($params['currency_list'])) {
+                $query->whereIn('currency_id', (array) $params['currency_list']);
             }
 
-            # Filter search term
-            if (!empty($params['search'])) {
-                $search = $params['search'];
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('customer', function ($qc) use ($search) {
-                        $qc->where('name', 'like', "%{$search}%");
-                    })->orWhere('unique_order_id', 'like', "%{$search}%")
-                        ->orWhere('customer_order_no', 'like', "%{$search}%");
+            if (!empty($params['principal_list'])) {
+                $query->whereHas('details', function ($q) use ($params) {
+                    $q->whereIn('principal_id', (array) $params['principal_list']);
                 });
             }
 
-            # Define pagination
-            $perPage = $params['per_page'] ?? 10;
+            # Date range handling:
+            if (!empty($params['start_date']) && !empty($params['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($params['start_date'])->startOfDay(),
+                    Carbon::parse($params['end_date'])->endOfDay()
+                ]);
+            }
+
+            if (!empty($params['search'])) {
+                $search = trim($params['search']);
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('customer', function ($qc) use ($search) {
+                        $qc->where('customer_name', 'like', "%{$search}%");
+                    })
+                        ->orWhere('unique_order_no', 'like', "%{$search}%")
+                        ->orWhere('customer_order_no', 'like', "%{$search}%")
+                        ->orWhere('lead_from', 'like', "%{$search}%");
+                });
+            }
+
+            # Pagination
+            $perPage = $params['per_page'] ?? config('constant.per_page', 10);
             $result = $query->paginate($perPage);
 
-            # Return response
-            return Utility::apiSuccess('Order report fetched', $result);
-
+            return Utility::apiSuccess('Order report fetched', $result, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed fetching order report', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Failed fetching order report', ['exception' => $ex->getMessage()], 500);
         }
     }
+
 }

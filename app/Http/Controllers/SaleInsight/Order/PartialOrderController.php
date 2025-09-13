@@ -483,9 +483,10 @@ class PartialOrderController extends Controller
                 ->when(
                     !empty($data['principal_list']),
                     fn($q) =>
-                    $q->whereIn('principal_id', $data['principal_list'])
+                    $q->whereHas('orderDetails', function ($d) use ($data) {
+                        $d->whereIn('principal_id', (array) $data['principal_list']);
+                    })
                 )
-
                 ->when(!empty($data['start_date']) && !empty($data['end_date']), function ($q) use ($data) {
                     $q->whereBetween('created_at', [
                         Carbon::parse($data['start_date'])->startOfDay(),

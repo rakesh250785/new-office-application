@@ -83,19 +83,52 @@ class InvoiceController extends Controller
         try {
 
             # Request specific fields
-            $data = $request->only(['per_page', 'search', 'date_range']);
+            $data = $request->only([
+                'branch_list',
+                'owner_list',
+                'currency_list',
+                'principal_list',
+                'start_date',
+                'end_date',
+                'search',
+                'per_page',
+                'page'
+            ]);
 
             # Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
 
-            # Date range filter
-            if (!empty($data['date_range'])) {
-                $dates = explode('|', $data['date_range']);
-                $from_date = (new Carbon($dates[0]))->startOfDay();
-                $to_date = (new Carbon($dates[1]))->endOfDay();
-                $query->whereBetween('created_at', [$from_date, $to_date]);
+            # Apply filters (arrays are expected from frontend; cast to array to be safe)
+            if (!empty($data['branch_list'])) {
+                $query->whereIn('branch_id', (array) $data['branch_list']);
+            }
+
+            if (!empty($data['owner_list'])) {
+                $query->whereHas('customerDetails.owner', function ($q) use ($data) {
+                    $q->whereIn('id', (array) $data['owner_list']);
+                });
+            }
+
+            if (!empty($data['currency_list'])) {
+                $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
+                    $q->whereIn('currency_id', (array) $data['currency_list']);
+                });
+            }
+
+            if (!empty($data['principal_list'])) {
+                $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
+                    $q->whereIn('principal_id', (array) $data['principal_list']);
+                });
+            }
+
+            # Date range handling:
+            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay()
+                ]);
             }
 
             # Search filter
