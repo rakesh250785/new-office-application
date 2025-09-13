@@ -780,16 +780,25 @@ class QuotationDetailController extends Controller
 
             # Update quotation reason
             $exitingReasonType = ReasonType::select('id', 'code')->where('id', $data['reason_status_id'])->first();
-            $updateReasonStatus = PendingQuotation::where('quotation_id', $data['quotation_id'])
-                ->where('unique_quotation_no', $data['unique_quotation_no'])->update([
-                        'reason' => \DB::raw("CONCAT(reason, ', {$data['reason']}')"),
-                        'last_updated_at' => Carbon::parse($data['current_follow_date'])->format('Y-m-d H:i:s'),
-                        'reason_status_id' => $data['reason_status_id'],
-                        'status_code' => $exitingReasonType['code']
-                    ]);
+            $pending = PendingQuotation::where('quotation_id', $data['quotation_id'])
+                ->where('unique_quotation_no', $data['unique_quotation_no'])
+                ->first();
+
+            if ($pending) {
+                // replicate your CONCAT behaviour in PHP (safer vs raw DB concat)
+                $pending->reason = $pending->reason
+                    ? $pending->reason . ', ' . $data['reason']
+                    : $data['reason'];
+
+                $pending->last_updated_at = Carbon::parse($data['current_follow_date'])->format('Y-m-d H:i:s');
+                $pending->reason_status_id = $data['reason_status_id'];
+                $pending->status_code = $exitingReasonType['code'];
+
+                $pending->save();
+            }
 
             # Return if fail
-            if (!$updateReasonStatus) {
+            if (!$pending) {
                 return Utility::apiError('Failed to update quotation status or reason', [], 500);
             }
 

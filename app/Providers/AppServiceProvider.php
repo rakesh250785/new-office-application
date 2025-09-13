@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\PendingQuotation;
+use App\Observers\PendingQuotationObserver;
 use Illuminate\Support\ServiceProvider;
 use App\Observers\RolePermissionObserver;
 use Spatie\Permission\Models\Role;
@@ -26,7 +28,11 @@ class AppServiceProvider extends ServiceProvider
         Role::observe(RolePermissionObserver::class);
         Permission::observe(RolePermissionObserver::class);
 
-        Quotation::observe(classes: QuotationObserver::class);
+        Quotation::observe(QuotationObserver::class);
+        PendingQuotation::observe(PendingQuotationObserver::class);
+
+
+
         // repeat for Order, PartialOrder, Invoice
     }
 }
