@@ -7,6 +7,7 @@ use App\Models\PendingQuotation;
 use App\Models\Quotation;
 use App\Observers\QuotationObserver;
 use App\Notifications\EntityCreated;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -38,14 +39,15 @@ class PendingQuotationObserver
 
         $status = $pendingQuotation->status_code ?? null;
         $branchName = Branch::findOrFail($recipients->branch_id)->name;
-        Notification::send($recipients, new EntityCreated('quotation', $pendingQuotation->id, [
+        Notification::send($recipients, new EntityCreated('quotation_status', $pendingQuotation->id, [
             'amount' => $pendingQuotation->total_amount,
             'status' => $status,
             'branch' => $branchName,
-            'created_at' => $pendingQuotation->created_at,
+            'created_at' => Carbon::parse($pendingQuotation->created_at)->format('d-m-Y h:i:s A'),
             'created_by' => Auth::user()->name,
             'message' => 'Quotation Status Update',
             'quotation_no' => $pendingQuotation->unique_quotation_no,
+            'type' => 'quotation_status',
         ]));
     }
 
@@ -59,8 +61,6 @@ class PendingQuotationObserver
         $recipients = Auth::user();
         Log::info('PendingQuotation updated fired for id: ' . $pendingQuotation);
 
-
-
         // Example for Quotation. Repeat for Order, PartialOrder, Invoice (change model names).
         // Choose recipients. Example: users with role 'admin' in same tenant
         $recipients = Auth::user();
@@ -68,14 +68,15 @@ class PendingQuotationObserver
 
         $status = $pendingQuotation->status_code ?? null;
         $branchName = Branch::findOrFail($recipients->branch_id)->name;
-        Notification::send($recipients, new EntityCreated('quotation', $pendingQuotation->id, [
+        Notification::send($recipients, new EntityCreated('quotation_status', $pendingQuotation->id, [
             'amount' => $pendingQuotation->total_amount,
             'status' => $status,
             'branch' => $branchName,
-            'created_at' => $pendingQuotation->created_at,
+            'created_at' => Carbon::parse($pendingQuotation->created_at)->format('d-m-Y h:i:s A'),
             'created_by' => Auth::user()->name,
             'message' => 'Quotation Status Update',
             'quotation_no' => $pendingQuotation->unique_quotation_no,
+            'type' => 'quotation_status',
         ]));
     }
 

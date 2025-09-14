@@ -38,7 +38,7 @@ class NotificationController extends Controller
                 'email' => [
                     'required',
                     'email',
-                    Rule::unique('notifications', 'email')->ignore($data['notification_id'] ?? null),
+                    Rule::unique('notifications_email', 'email')->ignore($data['notification_id'] ?? null),
                 ],
                 'email_list' => 'required|string',
                 'branch_id' => 'required|integer|exists:branches,id',

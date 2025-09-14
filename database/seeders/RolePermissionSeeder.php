@@ -88,13 +88,13 @@ class RolePermissionSeeder extends Seeder
             foreach ($permissions as $permission) {
                 Permission::firstOrCreate(
                     ['name' => $permission],
-                    ['module_name' => $module] 
+                    ['module_name' => $module]
                 );
             }
         }
 
         # Create default admin role
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'branch_id' => 1]);
 
         # Assign all permissions to admin role
         $allPermissions = Permission::all();

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class NotificationEmail extends Model
 {
 
-    protected $table = "notification_emails";
+    protected $table = "notifications_email";
 
     protected $fillable = [
         'name',

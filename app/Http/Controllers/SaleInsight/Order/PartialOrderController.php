@@ -100,7 +100,7 @@ class PartialOrderController extends Controller
                 'shipping_landline' => 'required|string|max:15',
                 'company_id' => 'required|integer|exists:customers,id',
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
-                'notification_id' => 'required|integer|exists:notifications,id',
+                'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
@@ -141,7 +141,7 @@ class PartialOrderController extends Controller
             # Check if order fully completed
             $checkOrderStatus = OrderDetails::whereNull('deleted_at')->where('order_id', $orderId)->where('partial_order_status', 1)->count();
 
-            if ($checkOrderStatus == 0) {
+            if ($checkOrderStatus != 0) {
                 return Utility::apiError('Order has been fully completed', [], 221);
             }
 
@@ -287,7 +287,7 @@ class PartialOrderController extends Controller
                     'quantity' => $item['quantity'] ?? 0,
                     'total' => $totalAmount,
                     'status' => 0,
-                    'partial_order_status' => $balanceQty == 0 ? 0 : 1,
+                    'partial_order_status' => $balanceQty == 0 ? 1 : 0,
                     'notes' => $item['notes'] ?? null,
                     'product_specification' => $item['product_specification'] ?? null,
                     'delivery_date_id' => $item['delivery_date_id'] ?? 0,
@@ -324,7 +324,7 @@ class PartialOrderController extends Controller
                 ->update(['partial_order_status' => 1]);
 
             if ($orderStatus) {
-                $statusCheck = PartialOrder::where('id', $partialOrderId)->update(['partial_order_status' => 0]);
+                $statusCheck = PartialOrder::where('id', $partialOrderId)->update(['partial_order_status' => 1]);
                 if (!$statusCheck) {
                     return Utility::apiError('Failed to update partial order status.', [], 221);
                 }

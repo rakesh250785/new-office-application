@@ -101,7 +101,7 @@ class QuotationDetailController extends Controller
                 'shipping_landline' => 'required|string|max:15',
                 'company_id' => 'required|integer|exists:customers,id',
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
-                'notification_id' => 'required|integer|exists:notification_emails,id',
+                'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',

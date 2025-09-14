@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\Models\Branch;
-use App\Models\PendingQuotation;
 use App\Models\Quotation;
 use App\Notifications\EntityCreated;
 use Carbon\Carbon;
@@ -20,6 +19,10 @@ class QuotationObserver
     {
         // Example for Quotation. Repeat for Order, PartialOrder, Invoice (change model names).
         // Choose recipients. Example: users with role 'admin' in same tenant
+
+        Log::info('QuotationObserver created fired for id: ' . $quotation->id);
+
+
         $recipients = Auth::user();
         $status = $quotation->pendingQuotationDetails->status_code ?? null;
         $branchName = Branch::findOrFail($recipients->branch_id)->name;
@@ -27,10 +30,11 @@ class QuotationObserver
             'amount' => $quotation->total_amount,
             'status' => $status,
             'branch' => $branchName,
-            'created_at' => Carbon::parse($quotation->created_at)->format('d-m-Y H:i:s'),
+            'created_at' => Carbon::parse($quotation->created_at)->format('d-m-Y h:i:s A'),
             'created_by' => Auth::user()->name,
             'message' => 'New Quotation',
             'quotation_no' => $quotation->unique_quotation_no,
+            'type' => 'quotation',
         ]));
     }
 
@@ -48,10 +52,11 @@ class QuotationObserver
             'amount' => $quotation->total_amount,
             'status' => $status,
             'branch' => $branchName,
-            'created_at' => Carbon::parse($quotation->created_at)->format('d-m-Y H:i:s'),
+            'created_at' => Carbon::parse($quotation->created_at)->format('d-m-Y h:i:s A'),
             'created_by' => Auth::user()->name,
             'message' => 'Quotation updated',
             'quotation_no' => $quotation->unique_quotation_no,
+            'type' => 'quotation',
         ]));
     }
 
