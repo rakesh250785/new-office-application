@@ -13,6 +13,7 @@ class Supplier extends Model
         'source_id',
         'currency_id',
         'rate_fc',
+        'profit',
         'factor_fc',
         'total_cost',
         'discount',

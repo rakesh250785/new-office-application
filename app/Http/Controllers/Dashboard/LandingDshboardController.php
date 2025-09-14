@@ -203,10 +203,10 @@ class LandingDshboardController extends Controller
             $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
 
 
-            # Count partial orders created today (only those with partial_order_status = 1 by default)
+            # Count partial orders created today (only those with partial_order_status = 0 by default)
             $todayCount = DB::table('partial_orders')
                 ->join('partial_order_details', 'partial_order_details.partial_order_id', '=', 'partial_orders.id')
-                ->where('partial_order_details.partial_order_status', 1)
+                ->where('partial_order_details.partial_order_status', 0)
                 ->whereBetween('partial_orders.created_at', [$todayStart, $todayEnd])
                 ->distinct('partial_orders.id')
                 ->count('partial_orders.id');

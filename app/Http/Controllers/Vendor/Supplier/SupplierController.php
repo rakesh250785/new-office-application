@@ -77,6 +77,7 @@ class SupplierController extends Controller
                         'discount' => $item['discount'],
                         'net_price' => round($item['net_price']),
                         'custom_price' => round($item['custom_price']),
+                        'profit' => round($item['profit']),
                         'user_id' => $userId,
                         'branch_id' => $branchId,
                         'deleted_at' => null,

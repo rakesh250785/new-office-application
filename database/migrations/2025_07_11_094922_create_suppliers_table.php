@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->string('discount');
             $table->string('net_price');
             $table->string('custom_price');
+            $table->string('profit');
             $table->dateTime('date');
             $table->softDeletes();
             $table->timestamps();

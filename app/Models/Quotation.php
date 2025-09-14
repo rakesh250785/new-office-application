@@ -47,7 +47,8 @@ class Quotation extends Model
         'delivery_date_id',
         'tin_number',
         'total_amount',
-        'user_id'
+        'user_id',
+        'status'
     ];
 
 
