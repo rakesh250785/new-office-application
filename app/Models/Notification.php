@@ -1,10 +1,9 @@
 <?php
 
 namespace App\Models;
+use Illuminate\Notifications\DatabaseNotification as BaseNotification;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Notification extends Model
+class Notification extends BaseNotification
 {
     protected $table = "notifications";
 
@@ -12,4 +11,9 @@ class Notification extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function notifiableUser()
+    {
+        return $this->belongsTo(User::class, 'notifiable_id');
+    }
 }

@@ -216,6 +216,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('markAllRead', [NotificationPushController::class, 'markAllRead']);
     Route::post('notifications/stream', [NotificationPushController::class, 'stream']);
     Route::post('pollNotifications', [NotificationPushController::class, 'pollNotifications']);
-
+    Route::post('getNotificationsList', [NotificationPushController::class, 'getNotificationsList']);
+    Route::post('getNotificationEntityTypes', [NotificationPushController::class, 'getNotificationEntityTypes']);
 });
 
