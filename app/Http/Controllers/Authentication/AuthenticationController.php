@@ -93,7 +93,7 @@ class AuthenticationController extends Controller
 
             $time = Carbon::now();
             $details = [
-                'username' => $user->name,
+                'username' => $user->name ?? null,
                 'event' => 'Login',
                 'ip' => $ip,
                 'country' => $location['country'],
@@ -139,7 +139,7 @@ class AuthenticationController extends Controller
             $agentInfo = $this->parseAgent($userAgent);
             $time = Carbon::now();
             $details = [
-                'username' => $user->name,
+                'username' => $user->name ?? null,
                 'event' => 'Logout',
                 'ip' => $ip,
                 'country' => $location['country'],
