@@ -143,7 +143,7 @@ class AuthenticationController extends Controller
                 'event' => 'Logout',
                 'ip' => $ip,
                 'country' => $location['country'],
-                'state' => $location['state'],
+                'state' => $location['state'],  
                 'city' => $location['city'],
                 'zip' => $location['zip'],
                 'time' => $time->format('d-m-Y h:i:s A'),
