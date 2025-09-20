@@ -54,7 +54,7 @@ class ParameterController extends Controller
 
             // Add /update parameter
             $parameter = Parameter::updateOrCreate(
-                ['id' => $data['parameter_id'] ?? null],
+                ['id' => $data['parameter_id'] ?? null]
                 $payload
             );
 
