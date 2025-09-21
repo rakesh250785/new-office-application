@@ -136,7 +136,7 @@ class CourierController extends Controller
             }
 
             # Filter query
-            $query = Courier::whereNull('deleted_at');
+            $query = Courier::with('branch')->whereNull('deleted_at');
 
             if (!empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);

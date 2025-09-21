@@ -58,7 +58,12 @@ fi
 
 # Install composer dependencies as deploy user (avoid owner mismatches)
 echo "Installing composer dependencies..."
-sudo -u "$DEPLOY_USER" $COMPOSER_BIN install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+# ensure composer cache path exists and is writable by deploy user
+COMPOSER_CACHE_DIR="$APP_DIR/.composer-cache"
+mkdir -p "$COMPOSER_CACHE_DIR"
+chown -R "$DEPLOY_USER":"$DEPLOY_USER" "$COMPOSER_CACHE_DIR"
+# run composer as deploy user using that cache
+sudo -u "$DEPLOY_USER" COMPOSER_CACHE_DIR="$COMPOSER_CACHE_DIR" $COMPOSER_BIN install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 # Run migrations (ensure run as deploy user or CI user that has DB access)
 echo "Running migrations..."
