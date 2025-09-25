@@ -2,82 +2,82 @@
 
 namespace App\Http\Controllers\SaleInsight\Order;
 
+use App\Exports\PartialOrderExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessPartialOrder;
 use App\Models\Branch;
 use App\Models\Currency;
 use App\Models\Customer;
-use App\Jobs\ProcessPartialOrder;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\PartialOrder;
 use App\Models\PartialOrderDetails;
-use App\Models\PendingQuotation;
 use App\Models\QuotationFormat;
 use App\Models\States;
 use Carbon\Carbon;
-use Exception, Log;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Log;
+
 class PartialOrderController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function storePartialOrder(Request $request)
     {
         try {
-            # Request specific fields
+            // Request specific fields
             $data = $request->only([
-                "product_id",
-                "id",
-                "product_description",
-                "principal_type",
-                "payment_term_condition",
-                "lead_from",
-                "billing_address",
-                "billing_city",
-                "billing_state_id",
-                "billing_mobile",
-                "billing_email",
-                "billing_landline",
-                "billing_pin_code",
-                "contact_person",
-                "shipping_address",
-                "shipping_city",
-                "shipping_state_id",
-                "shipping_email",
-                "company_id",
-                "quotation_type_id",
-                "notification_id",
-                "owner_id",
-                "date",
-                "enq_ref",
-                "prepard_by",
-                "currency_id",
-                "shipping_pin_code",
-                "shipping_mobile",
-                "shipping_email",
-                "shipping_landline",
-                "delivery_date_id",
-                "product_list",
-                "update_status",
-                "quotation_id",
-                "total_amount",
-                "unique_quotation_no",
+                'product_id',
+                'id',
+                'product_description',
+                'principal_type',
+                'payment_term_condition',
+                'lead_from',
+                'billing_address',
+                'billing_city',
+                'billing_state_id',
+                'billing_mobile',
+                'billing_email',
+                'billing_landline',
+                'billing_pin_code',
+                'contact_person',
+                'shipping_address',
+                'shipping_city',
+                'shipping_state_id',
+                'shipping_email',
+                'company_id',
+                'quotation_type_id',
+                'notification_id',
+                'owner_id',
+                'date',
+                'enq_ref',
+                'prepard_by',
+                'currency_id',
+                'shipping_pin_code',
+                'shipping_mobile',
+                'shipping_email',
+                'shipping_landline',
+                'delivery_date_id',
+                'product_list',
+                'update_status',
+                'quotation_id',
+                'total_amount',
+                'unique_quotation_no',
                 'unique_order_no',
                 'customer_order_no',
                 'extra_notes',
                 'courier_id',
             ]);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:orders,id',
                 'customer_order_no' => 'required|string',
-                "unique_quotation_no" => 'required|string',
+                'unique_quotation_no' => 'required|string',
                 'product_id' => 'nullable|integer|exists:products,id',
                 'product_description' => 'required|string',
                 'principal_type' => 'nullable|string',
@@ -126,26 +126,26 @@ class PartialOrderController extends Controller
                 'total_amount' => 'required|numeric|min:0',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
-            # Auth user
+            // Auth user
             $orderId = $data['id'];
             $branchId = Auth::user()['branch_id'];
             $adminUserId = Auth::id();
             $branchName = Branch::where('id', $branchId)->first();
-            $pdfFilePath = "order_" . time() . "_" . date('dmy') . ".pdf";
+            $pdfFilePath = 'order_'.time().'_'.date('dmy').'.pdf';
 
-            # Check if order fully completed
+            // Check if order fully completed
             $checkOrderStatus = OrderDetails::whereNull('deleted_at')->where('order_id', $orderId)->where('partial_order_status', 1)->count();
 
             if ($checkOrderStatus != 0) {
                 return Utility::apiError('Order has been fully completed', [], 221);
             }
 
-            # Update customer details
+            // Update customer details
             $customerUpdate = Customer::where('id', $data['company_id'])->update([
                 'address' => $data['billing_address'],
                 'city' => $data['billing_city'],
@@ -157,37 +157,36 @@ class PartialOrderController extends Controller
                 'landline_no' => $data['billing_landline'] ?? null,
             ]);
 
-            if (!$customerUpdate) {
+            if (! $customerUpdate) {
                 return Utility::apiError('Failed to update customer info.', [], 221);
             }
 
-
-            # Calculate subtotal from order details once
+            // Calculate subtotal from order details once
             $frightPack = 10;
             $salesTaxRate = 0;
             $salesTax = (((float) $data['total_amount'] + $frightPack) * $salesTaxRate) / 100;
             $finalTotal = ceil((float) $data['total_amount'] + $frightPack);
 
-            # Update order totals 
+            // Update order totals
             $orderTotalUpdate = Order::where('id', $orderId)->update([
                 'total_amount' => (float) $data['total_amount'],
                 'sale_tax_amount' => $salesTax,
                 'final_total_amount' => $finalTotal,
             ]);
 
-            if (!$orderTotalUpdate) {
+            if (! $orderTotalUpdate) {
                 return Utility::apiError('Failed to update order toytal.', [], 221);
             }
 
-            # Generate unique partial order number
+            // Generate unique partial order number
             $dateStr = Carbon::now()->format('dmY');
             $initials = substr($branchName['name'], 0, 3);
             $partialCount = PartialOrder::where('branch_id', $branchId)->whereDate('created_at', Carbon::now()->format('Y-m-d'))->count();
-            $uniquePartialNo = $initials . "/" . $dateStr . "/Part-" . ($partialCount + 1);
+            $uniquePartialNo = $initials.'/'.$dateStr.'/Part-'.($partialCount + 1);
 
             $partialOrder = Carbon::now()->format('Y-m-d 00:00:00');
 
-            # Insert new partial order
+            // Insert new partial order
             $partialOrderData = [
                 'unique_partial_order_no' => $uniquePartialNo,
                 'unique_order_no' => $data['unique_order_no'] ?? null,
@@ -231,13 +230,13 @@ class PartialOrderController extends Controller
                 'courier_id' => $data['courier_id'] ?? null,
             ];
 
-            # Insert partial order data
+            // Insert partial order data
             $partialOrderId = PartialOrder::create($partialOrderData);
-            if (!$partialOrderId) {
+            if (! $partialOrderId) {
                 return Utility::apiError('Failed to create partial order.', [], 221);
             }
 
-            # Prepare bulk insert for partial order details
+            // Prepare bulk insert for partial order details
             $grandTotal = 0;
             $calculations = [];
             $productList = [];
@@ -260,7 +259,7 @@ class PartialOrderController extends Controller
                     'discount_amount' => $discountAmount,
                     'net_price' => $afterDiscount,
                     'gst_amount' => $gstAmount,
-                    'total' => $totalAmount
+                    'total' => $totalAmount,
                 ];
 
                 $grandTotal += $totalAmount;
@@ -300,36 +299,35 @@ class PartialOrderController extends Controller
                 ];
             }
 
-            # Add partial order details
+            // Add partial order details
             $partialOrderDetails = PartialOrderDetails::insert($productList);
-            if (!$partialOrderDetails) {
+            if (! $partialOrderDetails) {
                 return Utility::apiError('Failed to create partial order details.', [], 221);
             }
 
-
-            # Bulk update order details balances and sent qty
+            // Bulk update order details balances and sent qty
             foreach ($orderDetailsToUpdate as $upd) {
                 $updateStatus = OrderDetails::where('order_id', $data['id'])->where('id', $upd['id'])->update([
                     'balance_quantity' => $upd['balance_quantity'],
                 ]);
 
-                if (!$updateStatus) {
+                if (! $updateStatus) {
                     return Utility::apiError('Failed to update quantity.', [], 221);
                 }
             }
 
-            # Update order details status flags inline
+            // Update order details status flags inline
             $orderStatus = OrderDetails::where('order_id', $orderId)
                 ->where('balance_quantity', '<=', 0)
                 ->update(['partial_order_status' => 1]);
 
             if ($orderStatus) {
                 $statusCheck = PartialOrder::where('id', $partialOrderId)->update(['partial_order_status' => 1]);
-                if (!$statusCheck) {
+                if (! $statusCheck) {
                     return Utility::apiError('Failed to update partial order status.', [], 221);
                 }
             }
-            # Close the order
+            // Close the order
             $updateCloseOrder = Order::where(['id' => $orderId, 'unique_order_no' => $data['unique_order_no']])->update([
                 'customer_order_no' => $data['customer_order_no'],
                 'is_order_closed' => '1',
@@ -337,19 +335,18 @@ class PartialOrderController extends Controller
                 'pdf_name' => $pdfFilePath,
             ]);
 
-            if (!$updateCloseOrder) {
+            if (! $updateCloseOrder) {
                 return Utility::apiError('Failed to update order status.', [], 221);
             }
 
-
-            # Customer and currency info
+            // Customer and currency info
             $customerInfo = Customer::findOrFail($data['company_id']);
             $currencyInfo = Currency::findOrFail($data['currency_id']);
 
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
 
-            # Prepare Pdf data
+            // Prepare Pdf data
             $responsePayload = array_merge($data, [
                 'product_list' => $productList,
                 'quotation_info' => [
@@ -379,7 +376,7 @@ class PartialOrderController extends Controller
                 'cc_email' => Auth::user()->cc_email,
                 'multiProdCal' => [
                     'calculations' => $calculations,
-                    'grand_total' => $grandTotal
+                    'grand_total' => $grandTotal,
                 ],
                 'totalcalc' => $grandTotal,
             ]);
@@ -390,6 +387,7 @@ class PartialOrderController extends Controller
 
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Fail to generate order', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -397,7 +395,7 @@ class PartialOrderController extends Controller
     public function getPartialOrder(Request $request)
     {
         try {
-            # Collect only the relevant inputs
+            // Collect only the relevant inputs
             $data = $request->only([
                 'per_page',
                 'branch_list',
@@ -407,10 +405,37 @@ class PartialOrderController extends Controller
                 'principal_list',
                 'start_date',
                 'end_date',
-                'search'
+                'search',
+                'download',
             ]);
 
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
+
+            if (! empty($data['download'])) {
+                $columns = [
+                    'unique_partial_order_no' => 'Partial Order No',
+                    'unique_order_no' => 'Order No',
+                    'unique_quotation_no' => 'Quotation No',
+                    'date' => 'Date',
+                    'branch' => 'Branch',
+                    'owner' => 'Owner',
+                    'currency' => 'Currency',
+                    'company' => 'Company',
+                    'total_amount' => 'Total Amount',
+                    'customer_order_no' => 'Customer Order No',
+                    'courier' => 'Courier',
+                ];
+
+                $filename = 'partial_order_'.now()->format('Ymd_His').'.xlsx';
+                (new PartialOrderExport($data, $columns))->queue("exports/{$filename}", 'public');
+
+                $fileUrl = url("storage/exports/{$filename}");
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => $fileUrl,
+                ]);
+            }
 
             $query = PartialOrder::select([
                 'id',
@@ -462,38 +487,34 @@ class PartialOrderController extends Controller
                     'companyDetails:id,company_name,email_id',
                     'branchDetails:id,name',
                     'currencyDetails:id,code',
-                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at'
+                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
                 ])
                 ->whereNull('deleted_at')
                 ->when(
-                    !empty($data['branch_list']),
-                    fn($q) =>
-                    $q->whereIn('branch_id', $data['branch_list'])
+                    ! empty($data['branch_list']),
+                    fn ($q) => $q->whereIn('branch_id', $data['branch_list'])
                 )
                 ->when(
-                    !empty($data['owner_list']),
-                    fn($q) =>
-                    $q->whereIn('owner_id', $data['owner_list'])
+                    ! empty($data['owner_list']),
+                    fn ($q) => $q->whereIn('owner_id', $data['owner_list'])
                 )
                 ->when(
-                    !empty($data['currency_list']),
-                    fn($q) =>
-                    $q->whereIn('currency_id', $data['currency_list'])
+                    ! empty($data['currency_list']),
+                    fn ($q) => $q->whereIn('currency_id', $data['currency_list'])
                 )
                 ->when(
-                    !empty($data['principal_list']),
-                    fn($q) =>
-                    $q->whereHas('orderDetails', function ($d) use ($data) {
+                    ! empty($data['principal_list']),
+                    fn ($q) => $q->whereHas('orderDetails', function ($d) use ($data) {
                         $d->whereIn('principal_id', (array) $data['principal_list']);
                     })
                 )
-                ->when(!empty($data['start_date']) && !empty($data['end_date']), function ($q) use ($data) {
+                ->when(! empty($data['start_date']) && ! empty($data['end_date']), function ($q) use ($data) {
                     $q->whereBetween('created_at', [
                         Carbon::parse($data['start_date'])->startOfDay(),
-                        Carbon::parse($data['end_date'])->endOfDay()
+                        Carbon::parse($data['end_date'])->endOfDay(),
                     ]);
                 })
-                ->when(!empty($data['search']), function ($q) use ($data) {
+                ->when(! empty($data['search']), function ($q) use ($data) {
                     $term = $data['search'];
                     $q->where(function ($sub) use ($term) {
                         $sub->where('unique_quotation_no', 'like', "%{$term}%")
@@ -503,13 +524,11 @@ class PartialOrderController extends Controller
 
                             ->orWhereHas(
                                 'companyDetails',
-                                fn($c) =>
-                                $c->where('customer_name', 'like', "%{$term}%")
+                                fn ($c) => $c->where('customer_name', 'like', "%{$term}%")
                             )
                             ->orWhereHas(
                                 'orderDetails',
-                                fn($d) =>
-                                $d->where('part_no', 'like', "%{$term}%")
+                                fn ($d) => $d->where('part_no', 'like', "%{$term}%")
                                     ->orWhere('hsn_code', 'like', "%{$term}%")
                                     ->orWhere('description', 'like', "%{$term}%")
                                     ->orWhere('in_stock', 'like', "%{$term}%")
@@ -529,8 +548,8 @@ class PartialOrderController extends Controller
 
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed getQuotation server error', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 }

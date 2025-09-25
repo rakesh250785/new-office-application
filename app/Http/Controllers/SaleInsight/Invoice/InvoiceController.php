@@ -2,26 +2,26 @@
 
 namespace App\Http\Controllers\SaleInsight\Invoice;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use App\Models\Invoice;
+use App\Exports\InvoiceExport;
 use App\Helpers\Utility;
+use App\Http\Controllers\Controller;
+use App\Models\Invoice;
 use Carbon\Carbon;
 use Exception;
-use Symfony\Component\ErrorHandler\Debug;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class InvoiceController extends Controller
 {
     public function addUpdateInvoice(Request $request)
     {
         try {
-            # Get specific fields 
+            // Get specific fields
             $data = $request->only(['partial_order_id', 'current_follow_date', 'docket_no', 'product_invoice_list', 'invoice_no', 'customer_id', 'customer_order_no']);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($request->all(), [
                 'partial_order_id' => 'required|integer|exists:partial_orders,id',
                 'invoice_no' => 'required|string|max:255',
@@ -30,12 +30,12 @@ class InvoiceController extends Controller
                 'product_invoice_list.*.invoice' => 'file|max:10240',
             ]);
 
-            # Validation error
+            // Validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Handle product invoice files
+            // Handle product invoice files
             $docs = [];
             if ($request->has('product_invoice_list')) {
                 foreach ($request->file('product_invoice_list', []) as $index => $row) {
@@ -43,14 +43,14 @@ class InvoiceController extends Controller
                         $file = $row['invoice'];
                         $extension = $file->getClientOriginalExtension();
                         $path = public_path('orderinvoicedocs/');
-                        $rename_file = 'order_invoice_' . date('Y-m-d') . '_' . time() . '.' . $extension;
+                        $rename_file = 'order_invoice_'.date('Y-m-d').'_'.time().'.'.$extension;
                         $file->move($path, $rename_file);
                         $docs[] = $rename_file;
                     }
                 }
             }
 
-            # Update or create invoice
+            // Update or create invoice
             $invoice = Invoice::updateOrCreate(
                 ['partial_order_id' => $data['partial_order_id'] ?? null],
                 [
@@ -65,24 +65,26 @@ class InvoiceController extends Controller
                 ]
             );
 
-            # Return if fail to insert
-            if (!$invoice) {
+            // Return if fail to insert
+            if (! $invoice) {
                 return Utility::apiError('Upload failed', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Invoice uploaded successfully', [], 200);
 
         } catch (Exception $e) {
             Log::error($e);
+
             return Utility::apiError('Failed to upload invoice', ['exception' => $e->getMessage()]);
         }
     }
+
     public function getInvoice(Request $request)
     {
         try {
 
-            # Request specific fields
+            // Request specific fields
             $data = $request->only([
                 'branch_list',
                 'owner_list',
@@ -92,47 +94,68 @@ class InvoiceController extends Controller
                 'end_date',
                 'search',
                 'per_page',
-                'page'
+                'page',
+                'download',
             ]);
 
-            # Get invoice data
+            if (!empty($data['download'])) {
+                $columns = [
+                    'invoice_no' => 'Invoice No',
+                    'invoice_date' => 'Invoice Date',
+                    'partial_order_no' => 'Partial Order No',
+                    'customer_order_no' => 'Customer Order No',
+                    'customer' => 'Customer',
+                ];
+
+                $filename = 'invoice_'.now()->format('Ymd_His').'.xlsx';
+                (new InvoiceExport($data, $columns))->queue("exports/{$filename}", 'public');
+
+                $fileUrl = url("storage/exports/{$filename}");
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => $fileUrl,
+                ]);
+            }
+
+            // Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
 
-            # Apply filters (arrays are expected from frontend; cast to array to be safe)
-            if (!empty($data['branch_list'])) {
+            // Apply filters (arrays are expected from frontend; cast to array to be safe)
+            if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            if (!empty($data['owner_list'])) {
+            if (! empty($data['owner_list'])) {
                 $query->whereHas('customerDetails.owner', function ($q) use ($data) {
                     $q->whereIn('id', (array) $data['owner_list']);
                 });
             }
 
-            if (!empty($data['currency_list'])) {
+            if (! empty($data['currency_list'])) {
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
                     $q->whereIn('currency_id', (array) $data['currency_list']);
                 });
             }
 
-            if (!empty($data['principal_list'])) {
+            if (! empty($data['principal_list'])) {
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
                     $q->whereIn('principal_id', (array) $data['principal_list']);
                 });
             }
 
-            # Date range handling:
-            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            // Date range handling:
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
-            # Search filter
-            if (!empty($data['search'])) {
+            // Search filter
+            if (! empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->whereHas('customerDetails', function ($q2) use ($search) {
@@ -145,62 +168,62 @@ class InvoiceController extends Controller
                 });
             }
 
-            # Get data
+            // Get data
             $perPage = $request->get('per_page', 10);
             $invoiceData = $query->paginate($perPage);
 
-            # Map invoice
+            // Map invoice
             $invoiceData->getCollection()->transform(function ($invoice) {
                 $invoice->invoice_docs = collect(explode(',', $invoice->invoice_docs))
                     ->filter()
-                    ->map(fn($doc, $idx) => [
+                    ->map(fn ($doc, $idx) => [
                         'id' => $idx + 1,
                         'file' => $doc,
-                        'download_url' => url("/orderinvoicedocs/{$doc}")
+                        'download_url' => url("/orderinvoicedocs/{$doc}"),
                     ])->values();
+
                 return $invoice;
             });
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('list_invoices', $invoiceData, 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error deleting invoice', ['exception' => $ex->getMessage()]);
         }
     }
 
-
-
-
     public function deleteInvoice(Request $request)
     {
         try {
-            # Get specific fields
+            // Get specific fields
             $data = $request->only(['partial_order_id']);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'partial_order_id' => 'required|integer|exists:invoice,partial_order_id',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Delete invoice
+            // Delete invoice
             $deleted = Invoice::where('id', $data['partial_order_id'])->delete();
 
-            # Return if fail
-            if (!$deleted) {
+            // Return if fail
+            if (! $deleted) {
                 return Utility::apiError('Invoice deletion failed', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Invoice deleted successfully', [], 200);
         } catch (Exception $e) {
             Log::error($e);
+
             return Utility::apiError('Error deleting invoice', ['exception' => $e->getMessage()]);
         }
     }

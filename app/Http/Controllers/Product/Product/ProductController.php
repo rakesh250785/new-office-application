@@ -1,32 +1,31 @@
 <?php
 
 namespace App\Http\Controllers\Product\Product;
+
 use App\Exports\ProductExport;
-use App\Imports\ProductUploadImport;
-use App\Models\ImportJob;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use App\Models\Product;
 use App\Helpers\Utility;
+use App\Http\Controllers\Controller;
+use App\Jobs\EnqueueProductImport;
+use App\Models\ImportJob;
+use App\Models\Product;
 use Carbon\Carbon;
-use Exception, Log;
-use App\Imports\HeaderCheckImport;
-use Illuminate\Validation\Rule;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Create or update product
      */
-
     public function addUpdateProduct(Request $request)
     {
         try {
@@ -47,7 +46,7 @@ class ProductController extends Controller
                 'product_id',
             ]);
 
-            # validation rules
+            // validation rules
             $rules = [
                 'part_no' => [
                     'required',
@@ -69,12 +68,12 @@ class ProductController extends Controller
                 'product_id' => 'nullable|numeric|exists:products,id',
             ];
 
-            # image rule (file)
+            // image rule (file)
             $fileRules = [
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:3072',
             ];
 
-            # validate using full request so file keys are included
+            // validate using full request so file keys are included
             $validator = Validator::make($request->all(), array_merge($rules, $fileRules), [
                 'part_no.unique' => 'Part name has already been taken.',
                 'image.image' => 'Uploaded file must be an image.',
@@ -84,7 +83,7 @@ class ProductController extends Controller
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # base payload (do NOT set price_updated_at/quantity_updated_at here for update)
+            // base payload (do NOT set price_updated_at/quantity_updated_at here for update)
             $payload = [
                 'part_no' => $data['part_no'] ?? null,
                 'hsn_no' => $data['hsn_no'] ?? null,
@@ -103,7 +102,7 @@ class ProductController extends Controller
                 'user_id' => Auth::user()['id'] ?? null,
             ];
 
-            # handle uploaded image (if present)
+            // handle uploaded image (if present)
             $newImagePath = null;
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
@@ -114,29 +113,29 @@ class ProductController extends Controller
                 $newImagePath = $path;
             }
 
-            # CREATE
+            // CREATE
             if (empty($data['product_id'])) {
                 $payload['created_at'] = Carbon::now();
                 $payload['price_updated_at'] = Carbon::now();
                 $payload['quantity_updated_at'] = Carbon::now();
 
                 $product = Product::create($payload);
-                if (!$product) {
+                if (! $product) {
                     return Utility::apiError('Fail to create product.', [], 221);
                 }
 
-                # return created product (optional: include image url)
+                // return created product (optional: include image url)
                 return Utility::apiSuccess('created successfully.', ['product' => $product], 200);
             }
 
-            # UPDATE
+            // UPDATE
             $existing = Product::find($data['product_id']);
-            if (!$existing) {
+            if (! $existing) {
                 return Utility::apiError('Product not found.', [], 221);
             }
 
-            # If new image uploaded, delete previous file from disk (best-effort)
-            if (!empty($newImagePath) && !empty($existing->image)) {
+            // If new image uploaded, delete previous file from disk (best-effort)
+            if (! empty($newImagePath) && ! empty($existing->image)) {
                 try {
                     $existingImage = $existing->image;
                     $storagePrefix = '/storage/';
@@ -146,17 +145,17 @@ class ProductController extends Controller
                             Storage::disk('public')->delete($relative);
                         }
                     } else {
-                        # possibly stored as 'products/abc.jpg'
+                        // possibly stored as 'products/abc.jpg'
                         if (Storage::disk('public')->exists($existingImage)) {
                             Storage::disk('public')->delete($existingImage);
                         }
                     }
                 } catch (Exception $ex) {
-                    Log::warning('Failed to delete old product image: ' . $ex->getMessage());
+                    Log::warning('Failed to delete old product image: '.$ex->getMessage());
                 }
             }
 
-            # timestamp updates only when value actually changes
+            // timestamp updates only when value actually changes
             if (isset($data['price']) && $existing->price != $data['price']) {
                 $payload['price_updated_at'] = Carbon::now();
             }
@@ -165,18 +164,17 @@ class ProductController extends Controller
                 $payload['quantity_updated_at'] = Carbon::now();
             }
 
-            # perform update
+            // perform update
             $existing->update($payload);
 
             // return updated product (optional: include image url)
             return Utility::apiSuccess('updated successfully.', ['product' => $existing->fresh()], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error saving product.', ['exception' => $ex->getMessage()], 500);
         }
     }
-
-
 
     /**
      * Get product list
@@ -185,10 +183,10 @@ class ProductController extends Controller
     {
         try {
 
-            # Request specific fields
+            // Request specific fields
             $data = $request->only(['search', 'download', 'per_page', 'start_date', 'end_date', 'principal_list', 'brand_list', 'category_list']);
 
-            if (!empty($data['download'])) {
+            if (! empty($data['download'])) {
                 $columns = [
                     'part_no' => 'Part No.',
                     'hsn_no' => 'HSN No.',
@@ -208,7 +206,7 @@ class ProductController extends Controller
                     'created_at' => 'Date',
                 ];
 
-                $filename = 'product_' . now()->format('Ymd_His') . '.xlsx';
+                $filename = 'product_'.now()->format('Ymd_His').'.xlsx';
 
                 (new ProductExport($data, $columns, Product::class))
                     ->queue("exports/{$filename}", 'public');
@@ -219,14 +217,13 @@ class ProductController extends Controller
                 ]);
             }
 
-
-            # Get products
+            // Get products
             $query = Product::with('principal:id,type', 'category:id,name', 'brand:id,name')
                 ->whereNull('deleted_at')
                 ->orderByDesc('id');
 
-            # Apply search filter across multiple fields
-            if (!empty($data['search'])) {
+            // Apply search filter across multiple fields
+            if (! empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('part_no', 'like', "%{$search}%")
@@ -244,41 +241,38 @@ class ProductController extends Controller
                         ->orWhere('quantity_updated_at', 'like', "%{$search}%")
                         ->orWhereHas(
                             'principal',
-                            fn($b) =>
-                            $b->where('type', 'like', "%$search%")
+                            fn ($b) => $b->where('type', 'like', "%$search%")
                         )
                         ->orWhereHas(
                             'category',
-                            fn($b) =>
-                            $b->where('name', 'like', "%$search%")
+                            fn ($b) => $b->where('name', 'like', "%$search%")
                         )
                         ->orWhereHas(
                             'brand',
-                            fn($b) =>
-                            $b->where('name', 'like', "%$search%")
+                            fn ($b) => $b->where('name', 'like', "%$search%")
                         );
                 });
             }
 
-            # Apply individual filters
-            if (!empty($data['principal_list'])) {
+            // Apply individual filters
+            if (! empty($data['principal_list'])) {
                 $query->whereIn('principal_id', $data['principal_list']);
             }
-            if (!empty($data['category_list'])) {
+            if (! empty($data['category_list'])) {
                 $query->whereIn('category_id', $data['category_list']);
             }
-            if (!empty($data['brand_list'])) {
+            if (! empty($data['brand_list'])) {
                 $query->whereIn('brand_id', $data['brand_list']);
             }
-            if (!empty($data['branch_list'])) {
+            if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);
             }
 
-            # Date filter
-            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            // Date filter
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
@@ -288,10 +282,10 @@ class ProductController extends Controller
             return Utility::apiSuccess('Product list fetched successfully.', $products);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error fetching products.', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 
     /**
      * Delete product
@@ -299,31 +293,32 @@ class ProductController extends Controller
     public function deleteProduct(Request $request)
     {
         try {
-            # Get specific fields
+            // Get specific fields
             $data = $request->only(['id']);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:products,id',
             ]);
 
-            # Return if fail
+            // Return if fail
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Delete product
+            // Delete product
             $deleted = Product::where('id', $data['id'])->update(['deleted_at' => Carbon::now()]);
 
-            # Return if fail to delete
-            if (!$deleted) {
+            // Return if fail to delete
+            if (! $deleted) {
                 return Utility::apiError('Failed to delete product.', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('deleted successfully.', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error deleting product.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -331,63 +326,110 @@ class ProductController extends Controller
     public function uploadProductFile(Request $request)
     {
         try {
-            # Validation error
-            $request->validate([
+            $validator = Validator::make($request->all(), [
                 'file' => 'required|mimes:xlsx,xls,csv|max:10240',
-                'upload_type' => 'required|in:price,quantity',
             ]);
-
-            # Check header
-            $import = new HeaderCheckImport;
-            Excel::import($import, $request->file('file'));
-
-            $headers = array_map('strtolower', $import->headers);
-            $expected = ['part_no', $request->upload_type];
-            $missing = array_diff($expected, $headers);
-
-            # Return if error
-            if (!empty($missing)) {
-                return Utility::apiError("Invalid file header. Missing: " . implode(", ", $missing), 221);
+            if ($validator->fails()) {
+                return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Get total file row
-            $totalRows = Excel::toCollection(new HeaderCheckImport, $request->file('file'))[0]->count();
+            $uploaded = $request->file('file');
+            if (! $uploaded || ! $uploaded->isValid()) {
+                return Utility::apiError('Invalid uploaded file', [], 422);
+            }
 
-            # Miantain import
+            // Ensure public/uploads exists
+            $uploadDir = public_path('uploads');
+            if (! file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // Build filename and move into public/uploads
+            $filename = 'product_upload_'.time().'_'.Str::random(8).'.'.$uploaded->getClientOriginalExtension();
+            $relativePath = 'uploads/'.$filename;
+            $fullPath = public_path($relativePath);
+            $uploaded->move($uploadDir, $filename);
+
+            if (! file_exists($fullPath)) {
+                return Utility::apiError('Failed to save file to public/uploads', [], 500);
+            }
+
+            // Quick header check using toArray (no heavy processing)
+            $sheets = Excel::toArray([], $fullPath);
+            if (empty($sheets) || ! isset($sheets[0]) || count($sheets[0]) === 0) {
+                @unlink($fullPath);
+
+                return Utility::apiError('Uploaded file is empty or unreadable', [], 221);
+            }
+
+            $rows = $sheets[0];
+            $firstRow = $rows[0];
+            $headers = array_map(function ($h) {
+                return strtolower(trim((string) $h));
+            }, $firstRow);
+
+            $headers = array_map('strtolower', $headers);
+
+            $required = ['part_no'];
+            $optional = ['price', 'quantity'];
+
+            // check for mandatory part_no
+            $missing = array_diff($required, $headers);
+
+            if (! empty($missing)) {
+                @unlink($fullPath);
+
+                return Utility::apiError(
+                    'Invalid file header. Missing required: '.implode(', ', $missing),
+                    221
+                );
+            }
+
+            // check if at least one optional exists
+            if (! array_intersect($optional, $headers)) {
+                @unlink($fullPath);
+
+                return Utility::apiError(
+                    'Invalid file header. Either price or quantity must be present.',
+                    222
+                );
+            }
+            $totalRows = max(0, count($rows) - 1);
+
             $job = ImportJob::create([
-                'file_name' => $request->file('file')->getClientOriginalName(),
-                'upload_type' => $request->upload_type,
+                'file_name' => $filename,
+                'file_path' => $relativePath,
                 'status' => 'pending',
                 'total_rows' => $totalRows,
                 'processed_rows' => 0,
+                'file_deleted' => false,
             ]);
 
-            # Process for import
-            Excel::import(
-                new ProductUploadImport($request->upload_type, $job->id),
-                $request->file('file')
-            );
-            # Return response
-            return Utility::apiSuccess('File uploaded successfully. Processing started.', [
+            EnqueueProductImport::dispatch($fullPath, $job->id, $headers);
+
+            return Utility::apiSuccess('File uploaded and queued for processing.', [
                 'job_id' => $job->id,
             ]);
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Error uploadProductFile product.', ['exception' => $ex->getMessage()], 500);
+
+            return Utility::apiError('Error uploading product.', ['exception' => $ex->getMessage()], 500);
         }
     }
 
-    public function importStatus($id)
+    public function importStatus(Request $request)
     {
 
         try {
-            $job = ImportJob::find($id);
+            $data = $request->only(['id']);
 
-            if (!$job) {
-                return response()->json([
-                    'code' => 404,
-                    'message' => 'Job not found',
-                ], 404);
+            if (empty($data['id'])) {
+                return Utility::apiError('Priduct upload job id  not found', [], 422);
+            }
+            $job = ImportJob::find($data['id']);
+
+            if (! $job) {
+                return Utility::apiError('Job not found', [], 422);
             }
 
             return Utility::apiSuccess('File uploaded successfully. Processing started.', [
@@ -398,8 +440,8 @@ class ProductController extends Controller
 
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error importStatus product.', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 }
