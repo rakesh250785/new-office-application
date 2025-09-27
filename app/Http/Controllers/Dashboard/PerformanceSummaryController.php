@@ -17,7 +17,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use Throwable;
 
 class PerformanceSummaryController extends Controller
@@ -101,6 +100,7 @@ class PerformanceSummaryController extends Controller
     public function importSaleData(Request $request)
     {
         try {
+            // --- validation (simple & fast) ---
             $validator = Validator::make($request->all(), [
                 'file' => 'required|mimes:xlsx,xls,csv|max:10240',
             ]);
@@ -113,65 +113,106 @@ class PerformanceSummaryController extends Controller
                 return Utility::apiError('Invalid uploaded file', [], 422);
             }
 
-            // store outside public webroot (safer)
+            // store safely inside storage (no public webroot)
             $storeDir = storage_path('app/imports');
             if (! is_dir($storeDir)) {
                 mkdir($storeDir, 0755, true);
             }
 
             $filename = 'sale_data_upload_'.time().'_'.Str::random(8).'.'.$uploaded->getClientOriginalExtension();
-            $fullPath = $uploaded->move($storeDir, $filename)->getPathname();
+            // use move to avoid extra memory/copies
+            $moved = $uploaded->move($storeDir, $filename);
+            $fullPath = $moved->getPathname();
 
             if (! file_exists($fullPath)) {
                 return Utility::apiError('Failed to save file to storage', [], 500);
             }
 
-            $reader = IOFactory::createReaderForFile($fullPath);
-            $reader->setReadDataOnly(true);
-            $readFilter = new class implements IReadFilter
-            {
-                public function readCell($column, $row, $worksheetName = '')
-                {
-                    return $row === 1;
+            // --- Header-only detection. Do NOT pre-count rows here. ---
+            $headers = null;
+
+            if (class_exists(\Box\Spout\Reader\Common\Creator\ReaderEntityFactory::class)) {
+                try {
+                    $reader = \Box\Spout\Reader\Common\Creator\ReaderEntityFactory::createReaderForFile($fullPath);
+                    $reader->open($fullPath);
+
+                    // read only the first non-empty row as header, then stop
+                    foreach ($reader->getSheetIterator() as $sheet) {
+                        foreach ($sheet->getRowIterator() as $row) {
+                            $cells = $row->toArray();
+                            $nonEmpty = array_filter($cells, fn ($c) => ! is_null($c) && trim((string) $c) !== '');
+                            if (empty($nonEmpty)) {
+                                continue;
+                            }
+                            $headers = array_map(fn ($h) => strtolower(trim((string) $h)), $cells);
+                            break 2; // header found — exit both loops
+                        }
+                    }
+                    $reader->close();
+                } catch (Throwable $e) {
+                    Log::warning('Spout header read failed: '.$e->getMessage());
+                    $headers = null;
                 }
-            };
-            $reader->setReadFilter($readFilter);
-            $spreadsheet = $reader->load($fullPath);
-            $sheet = $spreadsheet->getActiveSheet();
-            $highestColumn = $sheet->getHighestColumn();
-            $firstRow = $sheet->rangeToArray("A1:{$highestColumn}1", null, true, false)[0] ?? null;
-
-            if (! is_array($firstRow) || count($firstRow) === 0) {
-                @unlink($fullPath);
-
-                return Utility::apiError('Uploaded file is empty or unreadable', [], 221);
             }
 
-            $headers = array_values(array_filter(array_map(fn ($h) => strtolower(trim((string) $h)), $firstRow), fn ($h) => $h !== ''));
+            // --- Fall back to PhpSpreadsheet header-only read if Spout absent or failed ---
+            if ($headers === null) {
+                try {
+                    $phpReader = IOFactory::createReaderForFile($fullPath);
+                    $phpReader->setReadDataOnly(true);
 
+                    $readFilter = new class implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
+                    {
+                        public function readCell($column, $row, $worksheetName = '')
+                        {
+                            return $row === 1; // header row only
+                        }
+                    };
+
+                    $phpReader->setReadFilter($readFilter);
+                    $sheetOnly = $phpReader->load($fullPath)->getActiveSheet();
+                    $highestColumn = $sheetOnly->getHighestColumn();
+                    $firstRow = $sheetOnly->rangeToArray("A1:{$highestColumn}1", null, true, false)[0] ?? [];
+                    // free worksheet
+                    $sheetOnly->getParent()->disconnectWorksheets();
+                    unset($sheetOnly);
+
+                    $headers = array_values(array_map(fn ($h) => strtolower(trim((string) $h)), $firstRow));
+                } catch (Throwable $e) {
+                    Log::warning('PhpSpreadsheet header read failed: '.$e->getMessage());
+                    @unlink($fullPath);
+
+                    return Utility::apiError('Uploaded file is empty or unreadable', [], 221);
+                }
+            }
+
+            // validate headers (exact lowercase names expected)
+            $headersNormalized = array_values(array_filter($headers, fn ($h) => $h !== ''));
             $required = [
                 'qtr', 'month', 'year', 'invoice', 'invoice date', 'order no',
                 'customer name', 'branch', 'description', 'part no',
                 'categories', 'principal name', 'authorised', 'qty', 'amount',
             ];
-            $missing = array_diff($required, $headers);
+            $missing = array_diff($required, $headersNormalized);
             if (! empty($missing)) {
                 @unlink($fullPath);
 
                 return Utility::apiError('Invalid file header. Missing required: '.implode(', ', $missing), 221);
             }
 
+            // create tracking job quickly (small DB write)
+            // NOTE: set total_rows to 0 so worker owns counting to avoid mismatch
             $job = ImportJob::create([
                 'file_name' => $filename,
-                'file_path' => str_replace(storage_path('app').'/', '', $fullPath),
+                'file_path' => Str::replaceFirst(storage_path('app').DIRECTORY_SEPARATOR, '', $fullPath),
                 'status' => 'pending',
                 'total_rows' => 0,
                 'processed_rows' => 0,
                 'file_deleted' => false,
             ]);
 
-            $updateCols = $headers;
-            EnqueueSaleDataImport::dispatch($fullPath, $job->id, $updateCols);
+            // pass headers as-is; worker should stream/process rows (avoid loading here)
+            EnqueueSaleDataImport::dispatch($fullPath, $job->id, $headersNormalized);
 
             return Utility::apiSuccess('File uploaded and queued for processing.', ['job_id' => $job->id]);
         } catch (Throwable $ex) {
@@ -192,6 +233,34 @@ class PerformanceSummaryController extends Controller
             Log::error($ex);
 
             return Utility::apiError('Error quotationStatusReport', ['exception' => $ex->getMessage()]);
+        }
+    }
+
+    public function saleImportImportStatus(Request $request)
+    {
+
+        try {
+            $data = $request->only(['id']);
+
+            if (empty($data['id'])) {
+                return Utility::apiError('Priduct upload job id  not found', [], 422);
+            }
+            $job = ImportJob::find($data['id']);
+
+            if (! $job) {
+                return Utility::apiError('Job not found', [], 422);
+            }
+
+            return Utility::apiSuccess('File uploaded successfully. Processing started.', [
+                'status' => $job->status,
+                'processed_rows' => $job->processed_rows,
+                'total_rows' => $job->total_rows,
+            ], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Error importStatus product.', ['exception' => $ex->getMessage()], 500);
         }
     }
 

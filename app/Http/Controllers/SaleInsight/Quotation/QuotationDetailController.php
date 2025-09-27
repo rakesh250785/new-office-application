@@ -379,20 +379,7 @@ class QuotationDetailController extends Controller
                 ]);
             }
 
-            $query = Quotation::select([
-                'id',
-                'unique_quotation_no',
-                'lead_from',
-                'branch_id',
-                'owner_id',
-                'currency_id',
-                'company_id',
-                'total_amount',
-                'created_at',
-                'date',
-                'is_order_pending',
-            ])
-                ->with([
+            $query = Quotation::with([
                     'quotationDetails',
                     'quotationDetails.principal:id,type',
                     'companyDetails:id,company_name,email_id',

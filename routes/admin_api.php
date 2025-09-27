@@ -192,6 +192,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('getSaleReport', [PerformanceSummaryController::class, 'getSaleReport']);
     Route::post('importSaleData', [PerformanceSummaryController::class, 'importSaleData']);
     Route::post('exportSaleData', [PerformanceSummaryController::class, 'exportSaleData']);
+    Route::post('saleImportImportStatus', [PerformanceSummaryController::class, 'saleImportImportStatus']);
     Route::post('branchSummaryReport', [PerformanceSummaryController::class, 'branchSummaryReport']);
     Route::post('principalSummaryReport', [PerformanceSummaryController::class, 'principalSummaryReport']);
     Route::post('customerSummaryReport', [PerformanceSummaryController::class, 'customerSummaryReport']);
