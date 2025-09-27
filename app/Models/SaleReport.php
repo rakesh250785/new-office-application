@@ -31,8 +31,9 @@ class SaleReport extends Model
     ];
 
     protected $casts = [
-        'invoice_date' => 'date:Y-m-d', // auto format as Y-m-d
-        'qty'          => 'integer',    // ✅ integer, not double
-        'amount'       => 'decimal:2',  // ✅ correct
+        'invoice_date' => 'date:Y-m-d', 
+        'qty'          => 'integer',    
+        'amount'       => 'decimal:2',  
     ];
+    
 }
