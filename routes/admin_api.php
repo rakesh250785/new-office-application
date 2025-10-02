@@ -94,6 +94,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/addUpdateCategory', [CategoryController::class, 'addUpdateCategory']);
     Route::post('/getCategory', [CategoryController::class, 'getCategory']);
     Route::post('/deleteCategory', [CategoryController::class, 'deleteCategory']);
+    Route::post('/getCategoryParams', [CategoryController::class, 'getCategoryParams']);
 
     # Source
     Route::post('/addUpdateSource', [SourceController::class, 'addUpdateSource']);
@@ -131,8 +132,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/deleteProduct', [ProductController::class, 'deleteProduct']);
     Route::post('/uploadProductFile', [ProductController::class, 'uploadProductFile']);
     Route::post('/importStatus', [ProductController::class, 'importStatus']);
-
-
+    
     # Users
     Route::post('/addUpdateUser', [UserController::class, 'addUpdateUser']);
     Route::post('/getUser', [UserController::class, 'getUser']);
@@ -219,5 +219,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('pollNotifications', [NotificationPushController::class, 'pollNotifications']);
     Route::post('getNotificationsList', [NotificationPushController::class, 'getNotificationsList']);
     Route::post('getNotificationEntityTypes', [NotificationPushController::class, 'getNotificationEntityTypes']);
+
+    # Testing PDF
+    Route::post('download', [QuotationDetailController::class, 'download']);
+
+    
 });
 

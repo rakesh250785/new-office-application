@@ -6,7 +6,9 @@ use App\Exports\ProductExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Jobs\EnqueueProductImport;
+use App\Models\Category;
 use App\Models\ImportJob;
+use App\Models\Parameter;
 use App\Models\Product;
 use Carbon\Carbon;
 use Exception;
@@ -29,6 +31,8 @@ class ProductController extends Controller
     public function addUpdateProduct(Request $request)
     {
         try {
+
+            // Request specific fileds
             $data = $request->only([
                 'part_no',
                 'hsn_no',
@@ -46,7 +50,25 @@ class ProductController extends Controller
                 'product_id',
             ]);
 
-            // validation rules
+            // Get column name
+            $paramDefs = collect();
+            if (! empty($data['category_id'])) {
+                $cat = Category::find($data['category_id']);
+                if ($cat && $cat->parameter_field) {
+                    $ids = array_map('trim', explode(',', $cat->parameter_field));
+                    $ids = array_values(array_filter($ids, 'is_numeric'));
+                    if (! empty($ids)) {
+                        $paramDefs = Parameter::select('id', 'parameter_name', 'column_name')
+                            ->whereIn('id', $ids)
+                            ->get();
+                    }
+                }
+            }
+
+            // Get in aray
+            $allowedDynamicColumns = $paramDefs->pluck('column_name')->filter()->unique()->values()->all();
+
+            // Validation rule
             $rules = [
                 'part_no' => [
                     'required',
@@ -63,27 +85,45 @@ class ProductController extends Controller
                 'discount' => 'required|numeric',
                 'quantity' => 'required|numeric',
                 'description' => 'required|string',
-                'additional_description' => 'required|string',
-                'specification' => 'required',
+                'additional_description' => 'sometimes|nullable',
+                'specification' => 'sometimes|nullable',
                 'product_id' => 'nullable|numeric|exists:products,id',
             ];
 
-            // image rule (file)
+            // File rule
             $fileRules = [
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:3072',
             ];
 
-            // validate using full request so file keys are included
-            $validator = Validator::make($request->all(), array_merge($rules, $fileRules), [
+            // If there is dynamic fields
+            $dynamicRules = [];
+            if (! empty($allowedDynamicColumns)) {
+                foreach ($allowedDynamicColumns as $col) {
+                    $dynamicRules[$col] = 'required';
+                }
+            }
+            $fileRules = array_merge($rules, $fileRules, $dynamicRules);
+
+            $data = $request->all();
+
+            // Always replace "#" with space in all keys
+            $normalized = [];
+            foreach ($data as $key => $value) {
+                $newKey = str_replace('#', ' ', $key);
+                $normalized[$newKey] = $value;
+            }
+            // Validation rule apply
+            $validator = Validator::make($normalized, $fileRules, [
                 'part_no.unique' => 'Part name has already been taken.',
                 'image.image' => 'Uploaded file must be an image.',
             ]);
 
+            // Return validation rule
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            // base payload (do NOT set price_updated_at/quantity_updated_at here for update)
+            // Payload to add / update
             $payload = [
                 'part_no' => $data['part_no'] ?? null,
                 'hsn_no' => $data['hsn_no'] ?? null,
@@ -102,50 +142,53 @@ class ProductController extends Controller
                 'user_id' => Auth::user()['id'] ?? null,
             ];
 
-            // handle uploaded image (if present)
+            // Handle image
             $newImagePath = null;
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $path = $file->store('products', 'public');
-                $imageUrl = Storage::url($path);
                 $imageUrl = url(Storage::url($path));
                 $payload['image'] = $imageUrl;
                 $newImagePath = $path;
             }
 
-            // CREATE
+            foreach ($allowedDynamicColumns as $col) {
+                if (array_key_exists($col, $normalized)) {
+                    $payload[$col] = $normalized[$col];
+                }
+            }
+
+            // Add new product
             if (empty($data['product_id'])) {
                 $payload['created_at'] = Carbon::now();
                 $payload['price_updated_at'] = Carbon::now();
                 $payload['quantity_updated_at'] = Carbon::now();
+                $payload['updated_at'] = Carbon::now();
 
-                $product = Product::create($payload);
+                $product = Product::insert($payload);
                 if (! $product) {
                     return Utility::apiError('Fail to create product.', [], 221);
                 }
 
-                // return created product (optional: include image url)
                 return Utility::apiSuccess('created successfully.', ['product' => $product], 200);
             }
 
-            // UPDATE
+            // Update product
             $existing = Product::find($data['product_id']);
             if (! $existing) {
                 return Utility::apiError('Product not found.', [], 221);
             }
 
-            // If new image uploaded, delete previous file from disk (best-effort)
             if (! empty($newImagePath) && ! empty($existing->image)) {
                 try {
                     $existingImage = $existing->image;
                     $storagePrefix = '/storage/';
                     if (strpos($existingImage, $storagePrefix) !== false) {
-                        $relative = substr($existingImage, strpos($existingImage, $storagePrefix) + strlen($storagePrefix)); // products/abc.jpg
+                        $relative = substr($existingImage, strpos($existingImage, $storagePrefix) + strlen($storagePrefix));
                         if ($relative && Storage::disk('public')->exists($relative)) {
                             Storage::disk('public')->delete($relative);
                         }
                     } else {
-                        // possibly stored as 'products/abc.jpg'
                         if (Storage::disk('public')->exists($existingImage)) {
                             Storage::disk('public')->delete($existingImage);
                         }
@@ -155,19 +198,20 @@ class ProductController extends Controller
                 }
             }
 
-            // timestamp updates only when value actually changes
             if (isset($data['price']) && $existing->price != $data['price']) {
                 $payload['price_updated_at'] = Carbon::now();
             }
-
             if (isset($data['quantity']) && $existing->quantity != $data['quantity']) {
                 $payload['quantity_updated_at'] = Carbon::now();
             }
 
-            // perform update
-            $existing->update($payload);
+            // Update product
+            $status = $existing->update($payload);
+            if (! $status) {
+                return Utility::apiError('Fail to update not product.', [], 221);
+            }
 
-            // return updated product (optional: include image url)
+            // Retunr response
             return Utility::apiSuccess('updated successfully.', ['product' => $existing->fresh()], 200);
         } catch (Exception $ex) {
             Log::error($ex);

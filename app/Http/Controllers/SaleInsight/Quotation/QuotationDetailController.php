@@ -17,13 +17,15 @@ use App\Models\ReasonType;
 use App\Models\States;
 use Carbon\Carbon;
 use Exception;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
+
 use Log;
 use Response;
 use View;
@@ -325,7 +327,7 @@ class QuotationDetailController extends Controller
             ]);
 
             // Dispatch for pdf
-            // dispatch(new ProcessQuotation($responsePayload));
+            dispatch(new ProcessQuotation($responsePayload));
 
             // Return response
             return Utility::apiSuccess(! empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
@@ -380,14 +382,14 @@ class QuotationDetailController extends Controller
             }
 
             $query = Quotation::with([
-                    'quotationDetails',
-                    'quotationDetails.principal:id,type',
-                    'companyDetails:id,company_name,email_id',
-                    'branchDetails:id,name',
-                    'currencyDetails:id,code',
-                    'ownerDetails:id,name',
-                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
-                ])
+                'quotationDetails',
+                'quotationDetails.principal:id,type',
+                'companyDetails:id,company_name,email_id',
+                'branchDetails:id,name',
+                'currencyDetails:id,code',
+                'ownerDetails:id,name',
+                'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
+            ])
                 ->whereNull('deleted_at')
                 ->when(! empty($data['branch_list']), fn ($q) => $q->whereIn('branch_id', (array) $data['branch_list']))
                 ->when(! empty($data['owner_list']), fn ($q) => $q->whereIn('owner_id', (array) $data['owner_list']))
@@ -801,5 +803,60 @@ class QuotationDetailController extends Controller
 
             return Utility::apiError('Fail at statusQuotationChange server error', ['exception' => $ex->getMessage()], 500);
         }
+    }
+
+    public function download(Request $request)
+    {
+        // validate minimal shape
+        $data = $request->validate([
+            'formData' => 'nullable|array',
+            'productRows' => 'nullable|array',
+        ]);
+
+        $formData = $data['formData'] ?? [];
+        $productRows = $data['productRows'] ?? [];
+
+        // prepare data required by the blade; adapt keys as needed
+        $viewData = [
+            'formData' => $formData,
+            'productRows' => $productRows,
+            'currencyName' => $formData['currencyName'] ?? 'INR',
+            'headerLogoUrl' => $formData['headerLogoUrl'] ?? null,
+            // put any company info here or compute in view
+        ];
+
+        // load blade view (resources/views/pdf/quotation.blade.php)
+        $pdf = Pdf::loadView('quotation.quotation', $viewData);
+
+        // set paper to A4 portrait and margins
+        $pdf->setPaper('a4', 'portrait');
+
+        // OPTIONAL: for very long documents you can increase PHP memory limits or rendering time
+        // ini_set('memory_limit', '512M');
+        // set_time_limit(120);
+
+        // add page numbers in footer using Dompdf canvas
+        try {
+            // render first so canvas is available
+            $dompdf = $pdf->getDomPDF();
+            $canvas = $dompdf->get_canvas();
+
+            $font = $dompdf->getFontMetrics()->get_font('helvetica', 'normal');
+            $size = 9;
+            $y = $canvas->get_height() - 20; // 20pt from bottom
+            $xRight = $canvas->get_width() - 50;
+
+            // Page text: "Page {PAGE_NUM} of {PAGE_COUNT}"
+            $canvas->page_text($xRight, $y, 'Page {PAGE_NUM} of {PAGE_COUNT}', $font, $size, [0.35, 0.35, 0.35]);
+        } catch (\Throwable $e) {
+            Log::warning('Could not add page numbers: '.$e->getMessage());
+        }
+
+        $filename = Arr::get($formData, 'unique_quotation_no', 'quotation').'.pdf';
+
+        // return as download
+        return $pdf->download($filename);
+        // OR to stream in-browser:
+        // return $pdf->stream($filename);
     }
 }
