@@ -3,37 +3,34 @@
 namespace App\Http\Controllers\Vendor\Supplier;
 
 use App\Exports\SupplierExport;
-use App\Http\Controllers\Controller;
-use DB;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Supplier;
 use App\Helpers\Utility;
+use App\Http\Controllers\Controller;
+use App\Models\Supplier;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class SupplierController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function addUpdateSupplier(Request $request)
     {
         try {
-            # Extract only expected fields
+            // Extract only expected fields
             $data = $request->only([
                 'product_id',
                 'date',
                 'product_list',
                 'update_status',
                 'supplier_id',
-                'principal_id'
+                'principal_id',
             ]);
 
-            # Validate input
+            // Validate input
             $validator = Validator::make($data, [
                 'product_id' => ['required', 'integer', 'exists:products,id'],
                 'principal_id' => ['required', 'integer', 'exists:principals,id'],
@@ -50,22 +47,23 @@ class SupplierController extends Controller
                 'product_list.*.custom_price' => ['required', 'numeric'],
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Context setup
+            // Context setup
             $branchId = Auth::user()->branch_id;
             $userId = Auth::id();
             $date = Carbon::parse($data['date'])->format('Y-m-d');
 
-            # Track all submitted IDs
-            $submittedIds = [];
+            // Track all submitted IDs
 
             foreach ($data['product_list'] as $item) {
                 $supplier = Supplier::updateOrCreate(
-                    ['id' => $item['id'] ?? 0],
+                    ['product_id' => $data['product_id'],
+                        'principal_id' => $data['principal_id'],
+                        'source_id' => $item['source_id']],
                     [
                         'product_id' => $data['product_id'],
                         'principal_id' => $data['principal_id'],
@@ -84,35 +82,26 @@ class SupplierController extends Controller
                         'date' => $date,
                     ]
                 );
-
-                # Collect actual DB id (new or updated)
-                $submittedIds[] = $supplier->id;
             }
 
-            # Delete missing suppliers from DB for this product and branch
-            Supplier::where('product_id', $data['product_id'])
-                ->where('branch_id', $branchId)
-                ->whereNotIn('id', $submittedIds)
-                ->delete();
-
-            # Return success
+            // Return success
             return Utility::apiSuccess('Data saved successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error while saving supplier', ['exception' => $ex->getMessage()]);
         }
     }
 
-
     public function getSupplier(Request $request)
     {
         try {
-            # Get page info
+            // Get page info
             $page = max((int) $request->input('page', 1), 1);
             $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
             $search = trim($request->input('search', ''));
 
-            # Get filters
+            // Get filters
             $filters = [
                 'owner' => (array) $request->input('owner', []),
                 'branch' => (array) $request->input('branch', []),
@@ -125,7 +114,7 @@ class SupplierController extends Controller
                 'search' => $search,
             ];
 
-            # If export requested
+            // If export requested
             if ($request->boolean('download')) {
                 $columns = [
                     'product.part_no' => 'Part No',
@@ -143,7 +132,7 @@ class SupplierController extends Controller
                     'date' => 'Date',
                 ];
 
-                $filename = 'suppliers_' . now()->format('Ymd_His') . '.xlsx';
+                $filename = 'suppliers_'.now()->format('Ymd_His').'.xlsx';
 
                 (new SupplierExport($filters, $columns, Supplier::class))
                     ->queue("exports/{$filename}", 'public');
@@ -154,8 +143,7 @@ class SupplierController extends Controller
                 ]);
             }
 
-
-            # Base query
+            // Base query
             $query = Supplier::query()
                 ->with([
                     'product:id,part_no,description',
@@ -166,7 +154,7 @@ class SupplierController extends Controller
                 ])
                 ->whereNull('suppliers.deleted_at');
 
-            # Apply filters
+            // Apply filters
             if ($filters['owner']) {
                 $query->whereIn('suppliers.user_id', $filters['owner']);
             }
@@ -185,15 +173,15 @@ class SupplierController extends Controller
             if ($filters['currency']) {
                 $query->whereIn('suppliers.currency_id', $filters['currency']);
             }
-            if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            if (! empty($filters['start_date']) && ! empty($filters['end_date'])) {
                 $query->whereBetween('suppliers.date', [$filters['start_date'], $filters['end_date']]);
-            } elseif (!empty($filters['start_date'])) {
+            } elseif (! empty($filters['start_date'])) {
                 $query->whereDate('suppliers.date', '>=', $filters['start_date']);
-            } elseif (!empty($filters['end_date'])) {
+            } elseif (! empty($filters['end_date'])) {
                 $query->whereDate('suppliers.date', '<=', $filters['end_date']);
             }
 
-            # Search filter
+            // Search filter
             if ($filters['search'] !== '') {
                 $query->where(function ($q) use ($filters) {
                     $search = $filters['search'];
@@ -207,20 +195,20 @@ class SupplierController extends Controller
                         ->orWhere('suppliers.discount', 'like', "%$search%")
                         ->orWhere('suppliers.net_price', 'like', "%$search%")
                         ->orWhere('suppliers.custom_price', 'like', "%$search%")
-                        ->orWhereHas('principal', fn($q2) => $q2->where('type', 'like', "%$search%"))
-                        ->orWhereHas('source', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                        ->orWhereHas('currency', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                        ->orWhereHas('branch', fn($q2) => $q2->where('name', 'like', "%$search%"));
+                        ->orWhereHas('principal', fn ($q2) => $q2->where('type', 'like', "%$search%"))
+                        ->orWhereHas('source', fn ($q2) => $q2->where('name', 'like', "%$search%"))
+                        ->orWhereHas('currency', fn ($q2) => $q2->where('name', 'like', "%$search%"))
+                        ->orWhereHas('branch', fn ($q2) => $q2->where('name', 'like', "%$search%"));
                 });
             }
 
-            # Normal grouped + paginated response
-            $suppliers = $query->orderByDesc('id')->get()->groupBy(fn($item) => $item->product->part_no);
+            // Normal grouped + paginated response
+            $suppliers = $query->orderByDesc('id')->get()->groupBy(fn ($item) => $item->product->part_no);
 
             $totalGroups = $suppliers->count();
             $paged = $suppliers->forPage($page, $perPage);
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Supplier list grouped by part_no', [
                 'current_page' => $page,
                 'per_page' => $perPage,
@@ -231,39 +219,40 @@ class SupplierController extends Controller
 
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
         }
     }
 
-
     public function deleteSupplier(Request $request)
     {
         try {
-            # Get specific fields
+            // Get specific fields
             $data = $request->only(['id']);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'id' => ['required', 'integer', 'exists:products,id'],
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Delete supplier
+            // Delete supplier
             $deleted = Supplier::where('product_id', $data['id'])->delete();
 
-            # Return if fail to delete
-            if (!$deleted) {
+            // Return if fail to delete
+            if (! $deleted) {
                 return Utility::apiError('Failed to delete supplier', [], 400);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error while deleting supplier', ['exception' => $ex->getMessage()]);
         }
     }

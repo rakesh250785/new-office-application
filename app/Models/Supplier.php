@@ -25,14 +25,15 @@ class Supplier extends Model
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'created_at' => 'date',
+        'updated_at' => 'date',
     ];
 
     public function getCreatedAtAttribute($value)
     {
         return Carbon::parse($value)->format('d-m-Y');
     }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
@@ -57,5 +58,4 @@ class Supplier extends Model
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
-
 }
