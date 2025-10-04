@@ -32,7 +32,9 @@ class Category extends Model
         return $this->belongsTo(Branch::class, 'branch_id');
     }
 
-    public function parameterField(){
-        
+
+    public function uspType()
+    {
+        return $this->hasMany(Usp::class, 'category_id')->select('id', 'usp_type', 'category_id');
     }
 }

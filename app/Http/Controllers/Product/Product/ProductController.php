@@ -48,6 +48,7 @@ class ProductController extends Controller
                 'additional_description',
                 'specification',
                 'product_id',
+                'usp_id',
             ]);
 
             // Get column name
@@ -140,6 +141,7 @@ class ProductController extends Controller
                 'category_id' => $data['category_id'] ?? null,
                 'branch_id' => Auth::user()['branch_id'] ?? null,
                 'user_id' => Auth::user()['id'] ?? null,
+                'usp_id' => ! empty($data['usp_id']) ? implode(',', json_decode($data['usp_id'], true)) : null,
             ];
 
             // Handle image
@@ -205,8 +207,13 @@ class ProductController extends Controller
                 $payload['quantity_updated_at'] = Carbon::now();
             }
 
-            // Update product
-            $status = $existing->update($payload);
+            $product = Product::find($data['product_id']);
+            if ($product) {
+                foreach ($payload as $key => $value) {
+                    $product->$key = $value;
+                }
+                $status = $product->save();
+            }
             if (! $status) {
                 return Utility::apiError('Fail to update not product.', [], 221);
             }
@@ -226,9 +233,8 @@ class ProductController extends Controller
     public function getProduct(Request $request)
     {
         try {
-
             // Request specific fields
-            $data = $request->only(['search', 'download', 'per_page', 'start_date', 'end_date', 'principal_list', 'brand_list', 'category_list']);
+            $data = $request->only(['search', 'download', 'per_page', 'start_date', 'end_date', 'principal_list', 'brand_list', 'category_list', 'branch_list']);
 
             if (! empty($data['download'])) {
                 $columns = [
@@ -261,8 +267,12 @@ class ProductController extends Controller
                 ]);
             }
 
-            // Get products
-            $query = Product::with('principal:id,type', 'category:id,name', 'brand:id,name')
+            // Build base query (include parameter_field CSV from category)
+            $query = Product::with([
+                'principal:id,type',
+                'category:id,name,description,parameter_field',
+                'brand:id,name',
+            ])
                 ->whereNull('deleted_at')
                 ->orderByDesc('id');
 
@@ -283,18 +293,9 @@ class ProductController extends Controller
                         ->orWhere('quantity', 'like', "%{$search}%")
                         ->orWhere('price_updated_at', 'like', "%{$search}%")
                         ->orWhere('quantity_updated_at', 'like', "%{$search}%")
-                        ->orWhereHas(
-                            'principal',
-                            fn ($b) => $b->where('type', 'like', "%$search%")
-                        )
-                        ->orWhereHas(
-                            'category',
-                            fn ($b) => $b->where('name', 'like', "%$search%")
-                        )
-                        ->orWhereHas(
-                            'brand',
-                            fn ($b) => $b->where('name', 'like', "%$search%")
-                        );
+                        ->orWhereHas('principal', fn ($b) => $b->where('type', 'like', "%$search%"))
+                        ->orWhereHas('category', fn ($b) => $b->where('name', 'like', "%$search%"))
+                        ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', "%$search%"));
                 });
             }
 
@@ -322,6 +323,32 @@ class ProductController extends Controller
 
             $perPage = (int) ($data['per_page'] ?? 15);
             $products = $query->paginate($perPage);
+
+            $allIds = $products->pluck('category.parameter_field')
+                ->filter()
+                ->flatMap(function ($csv) {
+                    return array_filter(array_map('intval', array_map('trim', explode(',', (string) $csv))));
+                })
+                ->unique()
+                ->values()
+                ->all();
+
+            $paramsMap = [];
+            if (! empty($allIds)) {
+                $paramsMap = Parameter::select('id', 'column_name', 'parameter_name')->whereIn('id', $allIds)->get()->keyBy('id')->all();
+            }
+
+            $products->getCollection()->transform(function ($product) use ($paramsMap) {
+                $csv = $product->category->parameter_field ?? '';
+                $ids = array_filter(array_map('intval', array_map('trim', explode(',', (string) $csv))));
+
+                $product->category_params = collect($ids)
+                    ->map(fn ($id) => $paramsMap[$id] ?? null)
+                    ->filter()
+                    ->values();
+
+                return $product;
+            });
 
             return Utility::apiSuccess('Product list fetched successfully.', $products);
         } catch (Exception $ex) {

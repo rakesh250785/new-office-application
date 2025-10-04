@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -16,9 +17,9 @@ return new class extends Migration {
             $table->string('part_no');
             $table->string('hsn_no');
             $table->double('price');
-            $table->string('uom');  
+            $table->string('uom');
             $table->string('igst_rate');
-            $table->string('discount'); 
+            $table->string('discount');
             $table->text('description');
             $table->text('additional_description')->nullable();
             $table->longText('specification')->nullable();
@@ -28,7 +29,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('brand_id');
             $table->unsignedBigInteger('user_id');
-            $table->timestamp('price_updated_at')->nullable();  
+            $table->string('usp_id')->nullable();
+            $table->timestamp('price_updated_at')->nullable();
             $table->timestamp('quantity_updated_at')->nullable();
             $table->softDeletes();
             $table->timestamps();

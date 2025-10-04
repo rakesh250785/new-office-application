@@ -17,7 +17,6 @@ class Usp extends Model
         'user_id',
     ];
 
-
     public function getCreatedAtAttribute($value)
     {
         return Carbon::parse($value)->format('d-m-Y');
@@ -40,8 +39,8 @@ class Usp extends Model
         return $this->belongsTo(Principal::class, 'principal_id');
     }
 
-    public function categoryType()
+    public function category()
     {
-        return $this->belongsTo(CategoryType::class, 'category_id');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 }

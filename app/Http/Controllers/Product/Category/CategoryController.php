@@ -216,6 +216,7 @@ class CategoryController extends Controller
 
                 $usp = Usp::select('id', 'usp_type', 'category_id')
                     ->where('category_id', $data['category_id'])
+                    ->orderBy('usp_type')
                     ->get();
 
                 $recData['parameter'] = $params;    

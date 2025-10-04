@@ -25,7 +25,8 @@ class Product extends Model
         'quantity_updated_at',
         'branch_id',
         'user_id',
-        'image'
+        'image',
+        'usp_id'
     ];
 
     public function getCreatedAtAttribute($value)
@@ -61,21 +62,11 @@ class Product extends Model
     }
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id');
+        return $this->belongsTo(Category::class, 'category_id')->with(['uspType']);
     }
 
     public function brand()
     {
         return $this->belongsTo(Brand::class, 'brand_id');
-    }
-
-    public function details()
-    {
-        return $this->belongsTo(ProductDetail::class, 'brand_id');
-    }
-
-    public function parameterField()
-    {
-
     }
 }
