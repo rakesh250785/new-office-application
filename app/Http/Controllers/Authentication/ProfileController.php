@@ -43,11 +43,11 @@ class ProfileController extends Controller
                         $profile->profile_image = Storage::disk('public')->url($storageRelative);
                     } else {
                         Log::warning("Profile image missing for user {$user->id}: {$image}");
-                        $profile->profile_image = url('images/default-avatar.png');
+                        $profile->profile_image = null;
                     }
                 }
             } else {
-                $profile->profile_image = url('images/default-avatar.png');
+                $profile->profile_image = null;
             }
 
             return Utility::apiSuccess('Profile fetched successfully', $profile, 200);
@@ -103,19 +103,19 @@ class ProfileController extends Controller
                     $oldRelative = 'profileLogo/'.basename($user->profile_image);
                     if (Storage::disk('public')->exists($oldRelative)) {
                         Storage::disk('public')->delete($oldRelative);
-                    }
+                    }   
                 }
             }
 
             // Update allowed fields
-            $user->update([
+            $user->update([     
                 'name' => $request->input('name'),
-                'last_name' => $request->input('last_name'),    
+                'last_name' => $request->input('last_name'),
                 'email' => $request->input('email'),
                 'profile_image' => $imageName,
             ]);
 
-            $profileImageUrl = $imageName ? Storage::disk('public')->url('profileLogo/'.$imageName) : url('images/default-avatar.png');
+            $profileImageUrl = $imageName ? Storage::disk('public')->url('profileLogo/'.$imageName) : null;
 
             return Utility::apiSuccess('Profile updated successfully', [
                 'profile_image' => $imageName,
