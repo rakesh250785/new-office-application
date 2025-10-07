@@ -71,11 +71,12 @@ class PartialOrderController extends Controller
                 'extra_notes',
                 'courier_id',
                 'unique_partial_order_no',
+                'partial_order_id',
             ]);
 
             // Validation rule
             $validator = Validator::make($data, [
-                'id' => 'sometimes|nullable|exists:partial_orders,id',
+                'partial_order_id' => 'sometimes|nullable|exists:partial_orders,id',
                 'order_id' => 'required|exists:orders,id',
                 'customer_order_no' => 'required|string',
                 'unique_quotation_no' => 'required|string',
@@ -103,7 +104,7 @@ class PartialOrderController extends Controller
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
-                'date' => 'required|date|after_or_equal:today',
+                'date' => 'required|date',
                 'enq_ref' => 'required|string|max:255',
                 'prepard_by' => 'required|string|max:255',
                 'update_status' => 'required|boolean',
@@ -167,7 +168,7 @@ class PartialOrderController extends Controller
             // Update order info
             $orderTotalUpdate = Order::where('id', $data['order_id'])->update([
                 'total_amount' => (float) $data['total_amount'],
-                'sale_tax_amount' => $salesTax, 
+                'sale_tax_amount' => $salesTax,
                 'final_total_amount' => $finalTotal,
             ]);
             if (! $orderTotalUpdate) {
@@ -175,9 +176,9 @@ class PartialOrderController extends Controller
             }
 
             // Update existing partial order details
-            if (! empty($data['id'])) {
+            if (! empty($data['partial_order_id'])) {
                 $uniquePartialNo = $data['unique_partial_order_no'];
-                PartialOrderDetails::where('partial_order_id', $data['id'])->delete();
+                PartialOrderDetails::where('partial_order_id', $data['partial_order_id'])->delete();
             } else {
                 $dateStr = Carbon::now()->format('dmY');
                 $initials = substr($branchName['name'], 0, 3);
@@ -233,7 +234,7 @@ class PartialOrderController extends Controller
 
             // Where condition
             $whereCondition = [
-                'id' => $data['id'] ?? null,
+                'id' => $data['partial_order_id'] ?? null,
                 'unique_partial_order_no' => $uniquePartialNo,
                 'unique_order_no' => $data['unique_order_no'] ?? null,
                 'unique_quotation_no' => $data['unique_quotation_no'] ?? null,
@@ -290,7 +291,6 @@ class PartialOrderController extends Controller
                     'description' => $item['description'] ?? '',
                     'hsn_code' => $item['hsn_code'] ?? '',
                     'in_stock' => $item['in_stock'] ?? 0,
-                    'send_qty' => $sendQty,
                     'price' => $price,
                     'discount' => $discount,
                     'net_price' => $afterDiscount,
@@ -313,8 +313,8 @@ class PartialOrderController extends Controller
                         'id' => $item['id'],
                         'balance_quantity' => $balanceQty,
                     ];
-                    OrderDetails::where('order_id', $data['order_id'])->where('id', $item['id'])
-                        ->update(['sent_qty' => DB::raw('COALESCE(sent_qty,0) + '.intval($sendQty))]);
+                    // OrderDetails::where('order_id', $data['order_id'])->where('id', $item['id'])
+                    //     ->update(['sent_qty' => DB::raw('COALESCE(sent_qty,0) + '.intval($sendQty))]);
                 }
             }
 
@@ -369,7 +369,7 @@ class PartialOrderController extends Controller
             ]);
 
             // Return response
-            return Utility::apiSuccess($data['id'] ? 'updated successfully.' : 'generated successfully.', [], 200);
+            return Utility::apiSuccess(! empty($data['id']) ? 'updated successfully.' : 'generated successfully.', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
