@@ -242,12 +242,15 @@ class PartialOrderController extends Controller
                 'order_id' => $data['order_id'],
             ];
 
+
             // Update or create partial order
             $updateOrCreate = PartialOrder::updateOrCreate($whereCondition, $partialOrderData);
             if (! $updateOrCreate) {
                 return Utility::apiError('Failed to create / update partial order.', [], 221);
             }
-            $partialId = $updateOrCreate->id;
+
+
+            $partialId = $updateOrCreate->id ?? $data['partial_order_id'];
             $productListRows = [];
             $orderDetailsToUpdate = [];
             $grandTotal = 0;
@@ -296,6 +299,7 @@ class PartialOrderController extends Controller
                     'net_price' => $afterDiscount,
                     'igst' => $igst,
                     'balance_quantity' => $balanceQty,
+                    'send_qty'=> $sendQty,
                     'order_type' => 1,
                     'quantity' => $quantity,
                     'total' => $totalAmount,
@@ -313,8 +317,6 @@ class PartialOrderController extends Controller
                         'id' => $item['id'],
                         'balance_quantity' => $balanceQty,
                     ];
-                    // OrderDetails::where('order_id', $data['order_id'])->where('id', $item['id'])
-                    //     ->update(['sent_qty' => DB::raw('COALESCE(sent_qty,0) + '.intval($sendQty))]);
                 }
             }
 
