@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('profile_image')->nullable();
             $table->string('name');
+            $table->string('team_type')->nullable();
             $table->string('last_name')->nullable();
             $table->string('user_name')->unique();
             $table->string('email')->unique();

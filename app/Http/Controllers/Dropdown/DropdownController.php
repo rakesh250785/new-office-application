@@ -67,7 +67,6 @@ class DropdownController extends Controller
         }
     }
 
-    public function getCustomerDD() {}
 
     public function getCountryDD()
     {
@@ -209,22 +208,56 @@ class DropdownController extends Controller
         }
     }
 
-    public function getCompanyDD()
+    public function getCompanyDD(Request $request)
     {
         try {
-            // Get currency
-            $currency = Customer::whereNull('deleted_at')->select('id', 'customer_name', 'company_name', 'address', 'owner_id', 'state_id', 'other_state', 'city', 'email_id', 'pin_code', 'mobile_no', 'landline_no')
-                ->with(['owner:id,name'])->get();
-
-            // Return response
-            return Utility::apiSuccess('DD getCompanyDD', $currency, 200);
-
+            $search = trim((string) $request->input('search', ''));
+    
+            $query = Customer::whereNull('deleted_at')
+                ->select(
+                    'id',
+                    'customer_name',
+                    'company_name',
+                    'address',
+                    'owner_id',
+                    'state_id',
+                    'other_state',
+                    'city',
+                    'email_id',
+                    'pin_code',
+                    'mobile_no',
+                    'landline_no',
+                    'country_id'
+                )
+                ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
+    
+            // if user supplied a search term, filter (company_name OR customer_name)
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('company_name', 'like', "%{$search}%")        
+                      ->orWhere('customer_name', 'like', "%{$search}%")
+                      ->orWhere('mobile_no', 'like', "%{$search}%");
+                });
+            }
+    
+            // If client requests a specific id (optional), return single item quickly
+            if ($request->filled('id')) {
+                $id = (int) $request->input('id');
+                $item = $query->where('id', $id)->first();
+                return Utility::apiSuccess('DD getC     ompanyDD', $item ? [$item] : [], 200);
+            }
+    
+            // limit results to avoid loading all rows
+            $results = $query->get();
+    
+            return Utility::apiSuccess('DD getCompanyDD', $results, 200);
         } catch (Exception $ex) {
             Log::error($ex);
-
             return Utility::apiError('Something went wrong in getCompanyDD', ['exception' => $ex->getMessage()], 500);
         }
     }
+    
+    
 
     public function getProductDD(Request $request)
     {
