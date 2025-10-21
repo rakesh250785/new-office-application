@@ -37,4 +37,14 @@ class ExpansesCompanyDetail extends Model
     {
         return $this->hasOne(LinkExpansesOrder::class, 'expanses_company_detail_id', 'id');
     }
+
+    public function paymentBill()
+    {
+        return $this->hasOne(BillExpansesPayment::class, 'expanses_company_detail_id', 'id');
+    }
+
+    public function serviceReport()
+    {
+        return $this->hasOne(ExpansesServiceReport::class, 'expanses_company_detail_id', 'id')->with('company');
+    }
 }

@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bill_expanses_payments', function (Blueprint $table) {
+        Schema::create('expanses_service_reports', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('expanses_company_detail_id');
-            $table->string('advance_payment')->nullable();
-            $table->text('advance_details')->nullable();
+            $table->integer('company_id');
+            $table->integer('user_id');
+            $table->text('order_no')->nullable();
             $table->json('uploaded_file')->nullable();
-            $table->json('invoices')->nullable();
-            $table->json('invoices_meta')->nullable();
             $table->json('totals')->nullable();
             $table->timestamps();
         });
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bill_expanses_payments');
+        Schema::dropIfExists('expanses_service_reports');
     }
 };
