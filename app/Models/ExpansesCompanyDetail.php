@@ -25,6 +25,16 @@ class ExpansesCompanyDetail extends Model
 
     public function company()
     {
-        return $this->belongsTo(Customer::class, 'company_id', 'id')->select('id','company_name', 'customer_name');
+        return $this->belongsTo(Customer::class, 'company_id', 'id')->select('id', 'company_name', 'customer_name');
+    }
+
+    public function travelExpanses()
+    {
+        return $this->hasOne(TravelExpanses::class, 'expanses_company_detail_id', 'id');
+    }
+
+    public function linkOrder()
+    {
+        return $this->hasOne(LinkExpansesOrder::class, 'expanses_company_detail_id', 'id');
     }
 }

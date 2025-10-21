@@ -223,6 +223,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     // Expanses
     Route::post('addUpdateExpances', [ExpencesController::class, 'addUpdateExpances']);
     Route::post('addUpdateTravelExpense', [ExpencesController::class, 'addUpdateTravelExpense']);
+    Route::post('addUpdateLinkOrder', [ExpencesController::class, 'addUpdateLinkOrder']);
+    Route::post('addUpdateBillPayment', [ExpencesController::class, 'addUpdateBillPayment']);
     Route::post('getExpansesDetails', [ExpencesController::class, 'getExpansesDetails']);
 
     // Testing PDF
