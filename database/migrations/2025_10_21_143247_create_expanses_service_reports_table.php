@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('expanses_service_reports', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('expanses_company_detail_id');
-            $table->integer('company_id');
-            $table->integer('user_id');
+            $table->integer('company_id')->nullable();
+            $table->integer('user_id')->nullable();
             $table->text('order_no')->nullable();
             $table->json('uploaded_file')->nullable();
             $table->json('totals')->nullable();

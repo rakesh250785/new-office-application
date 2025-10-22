@@ -16,6 +16,7 @@ class ExpansesCompanyDetail extends Model
         'contact_details',
         'phone_no',
         'email_id',
+        'user_id',
     ];
 
     public function departmentCustomers()

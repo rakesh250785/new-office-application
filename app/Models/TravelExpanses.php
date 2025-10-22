@@ -9,8 +9,6 @@ class TravelExpanses extends Model
 {
     use HasFactory;
 
-    protected $table = 'travel_expenses';
-
     protected $fillable = [
         'expanses_company_detail_id',
         'purpose',
@@ -23,6 +21,7 @@ class TravelExpanses extends Model
         'labor',
         'other_expenses',
         'totals',
+        'user_id',
     ];
 
     protected $casts = [

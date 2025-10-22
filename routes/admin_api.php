@@ -221,6 +221,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('getNotificationEntityTypes', [NotificationPushController::class, 'getNotificationEntityTypes']);
 
     // Expanses
+    Route::post('addNewExpanses', [ExpencesController::class, 'addNewExpanses']);
     Route::post('addUpdateExpances', [ExpencesController::class, 'addUpdateExpances']);
     Route::post('addUpdateTravelExpense', [ExpencesController::class, 'addUpdateTravelExpense']);
     Route::post('addUpdateLinkOrder', [ExpencesController::class, 'addUpdateLinkOrder']);

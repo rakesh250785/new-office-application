@@ -20,6 +20,7 @@ return new class extends Migration
             $table->json('invoices')->nullable();
             $table->json('invoices_meta')->nullable();
             $table->json('totals')->nullable();
+            $table->integer('user_id');
             $table->timestamps();
         });
     }

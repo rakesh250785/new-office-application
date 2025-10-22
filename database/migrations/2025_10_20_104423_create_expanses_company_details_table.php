@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('expanses_company_details', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('company_id')->index();
-            $table->string('concern_person_name');
-            $table->string('designation');
-            $table->string('contact_details');
-            $table->string('phone_no', 20);
-            $table->string('email_id')->nullable();
+            $table->integer('company_id')->nullable();
+            $table->string('concern_person_name')->nullable();
+            $table->string('designation')->nullable();
+            $table->string('contact_details')->nullable();
+            $table->string('phone_no', 20)->nullable();
+            $table->string('email_id')->nullable()->nullable();
+            $table->integer('user_id');
             $table->timestamps();
         });
     }

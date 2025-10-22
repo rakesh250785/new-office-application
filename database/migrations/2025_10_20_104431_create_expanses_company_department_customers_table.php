@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('expanses_company_department_customers', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('expanses_company_detail_id');
-            $table->unsignedBigInteger('department')->nullable();
+            $table->string('department')->nullable();
             $table->string('customer_name')->nullable();
+            $table->integer('user_id');
             $table->timestamps();
         });
     }

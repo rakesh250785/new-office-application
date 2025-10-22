@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('travel_expanses', function (Blueprint $table) {
             $table->id();
-            $table->string('expanses_company_detail_id');
+            $table->unsignedBigInteger('expanses_company_detail_id');
             $table->string('purpose')->nullable();
             $table->json('legs')->nullable();
             $table->json('accompanying')->nullable();
@@ -24,6 +24,7 @@ return new class extends Migration
             $table->json('labor')->nullable();
             $table->json('other_expenses')->nullable();
             $table->json('totals')->nullable();
+            $table->integer('user_id');
             $table->timestamps();
         });
     }

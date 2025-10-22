@@ -13,6 +13,7 @@ class BillExpansesPayment extends Model
         'advance_details',
         'uploaded_file',
         'totals',
+        'user_id',
     ];
 
     protected $casts = [

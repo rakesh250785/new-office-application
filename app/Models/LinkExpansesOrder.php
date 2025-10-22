@@ -17,6 +17,7 @@ class LinkExpansesOrder extends Model
         'purchase_hardware',
         'labor',
         'totals',
+        'user_id',
     ];
 
     protected $casts = [

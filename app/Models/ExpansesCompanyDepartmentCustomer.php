@@ -13,6 +13,7 @@ class ExpansesCompanyDepartmentCustomer extends Model
         'expanses_company_detail_id',
         'department',
         'customer_name',
+        'user_id',
     ];
 
     public function companyDetail()
