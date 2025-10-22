@@ -580,4 +580,52 @@ class ExpencesController extends Controller
             return Utility::apiError('Error addUpdateExpances', ['exception' => $ex->getMessage()]);
         }
     }
+
+    public function getExpansesHistory(Request $request)
+    {
+        try {
+            $data = $request->only([
+                'page',
+                'per_page',
+                'start_date',
+                'end_date',
+                'download',
+                'branch_list',
+                'search',
+            ]);
+
+            $records = ExpansesCompanyDetail::with([
+                'company' => function ($q) {
+                    $q->select('id', 'company_name');
+                },
+                'travelExpanses' => function ($q) {
+                    $q->select('id', 'expanses_company_detail_id', 'totals');
+                },
+                'linkOrder' => function ($q) {
+                    $q->select('id', 'expanses_company_detail_id', 'purpose_order_no');
+                },
+                'paymentBill' => function ($q) {
+                    $q->select('id', 'expanses_company_detail_id', 'totals');
+                },
+                'serviceReport' => function ($q) {
+                    $q->select('id', 'expanses_company_detail_id', 'order_no', 'totals');
+                },
+                'user' => function ($q) {
+                    $q->select('id', 'user_name', 'email', 'team_type');
+                },
+            ]);
+
+            $perPage = $data['per_page'] ?? config('constant.per_page', 10);
+            $history = $records->orderByDesc('id')->paginate($perPage);
+
+            return Utility::apiSuccess('fetch expanses history', $history, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Error getExpansesHistory', [
+                'exception' => $ex->getMessage(),
+            ], 500);
+        }
+
+    }
 }

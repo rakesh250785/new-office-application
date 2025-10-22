@@ -17,7 +17,12 @@ class ExpansesCompanyDepartmentCustomer extends Model
     ];
 
     public function companyDetail()
-{
-    return $this->belongsTo(ExpansesCompanyDetail::class, 'expanses_company_detail_id');
-}
+    {
+        return $this->belongsTo(ExpansesCompanyDetail::class, 'expanses_company_detail_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Classification::class, 'department', 'id')->select('id', 'name');
+    }
 }

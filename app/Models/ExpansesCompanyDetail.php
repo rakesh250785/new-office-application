@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,16 @@ class ExpansesCompanyDetail extends Model
         'phone_no',
         'email_id',
         'user_id',
+    ];
+
+    public function getCreatedAtAttribute($value)
+    {
+        return Carbon::parse($value)->format('d-m-Y');
+    }
+
+    protected $casts = [
+        'created_at' => 'date',
+        'updated_at' => 'date',
     ];
 
     public function departmentCustomers()
@@ -47,5 +58,11 @@ class ExpansesCompanyDetail extends Model
     public function serviceReport()
     {
         return $this->hasOne(ExpansesServiceReport::class, 'expanses_company_detail_id', 'id')->with('company');
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'user_id')->select('username', 'team_type', 'id');
+
     }
 }
