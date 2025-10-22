@@ -27,76 +27,81 @@ class ExpencesController extends Controller
             $userId = Auth::id();
             $data = $request->all();
 
-            // Step 1: Create default company details
-            $companyDetail = ExpansesCompanyDetail::create([
-                'company_id' => $data['company_id'] ?? null,
-                'concern_person_name' => $data['concern_person_name'] ?? '',
-                'designation' => $data['designation'] ?? '',
-                'contact_details' => $data['contact_details'] ?? '',
-                'phone_no' => $data['phone_no'] ?? '',
-                'email_id' => $data['email_id'] ?? '',
-                'user_id' => $userId,
-            ]);
+            $records = ExpansesCompanyDetail::latest()->first();
 
-            // Step 2: Create default department-customer entry
-            ExpansesCompanyDepartmentCustomer::create([
-                'expanses_company_detail_id' => $companyDetail->id,
-                'department' => $data['department'] ?? '',
-                'customer_name' => $data['customer_name'] ?? '',
-                'user_id' => $userId,
-            ]);
+            if ($records?->company_id != null) {
+                // Step 1: Create default company details
+                $companyDetail = ExpansesCompanyDetail::create([
+                    'company_id' => $data['company_id'] ?? null,
+                    'concern_person_name' => $data['concern_person_name'] ?? '',
+                    'designation' => $data['designation'] ?? '',
+                    'contact_details' => $data['contact_details'] ?? '',
+                    'phone_no' => $data['phone_no'] ?? '',
+                    'email_id' => $data['email_id'] ?? '',
+                    'user_id' => $userId,
+                ]);
 
-            // Step 3: Create default travel expense entry
-            TravelExpanses::create([
-                'expanses_company_detail_id' => $companyDetail->id,
-                'purpose' => $data['purpose'] ?? '',
-                'legs' => $data['legs'] ?? '',
-                'accompanying' => $data['accompanying'] ?? '',
-                'food' => $data['food'] ?? 0,
-                'hotel' => $data['hotel'] ?? 0,
-                'purchase_equipment' => $data['purchase_equipment'] ?? 0,
-                'purchase_hardware' => $data['purchase_hardware'] ?? 0,
-                'labor' => $data['labor'] ?? 0,
-                'other_expenses' => $data['other_expenses'] ?? 0,
-                'totals' => $data['totals'] ?? 0,
-                'user_id' => $userId,
-            ]);
-
-            // Step 4: Create or update linked order entry
-            LinkExpansesOrder::create(
-                [
+                // Step 2: Create default department-customer entry
+                ExpansesCompanyDepartmentCustomer::create([
                     'expanses_company_detail_id' => $companyDetail->id,
-                    'purpose_order_no' => $data['purpose_order_no'] ?? '',
+                    'department' => $data['department'] ?? '',
+                    'customer_name' => $data['customer_name'] ?? '',
+                    'user_id' => $userId,
+                ]);
+
+                // Step 3: Create default travel expense entry
+                TravelExpanses::create([
+                    'expanses_company_detail_id' => $companyDetail->id,
                     'purpose' => $data['purpose'] ?? '',
+                    'legs' => $data['legs'] ?? '',
+                    'accompanying' => $data['accompanying'] ?? '',
+                    'food' => $data['food'] ?? 0,
+                    'hotel' => $data['hotel'] ?? 0,
                     'purchase_equipment' => $data['purchase_equipment'] ?? 0,
                     'purchase_hardware' => $data['purchase_hardware'] ?? 0,
                     'labor' => $data['labor'] ?? 0,
+                    'other_expenses' => $data['other_expenses'] ?? 0,
                     'totals' => $data['totals'] ?? 0,
                     'user_id' => $userId,
-                ]
-            );
+                ]);
 
-            // Step 5: Create default bill entry
-            BillExpansesPayment::create([
-                'expanses_company_detail_id' => $companyDetail->id,
-                'advance_payment' => $data['advance_payment'] ?? 0,
-                'advance_details' => $data['advance_details'] ?? '',
-                'uploaded_file' => json_encode([]),
-                'totals' => $data['totals'] ?? 0,
-                'user_id' => $userId,
-            ]);
+                // Step 4: Create or update linked order entry
+                LinkExpansesOrder::create(
+                    [
+                        'expanses_company_detail_id' => $companyDetail->id,
+                        'purpose_order_no' => $data['purpose_order_no'] ?? '',
+                        'purpose' => $data['purpose'] ?? '',
+                        'purchase_equipment' => $data['purchase_equipment'] ?? 0,
+                        'purchase_hardware' => $data['purchase_hardware'] ?? 0,
+                        'labor' => $data['labor'] ?? 0,
+                        'totals' => $data['totals'] ?? 0,
+                        'user_id' => $userId,
+                    ]
+                );
 
-            // Step 6: Create default service report entry
-            ExpansesServiceReport::create([
-                'expanses_company_detail_id' => $companyDetail->id,
-                'company_id' => $data['company_id'] ?? null,
-                'user_id' => $userId,
-                'order_no' => $data['order_no'] ?? '',
-                'uploaded_file' => json_encode([]),
-                'totals' => $data['totals'] ?? 0,
-            ]);
+                // Step 5: Create default bill entry
+                BillExpansesPayment::create([
+                    'expanses_company_detail_id' => $companyDetail->id,
+                    'advance_payment' => $data['advance_payment'] ?? 0,
+                    'advance_details' => $data['advance_details'] ?? '',
+                    'uploaded_file' => json_encode([]),
+                    'totals' => $data['totals'] ?? 0,
+                    'user_id' => $userId,
+                ]);
 
-            return Utility::apiSuccess('entry created successfully', [], 200);
+                // Step 6: Create default service report entry
+                ExpansesServiceReport::create([
+                    'expanses_company_detail_id' => $companyDetail->id,
+                    'company_id' => $data['company_id'] ?? null,
+                    'user_id' => $userId,
+                    'order_no' => $data['order_no'] ?? '',
+                    'uploaded_file' => json_encode([]),
+                    'totals' => $data['totals'] ?? 0,
+                ]);
+
+            }
+
+            return Utility::apiSuccess('can create new expanses now !', [], 200);
 
         } catch (Exception $ex) {
             Log::error('Error in addNewExpanses: '.$ex->getMessage());
@@ -549,7 +554,7 @@ class ExpencesController extends Controller
                 'id' => $serviceReport->id,
                 'order_no' => $serviceReport->order_no,
                 'company_id' => $serviceReport->company_id,
-                'uploaded_file' => $serviceReport->uploaded_file,   
+                'uploaded_file' => $serviceReport->uploaded_file,
                 'totals' => $serviceReport->totals,
             ];
 
