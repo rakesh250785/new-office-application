@@ -228,6 +228,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateBillPayment', [ExpencesController::class, 'addUpdateBillPayment']);
     Route::post('addUpdateServiceReport', [ExpencesController::class, 'addUpdateServiceReport']);
     Route::post('getExpansesDetails', [ExpencesController::class, 'getExpansesDetails']);
+    Route::post('deleteExpanses', [ExpencesController::class, 'deleteExpanses']);
+
     Route::post('getExpansesHistory', [ExpencesController::class, 'getExpansesHistory']);
 
     // Testing PDF

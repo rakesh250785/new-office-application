@@ -569,15 +569,37 @@ class ExpencesController extends Controller
     public function getExpansesDetails(Request $request)
     {
         try {
-            $records = ExpansesCompanyDetail::with('departmentCustomers', 'company', 'travelExpanses', 'linkOrder', 'paymentBill', 'serviceReport')
-                ->latest()
-                ->first();
+            $data = $request->only(['id']);
 
-            return Utility::apiSuccess('Latest expanses details fetched', $records, 200);
+            $validator = Validator::make($data, [
+                'id' => 'sometimes|nullable|integer|exists:expanses_company_details,id',
+            ]);
+
+            if ($validator->fails()) {
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
+            }
+
+            $with = [
+                'departmentCustomers',
+                'company',
+                'travelExpanses',
+                'linkOrder',                    
+                'paymentBill',
+                'serviceReport',
+            ];              
+
+            $query = ExpansesCompanyDetail::with($with)
+                ->when(isset($data['id']) && $data['id'] !== '', function ($q) use ($data) {
+                    $q->where('id', intval($data['id']));
+                });
+
+            $record = $query->latest()->first();
+
+            return Utility::apiSuccess('Expanses details fetched', $record, 200);
         } catch (Exception $ex) {
             Log::error($ex);
 
-            return Utility::apiError('Error addUpdateExpances', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Error fetching expanses details', ['exception' => $ex->getMessage()]);
         }
     }
 
@@ -602,7 +624,7 @@ class ExpencesController extends Controller
                     $q->select('id', 'expanses_company_detail_id', 'totals');
                 },
                 'linkOrder' => function ($q) {
-                    $q->select('id', 'expanses_company_detail_id', 'purpose_order_no');
+                    $q->select('id', 'expanses_company_detail_id', 'purpose_order_no', 'totals');
                 },
                 'paymentBill' => function ($q) {
                     $q->select('id', 'expanses_company_detail_id', 'totals');
@@ -613,7 +635,8 @@ class ExpencesController extends Controller
                 'user' => function ($q) {
                     $q->select('id', 'user_name', 'email', 'team_type');
                 },
-            ]);
+            ])
+                ->whereNotNull('company_id');
 
             $perPage = $data['per_page'] ?? config('constant.per_page', 10);
             $history = $records->orderByDesc('id')->paginate($perPage);
@@ -627,5 +650,46 @@ class ExpencesController extends Controller
             ], 500);
         }
 
+    }
+
+    public function deleteExpanses(Request $request)
+    {
+        try {
+
+            // Request id
+            $data = $request->only(['id']);
+
+            // Validation rule
+            $validator = Validator::make($data, [
+                'id' => 'required|integer|exists:expanses_company_details,id',
+            ]);
+
+            // Return validation error
+            if ($validator->fails()) {
+                return Utility::apiError('Validation failed', $validator->errors(), 221);
+            }
+
+            // Soft delete record
+            $deleted = ExpansesCompanyDetail::where('id', $data['id'])->first();
+
+            // Retunr if fail
+            if (! $deleted) {
+                return Utility::apiError('Failed to delete brand', [], 221);
+            }
+
+            ExpansesCompanyDetail::where('id', $data['id'])->delete();
+            ExpansesCompanyDepartmentCustomer::where('expanses_company_detail_id', $data['id'])->delete();
+            TravelExpanses::where('expanses_company_detail_id', $data['id'])->delete();
+            LinkExpansesOrder::where('expanses_company_detail_id', $data['id'])->delete();
+            BillExpansesPayment::where('expanses_company_detail_id', $data['id'])->delete();
+            ExpansesServiceReport::where('expanses_company_detail_id', $data['id'])->delete();
+
+            // Return response
+            return Utility::apiSuccess('Deleted successfully', [], 200);
+        } catch (Exception $ex) {
+            Log::error('Expanses delete error: '.$ex->getMessage());
+
+            return Utility::apiError('Something went wrong while deleting brand.', ['exception' => $ex->getMessage()], 500);
+        }
     }
 }
