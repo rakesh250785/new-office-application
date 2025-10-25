@@ -25,6 +25,7 @@ class PartialOrderController extends Controller
     public function storePartialOrder(Request $request)
     {
         try {
+
             $data = $request->only([
                 'id', 'product_id', 'product_description', 'principal_type', 'payment_term_condition',
                 'lead_from', 'billing_address', 'billing_city', 'billing_state_id', 'billing_mobile',
@@ -77,11 +78,11 @@ class PartialOrderController extends Controller
                 'product_list.*.quantity' => 'required|numeric|min:1',
                 'product_list.*.in_stock' => 'nullable|numeric|max:255',
                 'product_list.*.price' => 'required|numeric|min:0',
-                'product_list.*.send_qty' => 'required|numeric|min:0',
+                'product_list.*.send_qty' => 'required|numeric|min:1',
                 'product_list.*.discount' => 'nullable|numeric|min:0|max:100',
                 'product_list.*.net_price' => 'required|numeric|min:0',
                 'product_list.*.igst' => 'nullable|numeric|min:0',
-                'product_list.*.total' => 'required|numeric|min:0',
+                'product_list.*.total' => 'required|numeric|min:0', 
                 'product_list.*.notes' => 'nullable|string|max:1000',
                 'total_amount' => 'required|numeric|min:0',
                 'courier_id' => 'required',
@@ -90,6 +91,7 @@ class PartialOrderController extends Controller
             if ($validator->fails()) {
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
+
 
             // Common data
             $branchId = Auth::user()['branch_id'];
@@ -232,7 +234,11 @@ class PartialOrderController extends Controller
                 $balanceQtyFromItem = isset($item['balance_quantity']) ? (int) $item['balance_quantity'] : 0;
                 $sendQtyFromItem = isset($item['send_qty']) ? (int) $item['send_qty'] : 0;
                 $totalQty = $balanceQtyFromItem + $sendQtyFromItem;
-                $balanceQty = max(0, $quantity - $totalQty);
+                if($balanceQtyFromItem == 0){
+                    $balanceQty = max(0, $quantity - $sendQtyFromItem);
+                } else {
+                    $balanceQty = max(0, $balanceQtyFromItem - $sendQtyFromItem);
+                }
 
                 $calculations[] = [
                     'base_amount' => $baseAmount,
