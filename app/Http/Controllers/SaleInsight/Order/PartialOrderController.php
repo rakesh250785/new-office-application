@@ -82,7 +82,7 @@ class PartialOrderController extends Controller
                 'product_list.*.discount' => 'nullable|numeric|min:0|max:100',
                 'product_list.*.net_price' => 'required|numeric|min:0',
                 'product_list.*.igst' => 'nullable|numeric|min:0',
-                'product_list.*.total' => 'required|numeric|min:0', 
+                'product_list.*.total' => 'required|numeric|min:0',
                 'product_list.*.notes' => 'nullable|string|max:1000',
                 'total_amount' => 'required|numeric|min:0',
                 'courier_id' => 'required',
@@ -91,7 +91,6 @@ class PartialOrderController extends Controller
             if ($validator->fails()) {
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
-
 
             // Common data
             $branchId = Auth::user()['branch_id'];
@@ -234,7 +233,7 @@ class PartialOrderController extends Controller
                 $balanceQtyFromItem = isset($item['balance_quantity']) ? (int) $item['balance_quantity'] : 0;
                 $sendQtyFromItem = isset($item['send_qty']) ? (int) $item['send_qty'] : 0;
                 $totalQty = $balanceQtyFromItem + $sendQtyFromItem;
-                if($balanceQtyFromItem == 0){
+                if ($balanceQtyFromItem == 0) {
                     $balanceQty = max(0, $quantity - $sendQtyFromItem);
                 } else {
                     $balanceQty = max(0, $balanceQtyFromItem - $sendQtyFromItem);
@@ -310,7 +309,6 @@ class PartialOrderController extends Controller
             OrderDetails::where('order_id', $data['order_id'])
                 ->where('balance_quantity', '<=', 0)
                 ->update(['partial_order_status' => 1]);
-
 
             PartialOrder::where('id', $partialId)->update(['partial_order_status' => 1]);
 
