@@ -544,7 +544,6 @@
                                 <span class="small"><strong>Branch:</strong> {{ $company['branch_name'] }}</span>
                                 <span class="small"><strong>Udyam/MSME:</strong> {{ $company['udyam_no'] }}</span>
                                 <span class="small"><strong>IFSC:</strong> {{ $company['ifsc'] }}</span>
-                                <span class="small"><strong>Call:</strong> {{ $company['contact_person'] }}</span>
                             </div>
                         </div>
 
@@ -553,7 +552,6 @@
                             <span class="small"><strong>Quotation No:</strong> {{ trim($quotation['no']) }}</span>
                             <span class="small"><strong>Date:</strong> {{ trim($quotation['date']) }}</span>
                             <span class="small"><strong>Ref:</strong> {{ $quotation['ref'] }}</span>
-                            <span class="small"><strong>Contact Person:</strong> {{ $company['contact_person'] }}</span>
                         </span>
 
                     </div>
@@ -585,7 +583,7 @@
                 </colgroup>
                 <thead>
                     <tr style="color:#fff">
-                        <th>Company</th>
+                        <th>To Company</th>
                         <th>Address</th>
                         <th>Contact</th>
                         <th>GSTN</th>
@@ -674,9 +672,7 @@
                         <strong style="font-size:10px; display:block; margin-bottom:6px;">Terms &amp;
                             Conditions</strong>
                         <ul style="margin:0 0 0 12px; padding:0; font-size:9px; line-height:1.35;">
-                            @foreach($terms as $t)
-                                <li>{{ $t }}</li>
-                            @endforeach
+                            {!! $terms !!}
                         </ul>
                     </div>
                 </td>

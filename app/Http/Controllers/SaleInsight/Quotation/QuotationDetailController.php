@@ -319,7 +319,6 @@ class QuotationDetailController extends Controller
                     'web' => 'www.chromatographyworld.com',
                     'branch_name' => 'Matunga ',
                     'logo' => asset('appLogo/logo.png'),
-                    'contact_person' => $data['contact_person'],
                 ],
                 'quotation' => [
                     'no' => $quotationNumber,
@@ -336,6 +335,7 @@ class QuotationDetailController extends Controller
                     'mobile' => $customerInfo->mobile_no,
                     'email' => $customerInfo->email_id,
                     'state' => $states[$customerInfo->state_id] ?? $customerInfo->other_state ?? null,
+                    'contact_person' => $data['contact_person'],
                 ],
                 'items' => $productList,
                 'branch_address' => $branchAddress,
@@ -347,12 +347,7 @@ class QuotationDetailController extends Controller
                     'grand_total' => $grandTotal,
                     'in_words' => Utility::numberToWords($grandTotal, $currencyInfo->name),
                 ],
-                'terms' => [
-                    'Quotation valid for 30 days.',
-                    'Payment Terms: Advance Against Proforma Invoice.',
-                    'Taxes/levies extra at actuals.',
-                    'Delivery per item as per quotation date, subject to prior sales.',
-                ],
+                'terms' => $data['payment_term_condition']
             ];
 
             // Dispatch for pdf
