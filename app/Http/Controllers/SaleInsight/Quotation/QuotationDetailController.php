@@ -10,7 +10,7 @@ use App\Models\Branch;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\PendingQuotation;
-use App\Models\Quotation;
+use App\Models\Quotation as QuotationAdd;
 use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
 use App\Models\ReasonType;
@@ -137,7 +137,7 @@ class QuotationDetailController extends Controller
             $currencyInfo = Currency::findOrFail($data['currency_id']);
 
             // Get unique quotation number
-            $existingQuote = Quotation::findOrFail($data['quotation_id']);
+            $existingQuote = QuotationAdd::findOrFail($data['quotation_id']);
             $quotationNumber = ! empty($data['quotation_id'])
                 ? $existingQuote->unique_quotation_no
                 : $this->generateQuotationNumber($branchName, $quotationDate, $branchId);
@@ -201,7 +201,7 @@ class QuotationDetailController extends Controller
             }
 
             // Add update quoation info
-            $quotation = Quotation::updateOrCreate(['id' => $data['quotation_id']], $quotationData);
+            $quotation = QuotationAdd::updateOrCreate(['id' => $data['quotation_id']], $quotationData);
 
             // Return if fail
             if (! $quotation) {
@@ -407,7 +407,7 @@ class QuotationDetailController extends Controller
                 ]);
             }
 
-            $query = Quotation::with([
+            $query = QuotationAdd::with([
                 'quotationDetails',
                 'quotationDetails.principal:id,type',
                 'companyDetails:id,company_name,email_id',
@@ -514,7 +514,7 @@ class QuotationDetailController extends Controller
             }
 
             // Delete quotation
-            $status = Quotation::where('id', $data['id'])->delete();
+            $status = QuotationAdd::where('id', $data['id'])->delete();
 
             // Return if fail
             if (! $status) {
@@ -540,7 +540,7 @@ class QuotationDetailController extends Controller
             $branchId = Auth::user()->branch_id;
 
             // Get last quote number created on the same day
-            $lastQuote = Quotation::whereNull('deleted_at')
+            $lastQuote = QuotationAdd::whereNull('deleted_at')
                 ->where('branch_id', $branchId)
                 ->whereDate('created_at', $formattedDate)
                 ->orderByDesc('id')
@@ -579,7 +579,7 @@ class QuotationDetailController extends Controller
             $basePrefix = "{$branchCode}/{$formattedDateForQuote}/{$flgType}";
 
             // Get last quote number created on the same day
-            $lastQuote = Quotation::whereNull('deleted_at')->where('branch_id', $branchId)
+            $lastQuote = QuotationAdd::whereNull('deleted_at')->where('branch_id', $branchId)
                 ->whereDate('created_at', $formattedDate)
                 ->orderByDesc('id')
                 ->first();
