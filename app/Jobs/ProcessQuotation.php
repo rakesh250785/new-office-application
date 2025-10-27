@@ -44,7 +44,6 @@ class ProcessQuotation implements ShouldQueue
             $year = now()->year;
             $directory = "quotationsPdf/{$year}";
             $path = "{$directory}/{$fileName}";
-            logger($this->data);
             $disk = Storage::disk('public');
 
             if (! $disk->exists($directory)) {

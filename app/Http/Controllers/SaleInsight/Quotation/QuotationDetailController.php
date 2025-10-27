@@ -19,15 +19,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Log;
 use Response;
-use View;
 
 class QuotationDetailController extends Controller
 {
@@ -205,8 +202,7 @@ class QuotationDetailController extends Controller
 
             // Add update quoation info
             $quotation = Quotation::updateOrCreate(['id' => $data['quotation_id']], $quotationData);
-            logger('check update or create ,,,,,,,,,,,,,,,,,');
-            logger($quotationNumber);
+
             // Return if fail
             if (! $quotation) {
                 return Utility::apiError('Failed to save / update quotation', [], 221);
@@ -237,7 +233,9 @@ class QuotationDetailController extends Controller
             // Initialize variable
             $quotationId = $quotation->id;
             $grandTotal = 0;
-            $calculations = [];
+            $subUnitTotal = 0;
+            $subNetTotal = 0;
+            $totalIgstTotal = 0;
             $productList = [];
 
             // Product calculation
@@ -258,15 +256,10 @@ class QuotationDetailController extends Controller
                     $gstAmount = ($afterDiscount * $igst) / 100;
                     $totalAmount = $afterDiscount + $gstAmount;
 
-                    $calculations[] = [
-                        'base_amount' => $baseAmount,
-                        'discount_amount' => $discountAmount,
-                        'net_price' => $afterDiscount,
-                        'gst_amount' => $gstAmount,
-                        'total' => $totalAmount,
-                    ];
-
                     $grandTotal += $totalAmount;
+                    $subUnitTotal += $price;
+                    $subNetTotal += $afterDiscount;
+                    $totalIgstTotal += $totalAmount;
 
                     $productList[] = [
                         'quotation_id' => $quotationId,
@@ -278,7 +271,7 @@ class QuotationDetailController extends Controller
                         'hsn_code' => $item['hsn_code'] ?? '',
                         'quantity' => $quantity,
                         'in_stock' => $item['in_stock'] ?? 0,
-                        'price' => $price,
+                        'price' => $afterDiscount,
                         'discount' => $discount,
                         'net_price' => $afterDiscount,
                         'igst' => $igst,
@@ -302,36 +295,11 @@ class QuotationDetailController extends Controller
             // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
-
-            // Prepare Pdf data
-            $responsePayload = array_merge($data, [
-                'product_list' => $productList,
-                'quotation_info' => [
-                    'state_id' => $states[$customerInfo->state_id] ?? null,
-                    'shiping_state' => $states[$customerInfo->state_id] ?? null,
-                    'extra_notes' => $customerInfo->extra_notes,
-                    'gst' => $customerInfo->gst,
-                ],
-                'customer_info' => $customerInfo,
-                'tax_text' => 0,
-                'preparing_by' => $data['prepard_by'] ?? null,
-                'branch_address' => $branchAddress,
-                'currency' => $currencyInfo,
-                'file_path' => $pdfFilePath,
-                'email' => Auth::user()->email,
-                'cc_email' => Auth::user()->cc_email,
-                'multiProdCal' => [
-                    'calculations' => $calculations,
-                    'grand_total' => $grandTotal,
-                ],
-                'totalcalc' => $grandTotal,
-            ]);
-
             $data = [
                 'term_conditon_bg_img' => asset('storage/products/bannerImg2.png'),
                 'pdf_name' => $pdfFilePath,
                 'old_pdf_name' => $existingQuote?->pdf_name,
-                'prepared_by' => 'Manojlkkkkkkkkkkkkkkkkkkkkkkkk',
+                'prepared_by' => $data['prepard_by'],
                 'quotationInfo' => [
                     'id' => $quotation->id,
                     'unique_quotation_no' => $quotationNumber,
@@ -351,35 +319,33 @@ class QuotationDetailController extends Controller
                     'web' => 'www.chromatographyworld.com',
                     'branch_name' => 'Matunga ',
                     'logo' => asset('appLogo/logo.png'),
+                    'contact_person' => $data['contact_person'],
                 ],
                 'quotation' => [
-                    'no' => 'Mum/20251026/1',
-                    'date' => '2025-10-26',
-                    'ref' => 'Enq ref by rakesh',
+                    'no' => $quotationNumber,
+                    'date' => $quotationDate,
+                    'ref' => $data['enq_ref'],
                 ],
                 'shipping' => [
-                    'company' => 'Testing company Nameddddddddddddddddddddd',
-                    'address' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1',
-                    'contact_person' => 'Customer Namessssssssss',
-                    'gstn' => '27AAGFC1217K1ZM',
-                    'city' => 'mumbai',
-                    'pincode' => '24234234',
-                    'landline' => '2323432345',
-                    'mobile' => '9702050956',
-                    'email' => 'mkyweeea@gmail.com',
+                    'company' => $customerInfo->company_name,
+                    'address' => $customerInfo->address,
+                    'gstn' => $customerInfo->gst_number,
+                    'city' => $customerInfo->city,
+                    'pincode' => $customerInfo->pin_code,
+                    'landline' => $customerInfo->landline_no,
+                    'mobile' => $customerInfo->mobile_no,
+                    'email' => $customerInfo->email_id,
+                    'state' => $states[$customerInfo->state_id] ?? $customerInfo->other_state ?? null,
                 ],
-                'items' => [
-                    ['no' => 1, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1', 'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1 *', 'qty' => 20, 'rate' => '25', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
-                    ['no' => 2, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1', 'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1', 'qty' => 115, 'rate' => '545454444445454', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
-                    ['no' => 3, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1',  'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1', 'qty' => 114, 'rate' => '545454444445454', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
-                    ['no' => 4, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1', 'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1', 'qty' => 113, 'rate' => '545454444445454', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
-                ],
+                'items' => $productList,
+                'branch_address' => $branchAddress,
+                'currency' => $currencyInfo,
                 'totals' => [
-                    'sub_unit_total' => '2222222222222222222228',
-                    'sub_net_total' => '3333333333333333330',
-                    'total_igst_total' => '288888888888888888888',
-                    'grand_total' => '888888888888',
-                    'in_words' => 'Twenty Eight Crore Three Lakh Ninety Three Thousand Six Hundred Fifty INR Only',
+                    'sub_unit_total' => $subUnitTotal,
+                    'sub_net_total' => $subNetTotal,
+                    'total_igst_total' => $totalIgstTotal,
+                    'grand_total' => $grandTotal,
+                    'in_words' => Utility::numberToWords($grandTotal, $currencyInfo->name),
                 ],
                 'terms' => [
                     'Quotation valid for 30 days.',
@@ -678,140 +644,6 @@ class QuotationDetailController extends Controller
         ];
     }
 
-    public function previewQuatation(Request $request)
-    {
-        try {
-            // Preview quotaion & field validation
-            $pdf = \App::make('dompdf.wrapper');
-            $sel_prods_details = $request->sel_prods_details;
-            if (! empty($sel_prods_details)) {
-                $validator = Validator::make($sel_prods_details[0], [
-                    'in_cust_id' => 'required',
-                ]);
-            }
-            $msg1 = $validator->getMessageBag()->toArray();
-            $quotation_info = $request->quotation_info;
-            if (! empty($quotation_info)) {
-                $val = [
-                    'st_shiping_add' => 'required',
-                    'st_shiping_city' => 'required',
-                    'st_shiping_state' => 'required',
-                    'st_shiping_pincode' => 'required',
-                    'st_shipping_email' => 'required',
-                    'st_shipping_phone' => 'required',
-                    'st_enq_ref_number' => 'required',
-                    'shipping_lanline' => 'required',
-                    'dt_ref' => 'required',
-                    'st_landline' => 'required',
-                    'product_search' => 'required',
-                    'prod_qty' => 'required',
-                ];
-                if (isset($quotation_info['in_quot_id']) && ! empty($quotation_info['in_quot_id'])) {
-                    unset($val['product_search']);
-                }
-                $validator1 = Validator::make($quotation_info, $val);
-            }
-            $msg2 = $validator1->getMessageBag()->toArray();
-            $customer_info = $request->customer_info;
-            if (! empty($customer_info)) {
-                $validator2 = Validator::make($customer_info, [
-                    'auto_pop_cust_name' => 'required',
-                    'st_cust_mobile' => 'required',
-                    'auto_pop_state' => 'required',
-                    'preparing_by' => 'required',
-                    'lead_from' => 'required',
-                    'notify_group' => 'required',
-                    'select_owner' => 'required',
-                    'auto_pop_addr' => 'required',
-                    'auto_pop_city' => 'required',
-                    'auto_pop_pincod' => 'required',
-                    'auto_pop_email' => 'required',
-                    'auto_pop_landline' => 'required',
-                ]);
-            }
-            $msg3 = $validator2->getMessageBag()->toArray();
-            if ($validator->fails() || $validator1->fails() || $validator2->fails()) {
-                $msg = $msg1 + $msg2 + $msg3;
-
-                return Response::json([
-                    'success' => false,
-                    'errors' => $msg,
-                ], 400);
-            }
-            $indian_all_states = Config::get('constant.indian_all_states');
-            if ($customer_info['country_code'] == 'IN') {
-                $address = $customer_info['auto_pop_addr'].', State '.$indian_all_states[$customer_info['auto_pop_state']].', City '.$customer_info['auto_pop_city'].', Pincode '.$customer_info['auto_pop_pincod'];
-            } else {
-                $address = $customer_info['auto_pop_addr'].', State '.$customer_info['auto_pop_state'].', City '.$customer_info['auto_pop_city'].', Pincode '.$customer_info['auto_pop_pincod'];
-            }
-
-            $result = [];
-            $billing_address = $request->quotation_info;
-            $format = $billing_address['bill_add_id'];
-            if ($customer_info['country_code'] == 'IN') {
-                $update_state = $request->customer_info;
-                $update_state['auto_pop_state'] = $indian_all_states[$update_state['auto_pop_state']];
-
-                $quote_update_state = $request->quotation_info;
-                $quote_update_state['st_shiping_state'] = $indian_all_states[$quote_update_state['st_shiping_state']];
-            } else {
-                $update_state = $request->customer_info;
-                $quote_update_state = $request->quotation_info;
-            }
-
-            if (! empty($customer_info['country_code'])) {
-                $country = Config::get('constant.countries');
-                $update_state['country'] = $country[$customer_info['country_code']];
-            }
-
-            $result['quotation_details'] = $request->sel_prods_details;
-            $result['customer_info'] = $update_state;
-            $result['quotation_info'] = $quote_update_state;
-            $result['format'] = $format;
-            $result['BillAddress'] = $this->get_PDF_BillAddress();
-            $result['multiProdCal'] = $this->calculateProductTotals($request->sel_prods_details);
-
-            $cur = Config::get('constant.currency');
-            $currencyCodes = Config::get('constant.currencyCodes');
-            $qt_info = $request->quotation_info;
-            $c_format = $qt_info['currency'];
-            $result['currency'] = $currencyCodes[$cur[$c_format]];
-
-            // default quotation
-
-            $quotation_type = $request->quotation_info['quotation_type'];
-            if ($quotation_type == 'GW Quotation' || $quotation_type == 'Project Quotation') {
-                $data['quotation_data'] = View::make('office.quatation.preview_project_quatation', $result)->render();
-            } else {
-                $data['quotation_data'] = View::make('office.quatation.preview_quatation', $result)->render();
-            }
-
-            return json_encode($data);
-        } catch (Exception $ex) {
-            // Log the full error
-            Log::error('Quotation Preview Error: '.$ex->getMessage());
-            Log::error('Error Trace: '.$ex->getTraceAsString());
-
-            // Return a consistent error response
-            return response()->json([
-                'success' => false,
-                'message' => $ex->getMessage(),
-                'error_details' => $ex->getTraceAsString(),
-            ], 500);
-        }
-    }
-
-    public function calculateTotal($quotation_details)
-    {
-        $total = 0;
-
-        foreach ($quotation_details as $product) {
-            $total += $product['in_pro_qty'] * $product['fl_pro_unitprice'];
-        }
-
-        return $total;
-    }
-
     public function updateQuotationStatus(Request $request)
     {
         try {
@@ -870,60 +702,5 @@ class QuotationDetailController extends Controller
 
             return Utility::apiError('Fail at statusQuotationChange server error', ['exception' => $ex->getMessage()], 500);
         }
-    }
-
-    public function download(Request $request)
-    {
-        // validate minimal shape
-        $data = $request->validate([
-            'formData' => 'nullable|array',
-            'productRows' => 'nullable|array',
-        ]);
-
-        $formData = $data['formData'] ?? [];
-        $productRows = $data['productRows'] ?? [];
-
-        // prepare data required by the blade; adapt keys as needed
-        $viewData = [
-            'formData' => $formData,
-            'productRows' => $productRows,
-            'currencyName' => $formData['currencyName'] ?? 'INR',
-            'headerLogoUrl' => $formData['headerLogoUrl'] ?? null,
-            // put any company info here or compute in view
-        ];
-
-        // load blade view (resources/views/pdf/quotation.blade.php)
-        $pdf = Pdf::loadView('quotation.quotation', $viewData);
-
-        // set paper to A4 portrait and margins
-        $pdf->setPaper('a4', 'portrait');
-
-        // OPTIONAL: for very long documents you can increase PHP memory limits or rendering time
-        // ini_set('memory_limit', '512M');
-        // set_time_limit(120);
-
-        // add page numbers in footer using Dompdf canvas
-        try {
-            // render first so canvas is available
-            $dompdf = $pdf->getDomPDF();
-            $canvas = $dompdf->get_canvas();
-
-            $font = $dompdf->getFontMetrics()->get_font('helvetica', 'normal');
-            $size = 9;
-            $y = $canvas->get_height() - 20; // 20pt from bottom
-            $xRight = $canvas->get_width() - 50;
-
-            // Page text: "Page {PAGE_NUM} of {PAGE_COUNT}"
-            $canvas->page_text($xRight, $y, 'Page {PAGE_NUM} of {PAGE_COUNT}', $font, $size, [0.35, 0.35, 0.35]);
-        } catch (\Throwable $e) {
-            Log::warning('Could not add page numbers: '.$e->getMessage());
-        }
-
-        $filename = Arr::get($formData, 'unique_quotation_no', 'quotation').'.pdf';
-
-        // return as download
-        return $pdf->download($filename);
-        // OR to stream in-browser:
-        // return $pdf->stream($filename);
     }
 }

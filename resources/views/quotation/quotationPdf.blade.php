@@ -311,7 +311,7 @@
             color: black;
             padding: 6px;
             font-weight: 700;
-            font-size: 10px;
+            font-size: 9px;
             border: 0.5px solid #fddcb4;
             text-align: left;
             line-height: 1.1;
@@ -544,7 +544,7 @@
                                 <span class="small"><strong>Branch:</strong> {{ $company['branch_name'] }}</span>
                                 <span class="small"><strong>Udyam/MSME:</strong> {{ $company['udyam_no'] }}</span>
                                 <span class="small"><strong>IFSC:</strong> {{ $company['ifsc'] }}</span>
-                                <span class="small"><strong>Call:</strong> {{ $company['contact'] }}</span>
+                                <span class="small"><strong>Call:</strong> {{ $company['contact_person'] }}</span>
                             </div>
                         </div>
 
@@ -553,7 +553,7 @@
                             <span class="small"><strong>Quotation No:</strong> {{ trim($quotation['no']) }}</span>
                             <span class="small"><strong>Date:</strong> {{ trim($quotation['date']) }}</span>
                             <span class="small"><strong>Ref:</strong> {{ $quotation['ref'] }}</span>
-                            <span class="small"><strong>Prepared By:</strong> {{ $prepared_by }}</span>
+                            <span class="small"><strong>Contact Person:</strong> {{ $company['contact_person'] }}</span>
                         </span>
 
                     </div>
@@ -579,8 +579,8 @@
                     <col style="width:12%" />
                     <col style="width:12%" />
                     <col style="width:10%" />
-                    <col style="width:8%" />
-                    <col style="width:8%" />
+                    <col style="width:15%" />
+                    <col style="width:15%" />
                     <col style="width:10%" />
                 </colgroup>
                 <thead>
@@ -631,29 +631,29 @@
                     <th class="part">Part No.</th>
                     <th class="hsn">HSN</th>
                     <th class="qty">Qty</th>
-                    <th class="rate">Rate</th>
-                    <th class="disc">Disc%</th>
-                    <th class="net">Net</th>
+                    <th class="price">Unit Price</th>
+                    <th class="disc">Discount%</th>
+                    <th class="net">Net Amount</th>
                     <th class="igst">IGST%</th>
-                    <th class="igstamt">IGST Amt</th>
-                    <th class="amount">Amount</th>
-                    <th class="delivery">Delivery</th>
+                    <th class="igstamt">IGST Amount</th>
+                    <th class="amount">Total</th>
+                    <th class="delivery">Delivery Status</th>
                 </tr>
             </thead>
             <tbody style="border: 0.5px solid #fddcb4; !important">
                 @foreach($items as $it)
                     <tr>
                         <td class="serial">{{ trim($it['no'] ?? '') }}</td>
-                        <td class="part">{{ $it['part'] ?? '' }}</td>
-                        <td class="hsn">{{ $it['hsn'] ?? '' }}</td>
-                        <td class="qty center">{{ $it['qty'] ?? '' }}</td>
-                        <td class="rate right">{{ $it['rate'] ?? '' }}</td>
-                        <td class="disc center">{{ $it['disc'] ?? '' }}</td>
-                        <td class="net right">{{ $it['net'] ?? '' }}</td>
+                        <td class="part">{{ $it['part_no'] ?? '' }}</td>
+                        <td class="hsn">{{ $it['hsn_code'] ?? '' }}</td>
+                        <td class="qty center">{{ $it['quantity'] ?? '' }}</td>
+                        <td class="qty center">{{ $it['price'] ?? '' }}</td>
+                        <td class="disc center">{{ $it['discount'] ?? '' }}</td>
+                        <td class="net right">{{ $it['net_price'] ?? '' }}</td>
                         <td class="igst right">{{ $it['igst'] ?? '' }}</td>
-                        <td class="igstamt right">{{ $it['igst_amt'] ?? '' }}</td>
-                        <td class="amount right">{{ $it['amount'] ?? '' }}</td>
-                        <td class="delivery center">{{ $it['delivery'] ?? '' }}</td>
+                        <td class="igstamt right">{{ $it['total'] ?? '' }}</td>
+                        <td class="amount right">{{ $it['total'] ?? '' }}</td>
+                        <td class="delivery center">{{ $it['notes'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <td class="serial"></td>
@@ -664,8 +664,6 @@
         </table>
 
         <!-- TERMS & SUMMARY -->
-        <!-- PDF-safe: Terms | Signature | Summary as a single table row -->
-        <!-- PDF-safe layout with centered signature -->
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse; font-family: DejaVu Sans, Arial, Helvetica, sans-serif; font-size:10px;
       background-image: url('{{ $term_conditon_bg_img }}');
        background-size: cover; background-position: center right; background-repeat: no-repeat;">
@@ -693,7 +691,7 @@
                             <strong style="font-size:9px; color:#b8860b;">Authorized Signatory</strong>
                         </div>
                         <div>
-                            <strong style="font-size:8px; color:#b8860b;">MANOJ</strong>
+                            <strong style="font-size:8px; color: black;">{{ $prepared_by }}</strong>
                         </div>
                     </div>
                 </td>
