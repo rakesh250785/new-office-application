@@ -15,17 +15,16 @@ use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
 use App\Models\ReasonType;
 use App\Models\States;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Exception;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Arr;
-
 use Log;
 use Response;
 use View;
@@ -141,8 +140,9 @@ class QuotationDetailController extends Controller
             $currencyInfo = Currency::findOrFail($data['currency_id']);
 
             // Get unique quotation number
+            $existingQuote = Quotation::findOrFail($data['quotation_id']);
             $quotationNumber = ! empty($data['quotation_id'])
-                ? Quotation::findOrFail($data['quotation_id'])->unique_quotation_no
+                ? $existingQuote->unique_quotation_no
                 : $this->generateQuotationNumber($branchName, $quotationDate, $branchId);
 
             // PDF path
@@ -205,7 +205,8 @@ class QuotationDetailController extends Controller
 
             // Add update quoation info
             $quotation = Quotation::updateOrCreate(['id' => $data['quotation_id']], $quotationData);
-
+            logger('check update or create ,,,,,,,,,,,,,,,,,');
+            logger($quotationNumber);
             // Return if fail
             if (! $quotation) {
                 return Utility::apiError('Failed to save / update quotation', [], 221);
@@ -326,8 +327,72 @@ class QuotationDetailController extends Controller
                 'totalcalc' => $grandTotal,
             ]);
 
+            $data = [
+                'term_conditon_bg_img' => asset('storage/products/bannerImg2.png'),
+                'pdf_name' => $pdfFilePath,
+                'old_pdf_name' => $existingQuote?->pdf_name,
+                'prepared_by' => 'Manojlkkkkkkkkkkkkkkkkkkkkkkkk',
+                'quotationInfo' => [
+                    'id' => $quotation->id,
+                    'unique_quotation_no' => $quotationNumber,
+                    'user_id' => $adminId,
+                    'branch_id' => $branchId,
+                ],
+                'company' => [
+                    'name' => 'Chromatography World',
+                    'address_line1' => '217, 2nd Floor, Champaklal Industrial Estate, Sion East, Mumbai - 400022. India',
+                    'contact' => '+91 - 022 - 43159100',
+                    'email' => 'sales@chromatographyworld.com, speed@chromatographyworld.com, gm-support@chromatographyworld.com',
+                    'gstin' => '27AAGFC1217K1ZM',
+                    'udyam_no' => 'UDYAM-MH-19-0078510',
+                    'bank' => 'Kotak Mahindra Bank',
+                    'ifsc' => 'KKBK0000644',
+                    'account' => '4611234274',
+                    'web' => 'www.chromatographyworld.com',
+                    'branch_name' => 'Matunga ',
+                    'logo' => asset('appLogo/logo.png'),
+                ],
+                'quotation' => [
+                    'no' => 'Mum/20251026/1',
+                    'date' => '2025-10-26',
+                    'ref' => 'Enq ref by rakesh',
+                ],
+                'shipping' => [
+                    'company' => 'Testing company Nameddddddddddddddddddddd',
+                    'address' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1',
+                    'contact_person' => 'Customer Namessssssssss',
+                    'gstn' => '27AAGFC1217K1ZM',
+                    'city' => 'mumbai',
+                    'pincode' => '24234234',
+                    'landline' => '2323432345',
+                    'mobile' => '9702050956',
+                    'email' => 'mkyweeea@gmail.com',
+                ],
+                'items' => [
+                    ['no' => 1, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1', 'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1 *', 'qty' => 20, 'rate' => '25', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
+                    ['no' => 2, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1', 'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1', 'qty' => 115, 'rate' => '545454444445454', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
+                    ['no' => 3, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1',  'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1', 'qty' => 114, 'rate' => '545454444445454', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
+                    ['no' => 4, 'part' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QSFiltration-kit-SS-1', 'description' => 'QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1', 'hsn' => 'QS-Filtration-kit-SS-1', 'qty' => 113, 'rate' => '545454444445454', 'disc' => 3, 'net' => '545454444445454', 'igst' => '545454444445454', 'igst_amt' => '545454444445454', 'amount' => '545454444445454', 'delivery' => '-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1QS-Filtration-kit-SS-1Q'],
+                ],
+                'totals' => [
+                    'sub_unit_total' => '2222222222222222222228',
+                    'sub_net_total' => '3333333333333333330',
+                    'total_igst_total' => '288888888888888888888',
+                    'grand_total' => '888888888888',
+                    'in_words' => 'Twenty Eight Crore Three Lakh Ninety Three Thousand Six Hundred Fifty INR Only',
+                ],
+                'terms' => [
+                    'Quotation valid for 30 days.',
+                    'Payment Terms: Advance Against Proforma Invoice.',
+                    'Taxes/levies extra at actuals.',
+                    'Delivery per item as per quotation date, subject to prior sales.',
+                ],
+            ];
+
             // Dispatch for pdf
-            dispatch(new ProcessQuotation($responsePayload));
+            ProcessQuotation::dispatch($data)
+            // ->onQueue('quotation_pdf')
+                ->delay(0);
 
             // Return response
             return Utility::apiSuccess(! empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
@@ -419,7 +484,9 @@ class QuotationDetailController extends Controller
                 })
                 ->orderByDesc('id');
 
-            $quotationData = $query->paginate($perPage);
+            $quotationData = $query->paginate($perPage)->toArray();
+            $year = date('Y');
+            $quotationData['base_pdf_url'] = url("storage/quotationsPdf/{$year}/");
 
             return Utility::apiSuccess('list_quotation', $quotationData, 200);
 
