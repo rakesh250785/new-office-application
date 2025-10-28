@@ -291,7 +291,7 @@ class QuotationDetailController extends Controller
             // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
-            $data = [
+            $pdfRec = [
                 'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
                 'pdf_name' => $pdfFilePath,
                 'old_pdf_name' => $existingQuote?->pdf_name,
@@ -347,7 +347,7 @@ class QuotationDetailController extends Controller
             ];
 
             // Dispatch for pdf
-            ProcessQuotation::dispatch($data)
+            ProcessQuotation::dispatch($pdfRec)
             // ->onQueue('quotation_pdf')
                 ->delay(0);
 
