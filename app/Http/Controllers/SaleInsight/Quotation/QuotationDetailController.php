@@ -292,7 +292,7 @@ class QuotationDetailController extends Controller
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
             $data = [
-                'term_conditon_bg_img' => url('storage/products/bannerImg2.png'),
+                'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
                 'pdf_name' => $pdfFilePath,
                 'old_pdf_name' => $existingQuote?->pdf_name,
                 'prepared_by' => $data['prepard_by'],
