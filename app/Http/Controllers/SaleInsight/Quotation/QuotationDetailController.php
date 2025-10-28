@@ -15,16 +15,12 @@ use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
 use App\Models\ReasonType;
 use App\Models\States;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Log;
-use Response;
 
 class QuotationDetailController extends Controller
 {
@@ -137,7 +133,7 @@ class QuotationDetailController extends Controller
             $currencyInfo = Currency::findOrFail($data['currency_id']);
 
             // Get unique quotation number
-            $existingQuote = QuotationAdd::findOrFail($data['quotation_id']);
+            $existingQuote = QuotationAdd::find($data['quotation_id']);
             $quotationNumber = ! empty($data['quotation_id'])
                 ? $existingQuote->unique_quotation_no
                 : $this->generateQuotationNumber($branchName, $quotationDate, $branchId);
@@ -347,7 +343,7 @@ class QuotationDetailController extends Controller
                     'grand_total' => $grandTotal,
                     'in_words' => Utility::numberToWords($grandTotal, $currencyInfo->name),
                 ],
-                'terms' => $data['payment_term_condition']
+                'terms' => $data['payment_term_condition'],
             ];
 
             // Dispatch for pdf
@@ -458,44 +454,6 @@ class QuotationDetailController extends Controller
         }
     }
 
-    protected function getQuotationPdfUrl($filename)
-    {
-        try {
-            // Get  pdf file info
-            $year = date('Y');
-            $lastYear = date('Y', strtotime('-1 year'));
-
-            // Check if exist
-            if (File::exists(public_path("/pdf_$year/$filename"))) {
-                return URL::to("/pdf_$year/$filename");
-            } elseif (File::exists(public_path("/pdf_$lastYear/$filename"))) {
-                return URL::to("/pdf_$lastYear/$filename");
-            }
-
-            // Return path
-            return URL::to("/quotationpdf/$filename");
-        } catch (Exception $ex) {
-            Log::error($ex);
-
-            return Utility::apiError('Failed getQuotationPdfUrl server error', ['exception' => $ex->getMessage()], 500);
-        }
-    }
-
-    protected function getStatusLabel($status)
-    {
-        try {
-            return match ((int) $status) {
-                1 => 'Win',
-                2 => 'Lost',
-                3 => 'Closed',
-                default => 'Open',
-            };
-        } catch (Exception $ex) {
-            Log::error($ex);
-
-            return Utility::apiError('Failed getStatusLabel server error', ['exception' => $ex->getMessage()], 500);
-        }
-    }
 
     public function deleteQuotation(Request $request)
     {
@@ -563,80 +521,6 @@ class QuotationDetailController extends Controller
 
             return null;
         }
-    }
-
-    public function generateOrderNumber($branchName, $quotationDate, $type = '')
-    {
-        try {
-            // Create format
-            $branchCode = substr($branchName, 0, 3);
-            $formattedDate = Carbon::parse($quotationDate)->format('Y-m-d');
-            $formattedDateForQuote = Carbon::parse($quotationDate)->format('Ymd');
-            $branchId = Auth::user()->branch_id;
-
-            // Create type
-            $flgType = $type !== '' ? "{$type}-" : '';
-            $basePrefix = "{$branchCode}/{$formattedDateForQuote}/{$flgType}";
-
-            // Get last quote number created on the same day
-            $lastQuote = QuotationAdd::whereNull('deleted_at')->where('branch_id', $branchId)
-                ->whereDate('created_at', $formattedDate)
-                ->orderByDesc('id')
-                ->first();
-
-            // If found generate number
-            if ($lastQuote && isset($lastQuote->unique_quotation_no)) {
-                $segments = explode('/', $lastQuote->unique_quotation_no);
-                $lastNumber = (int) str_replace($flgType, '', $segments[2] ?? 0);
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            // Return number
-            return "{$basePrefix}{$nextNumber}";
-        } catch (Exception $ex) {
-            Log::error('Failed to generate quotation number: '.$ex->getMessage());
-
-            return null;
-        }
-    }
-
-    public function calculateProductTotals($quotation_details)
-    {
-        $grandTotal = 0;
-        $calculations = [];
-
-        foreach ($quotation_details as $product) {
-            // Base calculation (price × quantity)
-            $baseAmount = $product['fl_pro_unitprice'] * $product['in_pro_qty'];
-
-            // Calculate discount
-            $discountAmount = ($baseAmount * $product['fl_discount']) / 100;
-            $afterDiscount = $baseAmount - $discountAmount;
-
-            // Calculate GST
-            $gstAmount = ($afterDiscount * $product['in_igst_rate']) / 100;
-
-            // Calculate final total for this product
-            $totalAmount = $afterDiscount + $gstAmount;
-
-            // Store calculations
-            $calculations[] = [
-                'base_amount' => $baseAmount,
-                'discount_amount' => $discountAmount,
-                'net_price' => $afterDiscount,
-                'gst_amount' => $gstAmount,
-                'total' => $totalAmount,
-            ];
-
-            $grandTotal += $totalAmount;
-        }
-
-        return [
-            'calculations' => $calculations,
-            'grand_total' => $grandTotal,
-        ];
     }
 
     public function updateQuotationStatus(Request $request)
