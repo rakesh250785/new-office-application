@@ -292,7 +292,7 @@ class QuotationDetailController extends Controller
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
             $data = [
-                'term_conditon_bg_img' => asset('storage/products/bannerImg2.png'),
+                'term_conditon_bg_img' => url('storage/products/bannerImg2.png'),
                 'pdf_name' => $pdfFilePath,
                 'old_pdf_name' => $existingQuote?->pdf_name,
                 'prepared_by' => $data['prepard_by'],
@@ -314,7 +314,7 @@ class QuotationDetailController extends Controller
                     'account' => '4611234274',
                     'web' => 'www.chromatographyworld.com',
                     'branch_name' => 'Matunga ',
-                    'logo' => asset('appLogo/logo.png'),
+                    'logo' => url('appLogo/logo.png'),
                 ],
                 'quotation' => [
                     'no' => $quotationNumber,
@@ -352,7 +352,7 @@ class QuotationDetailController extends Controller
                 ->delay(0);
 
             // Return response
-            return Utility::apiSuccess(! empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
+            return Utility::apiSuccess(!empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
