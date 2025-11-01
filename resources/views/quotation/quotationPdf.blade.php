@@ -5,16 +5,16 @@
     <meta charset="utf-8" />
     <title>Quotation</title>
     <style>
-        /* Base */
         body,
         table,
-        td,
-        th {
+        th,
+        td {
             font-family: "Inter", "DejaVu Sans", Arial, Helvetica, sans-serif;
             color: #222;
             font-size: 9px;
             line-height: 1.45;
             letter-spacing: 0.1px;
+            border-collapse: collapse;
         }
 
         html,
@@ -22,14 +22,12 @@
             height: 100%;
             margin: 0;
             padding: 6px;
-            background: #ffffff;
-            color: #222;
-            font-size: 10px;
+            background: #fff;
         }
 
         .paper {
             background: #fff;
-            border-radius: 0.5px;
+            border-radius: 1px;
             padding: 2px;
             margin: 0 auto;
             max-width: 100%;
@@ -40,17 +38,48 @@
             margin: 6mm;
         }
 
-        /* header / tables */
-        .hdr {
+        /* --- Collapsed Table Core --- */
+        table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
-            background-color: #fdf1cb;
+            border: 0.5px solid #f9d8ab;
+            font-size: 9px;
+            background: #fff;
+        }
+
+        th,
+        td {
+            border: 0.5px solid #f9d8ab;
+            padding: 3px 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: linear-gradient(to bottom, #fde3c1, #fddcb4);
+            font-weight: 600;
+            color: #2e2e2e;
+            text-transform: uppercase;
+        }
+
+        tr:nth-child(even) {
+            background: #fffaf5;
+        }
+
+        tr:hover td {
+            background: #fff1df;
+        }
+
+        /* --- Header Table --- */
+        .hdr {
+            width: 100%;
+            border: 0.5px solid #f9d8ab;
+            background: #fdf1cb;
         }
 
         .logo-col {
             width: 18%;
-            padding-right: 10px;
+            vertical-align: middle;
         }
 
         .center-col {
@@ -63,339 +92,90 @@
             height: 64px;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            overflow: hidden;
-            background: transparent;
+            justify-content: center;
+            background: #fff;
+            border: 0.5px solid #ccc;
             border-radius: 4px;
+            overflow: hidden;
         }
 
         .logo img {
             max-width: 100%;
             max-height: 100%;
-            width: auto;
-            height: auto;
             object-fit: contain;
-            display: block;
         }
 
         .logo-fallback {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            background: #0a2a30;
+            text-align: center;
             width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #0a2a30;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.4px;
         }
 
-        .company-name {
-            font-weight: 700;
-            font-size: 14px;
-            line-height: 1.05;
-            color: #111;
-            text-align: center;
-        }
-
-        .company-meta {
-            color: #555;
-            font-size: 9.2px;
-            line-height: 1.15;
-            max-width: 100%;
-        }
-
-        .title {
-            color: #e76b00;
-            font-size: 16px;
-            font-weight: 700;
-            margin: 0 0 4px 0;
-        }
-
+        /* --- Authorised Section --- */
         .authorised {
-            margin-top: 5px;
-            border: 0.5px solid #eef2f4;
-            background: #fff;
+            margin-top: 8px;
+            border: 0.5px solid #ccc;
+            background: #fffdf7;
             padding: 8px;
             border-radius: 4px;
             font-size: 9px;
             color: #333;
             text-align: center;
-            line-height: 1.2;
-            word-break: break-word;
-            display: block;
         }
 
+        /* --- Shipping Table --- */
         .ship-wrap {
-            border-radius: 1px;
-            border: 1px solid #e2efe6;
-            background: #f7fff8;
-        }
-
-        .ship-table {
-            width: 100%;
             border-collapse: collapse;
-            font-size: 9.5px;
-            table-layout: fixed;
+            border: 0.5px solid #ccc;
+            background: #fafafa;
+            border-radius: 3px;
+            margin-top: 8px;
+            margin-bottom: 8px;
         }
 
-        .break-all {
-            word-break: break-all;
-            overflow-wrap: anywhere;
+        .ship-wrap th {
+            background: #fddcb4;
+            color: #222;
         }
 
-        /* Table defaults */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 12px;
+        /* --- Item Table --- */
+        .items th {
+            background: #fddcb4;
+            border: 0.5px solid #c7a86a;
         }
 
-        th,
-        td {
-            padding: 2px 2px;
-            text-align: left;
-            vertical-align: top;
-            word-break: break-word;
+        .items td {
+            border: 0.5px solid #ddd;
         }
 
-        th {
-            background: #f2f2f2;
-            font-weight: bold;
-            color: #333;
-            /* softer default heading color */
-            text-transform: uppercase;
-        }
-
-        tr:nth-child(even) {
-            background: #fff2e6;
-        }
-
-        tr:hover {
-            background: #f5f5f5;
-        }
-
-        .table-wrapper {
-            border: 1.5px solid #fddcb4;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        /* Items styling (updated) */
         .items tbody tr:nth-child(odd) {
-            background-color: #ffffff;
+            background: #fff;
         }
 
         .items tbody tr:nth-child(even) {
-            background-color: #f7fbff;
+            background: #fef9f2;
         }
 
-        .items tbody tr:nth-child(even)+tr .desc {
-            background-color: #fdf1cb;
+        .desc {
+            background: #fdf7ea;
+            border-top: none;
+            font-style: italic;
         }
 
-        .items tbody tr:nth-child(odd)+tr .desc {
-            background-color: #fdf5e2;
-        }
-
-        .items tbody tr:hover {
-            background-color: #e8f3ff;
-        }
-
-        /* professional header color + very light borders */
-        .items thead th {
-            background: #fddcb4;
-            color: #2e2e2e;
-            /* deep graphite — softer than black */
-            padding: 4px 6px;
-            font-weight: 700;
-            font-size: 9px;
-            line-height: 1.1;
-            border: 0.6px solid rgba(0, 0, 0, 0.06);
-            /* slightly stronger hairline for headers */
-            text-align: left;
-            vertical-align: middle;
-            letter-spacing: 0.2px;
-        }
-
-        /* very-light, consistent borders for body cells */
-        .items tbody td {
-            padding: 4px 6px;
-            border: 0.4px solid rgba(0, 0, 0, 0.04);
-            /* whisper-light */
-            vertical-align: top;
-            font-size: 10px;
-            color: #222;
-            font-family: "Inter", "DejaVu Sans", Arial, Helvetica, sans-serif;
-            background-clip: padding-box;
-        }
-
-        .items .desc {
-            color: #666;
-            font-size: 9.5px;
-            padding-left: 2px;
-        }
-
-        .items td,
-        .ship-table td {
-            word-wrap: break-word;
-            overflow-wrap: anywhere;
-            white-space: normal;
-        }
-
-        .items col.serial-col {
-            width: 20px !important;
-            min-width: 20px !important;
-            max-width: 20px !important;
-        }
-
-        .items thead th.serial,
-        .items tbody td.serial {
-            width: 20px !important;
-            min-width: 20px !important;
-            max-width: 20px !important;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 700;
-        }
-
-        .items thead th.hsn,
-        .items tbody td.hsn {
-            width: 70px;
-        }
-
-        .items thead th.qty,
-        .items tbody td.qty {
-            width: 40px;
-            text-align: left;
-        }
-
-        .items thead th.rate,
-        .items tbody td.rate,
-        .items thead th.net,
-        .items tbody td.net,
-        .items thead th.amount,
-        .items tbody td.amount {
-            padding-right: 2px;
-        }
-
-        .items thead th.delivery,
-        .items tbody td.delivery {
-            white-space: normal;
-        }
-
-        .items tbody tr {
-            page-break-inside: auto;
-            break-inside: auto;
-        }
-
-        .bottom {
-            margin-top: 8px;
-            width: 100%;
-            display: table;
-            table-layout: fixed;
-            border-collapse: collapse;
-            box-sizing: border-box;
-        }
-
+        /* --- Terms and Summary --- */
         .terms {
-            display: table-cell;
-            vertical-align: top;
-            width: 65%;
-            box-sizing: border-box;
-            border: 0.5px solid rgba(0, 0, 0, 0.05);
-            border-radius: 2px;
-            font-size: 9.5px;
-            color: #333;
-            position: relative;
-            overflow: hidden;
-            page-break-inside: auto;
-            break-inside: auto;
-            -webkit-column-break-inside: auto;
-            -moz-column-break-inside: auto;
-            word-break: break-word;
-            overflow-wrap: break-word;
+            border: 0.5px solid #ddd;
+            border-radius: 3px;
             padding: 8px;
-            background: transparent;
-        }
-
-        .terms .bg-overlay {
-            position: absolute;
-            inset: 0;
-            border-radius: 2px;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .terms .content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .summary {
-            display: table-cell;
-            vertical-align: top;
-            width: 35%;
-            box-sizing: border-box;
-            padding: 8px;
-            border-radius: 2px;
-            border: 0.6px solid rgba(0, 0, 0, 0.05);
-            font-size: 10px;
-            color: #111;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            background: #fdf5e2;
-        }
-
-        .summary .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2px 0;
-            border-bottom: 0.5px solid #eee;
-        }
-
-        .summary .total-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f58220;
-            color: #fff;
-            font-weight: 700;
-            padding: 2px 2px;
-            border-radius: 2px;
-            margin-top: 6px;
-        }
-
-        .summary .in-words {
+            background: #fdfcf9;
             font-size: 9px;
-            color: #666;
-            margin-top: 6px;
-            text-align: right;
-            word-wrap: break-word;
-        }
-
-        .clearfix::after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-
-        .right {
-            text-align: right;
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .small {
-            font-size: 9.5px;
-            color: #666;
         }
 
         .terms ul {
@@ -405,21 +185,51 @@
         }
 
         .terms li {
-            margin-bottom: 4px;
-            line-height: 1.25;
+            margin-bottom: 3px;
             color: #555;
+        }
+
+        .summary {
+            border: 0.5px solid #ccc;
+            border-radius: 3px;
+            padding: 8px;
+            background: #fff9f3;
             font-size: 9px;
         }
 
-        /* Accessibility / print fallback: if hairlines disappear in PDF engine, use faint grey */
+        .summary .row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 0.5px solid #eee;
+            padding: 2px 0;
+        }
+
+        .summary .total-row {
+            background: #f58220;
+            color: #fff;
+            padding: 4px 6px;
+            border-radius: 2px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .summary .in-words {
+            font-size: 8.5px;
+            color: #444;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        /* --- Print Fallback --- */
         @media print {
 
-            .items tbody td,
-            .items thead th {
-                border: 1px solid rgba(0, 0, 0, 0.06);
+            th,
+            td {
+                border: 0.5px solid #bbb !important;
             }
         }
     </style>
+
 </head>
 
 <body>
@@ -479,7 +289,7 @@
 
         <!-- SHIPPING -->
         <div class="ship-wrap">
-            <table class="items" role="presentation">
+            <table role="presentation">
                 <colgroup>
                     <col style="width:12%" />
                     <col style="width:28%" />
@@ -518,7 +328,7 @@
         </div>
 
         <!-- ITEMS -->
-        <table class="items" role="presentation">
+        <table class="ship-wrap" role="presentation">
             <colgroup>
                 <col class="serial-col" />
                 <col style="width:210px" />
@@ -574,7 +384,7 @@
         <!-- TERMS & SUMMARY -->
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse; font-family: DejaVu Sans, Arial, Helvetica, sans-serif; font-size:10px;
       background-image: url('{{ $term_conditon_bg_img }}');
-       background-size: cover; background-position: center right; background-repeat: no-repeat;">
+       background-size: cover; background-position: center right; background-repeat: no-repeat; margin-top: 8px;">
             <tr>
                 <!-- TERMS (left) -->
                 <td valign="top" width="52%" style="padding:1px; vertical-align:top;">
@@ -604,7 +414,7 @@
 
                 <!-- SUMMARY (right) -->
                 <td valign="top" width="22%"
-                    style="padding:8px; border-left:1px solid #e0e0e0; font-size:9px; line-height:1.35;">
+                    style="padding:8px; border-left:0.5px solid #e0e0e0; font-size:9px; line-height:1.35;">
                     <div>
                         <div><strong>Sub Unit Total ( {{$currency['name'] ?? ''}} ) :</strong>
                             {{ $totals['sub_unit_total'] ?? '' }}</div>
@@ -620,8 +430,8 @@
                     </div>
                 </td>
             </tr>
-            <tr>
-                <td colspan="3" style="text-align:center; padding:5px; font-size:12px;">
+            <tr>;
+                <td colspan="3" style="text-align:center; padding:5px; font-size:12px; color:red">
                     We look forward to your valuable order! Thank you.
                 </td>
             </tr>
