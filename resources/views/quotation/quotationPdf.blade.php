@@ -5,29 +5,21 @@
     <meta charset="utf-8" />
     <title>Quotation</title>
     <style>
+        /* Base */
         body,
         table,
         td,
         th {
             font-family: "Inter", "DejaVu Sans", Arial, Helvetica, sans-serif;
             color: #222;
-            font-size: 10px;
+            font-size: 9px;
             line-height: 1.45;
             letter-spacing: 0.1px;
         }
 
-        /* ---------- GLOBAL / PRINT HINTS ---------- */
-        * {
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-
         html,
         body {
             height: 100%;
-            font-family: "Inter", "DejaVu Sans", Arial, Helvetica, sans-serif;
             margin: 0;
             padding: 6px;
             background: #ffffff;
@@ -37,8 +29,8 @@
 
         .paper {
             background: #fff;
-            border-radius: 4px;
-            padding: 8px;
+            border-radius: 0.5px;
+            padding: 2px;
             margin: 0 auto;
             max-width: 100%;
             box-sizing: border-box;
@@ -64,67 +56,6 @@
         .center-col {
             width: 82%;
             vertical-align: middle;
-        }
-
-        .logo {
-            width: 100%;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            overflow: hidden;
-            border-radius: 6px;
-        }
-
-        .logo img {
-            width: 100%;
-            height: auto;
-            max-height: 65px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .logo-fallback {
-            width: 100%;
-            height: 70px;
-            background: #0a2a30;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
-        .company-meta .meta-row,
-        .quotation-meta .meta-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            line-height: 1.3;
-        }
-
-        .hdr td {
-            vertical-align: middle;
-            padding: 0 0 4px 6px;
-        }
-
-        .center-col {
-            padding: 0 8px;
-            vertical-align: middle;
-        }
-
-        .right-col {
-            width: 220px;
-            vertical-align: top;
-        }
-
-        /* --- Header / logo improvements --- */
-        .logo-col {
-            width: 140px;
-            padding-right: 12px;
         }
 
         .logo {
@@ -175,21 +106,6 @@
             max-width: 100%;
         }
 
-        .company-meta .meta-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-            font-size: 9.2px;
-            color: #555;
-        }
-
-        .company-meta .muted {
-            color: #666;
-            font-weight: 600;
-            font-size: 9px;
-        }
-
         .title {
             color: #e76b00;
             font-size: 16px;
@@ -197,31 +113,11 @@
             margin: 0 0 4px 0;
         }
 
-        .info-card {
-            border-radius: 6px;
-            border: 1px solid #f0d9cd;
-            background: #fff8f3;
-            padding: 8px;
-            font-size: 9.5px;
-            color: #b85c12;
-            min-width: 160px;
-            box-sizing: border-box;
-        }
-
-        .info-card .row {
-            display: flex;
-            justify-content: space-between;
-            gap: 6px;
-            padding: 2px 0;
-            color: #333;
-            font-size: 9.5px;
-        }
-
         .authorised {
             margin-top: 5px;
-            border: 1px solid #eef2f4;
+            border: 0.5px solid #eef2f4;
             background: #fff;
-            padding: 8px 10px;
+            padding: 8px;
             border-radius: 4px;
             font-size: 9px;
             color: #333;
@@ -232,7 +128,7 @@
         }
 
         .ship-wrap {
-            border-radius: 4px;
+            border-radius: 1px;
             border: 1px solid #e2efe6;
             background: #f7fff8;
         }
@@ -249,6 +145,7 @@
             overflow-wrap: anywhere;
         }
 
+        /* Table defaults */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -258,7 +155,7 @@
 
         th,
         td {
-            padding: 6px 8px;
+            padding: 2px 2px;
             text-align: left;
             vertical-align: top;
             word-break: break-word;
@@ -267,7 +164,8 @@
         th {
             background: #f2f2f2;
             font-weight: bold;
-            color: #111;
+            color: #333;
+            /* softer default heading color */
             text-transform: uppercase;
         }
 
@@ -285,7 +183,7 @@
             overflow: hidden;
         }
 
-        /* items styling */
+        /* Items styling (updated) */
         .items tbody tr:nth-child(odd) {
             background-color: #ffffff;
         }
@@ -306,31 +204,38 @@
             background-color: #e8f3ff;
         }
 
+        /* professional header color + very light borders */
         .items thead th {
             background: #fddcb4;
-            color: black;
-            padding: 6px;
+            color: #2e2e2e;
+            /* deep graphite — softer than black */
+            padding: 4px 6px;
             font-weight: 700;
             font-size: 9px;
-            border: 0.5px solid #fddcb4;
-            text-align: left;
             line-height: 1.1;
+            border: 0.6px solid rgba(0, 0, 0, 0.06);
+            /* slightly stronger hairline for headers */
+            text-align: left;
             vertical-align: middle;
+            letter-spacing: 0.2px;
         }
 
+        /* very-light, consistent borders for body cells */
         .items tbody td {
-            padding: 5px 6px;
-            border: 0.5px solid #fddcb4;
+            padding: 4px 6px;
+            border: 0.4px solid rgba(0, 0, 0, 0.04);
+            /* whisper-light */
             vertical-align: top;
             font-size: 10px;
             color: #222;
             font-family: "Inter", "DejaVu Sans", Arial, Helvetica, sans-serif;
+            background-clip: padding-box;
         }
 
         .items .desc {
             color: #666;
             font-size: 9.5px;
-            padding-left: 8px;
+            padding-left: 2px;
         }
 
         .items td,
@@ -351,13 +256,11 @@
             width: 20px !important;
             min-width: 20px !important;
             max-width: 20px !important;
-            text-align: center;
+            text-align: left;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            /* padding: 2px 4px !important; */
             font-weight: 700;
-            /* border: 1px solid #e2efe6 !important; */
         }
 
         .items thead th.hsn,
@@ -368,7 +271,7 @@
         .items thead th.qty,
         .items tbody td.qty {
             width: 40px;
-            text-align: center;
+            text-align: left;
         }
 
         .items thead th.rate,
@@ -377,14 +280,12 @@
         .items tbody td.net,
         .items thead th.amount,
         .items tbody td.amount {
-            text-align: right;
-            padding-right: 8px;
+            padding-right: 2px;
         }
 
         .items thead th.delivery,
         .items tbody td.delivery {
             white-space: normal;
-            text-align: center;
         }
 
         .items tbody tr {
@@ -406,9 +307,8 @@
             vertical-align: top;
             width: 65%;
             box-sizing: border-box;
-            border: 1px solid #eee;
-            padding: 12px 12px 12px 14px;
-            border-radius: 4px;
+            border: 0.5px solid rgba(0, 0, 0, 0.05);
+            border-radius: 2px;
             font-size: 9.5px;
             color: #333;
             position: relative;
@@ -419,12 +319,14 @@
             -moz-column-break-inside: auto;
             word-break: break-word;
             overflow-wrap: break-word;
+            padding: 8px;
+            background: transparent;
         }
 
         .terms .bg-overlay {
             position: absolute;
             inset: 0;
-            border-radius: 4px;
+            border-radius: 2px;
             pointer-events: none;
             z-index: 1;
         }
@@ -440,8 +342,8 @@
             width: 35%;
             box-sizing: border-box;
             padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #eee;
+            border-radius: 2px;
+            border: 0.6px solid rgba(0, 0, 0, 0.05);
             font-size: 10px;
             color: #111;
             page-break-inside: avoid;
@@ -454,7 +356,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 2px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 0.5px solid #eee;
         }
 
         .summary .total-row {
@@ -464,8 +366,8 @@
             background: #f58220;
             color: #fff;
             font-weight: 700;
-            padding: 4px 6px;
-            border-radius: 4px;
+            padding: 2px 2px;
+            border-radius: 2px;
             margin-top: 6px;
         }
 
@@ -508,14 +410,20 @@
             color: #555;
             font-size: 9px;
         }
+
+        /* Accessibility / print fallback: if hairlines disappear in PDF engine, use faint grey */
+        @media print {
+
+            .items tbody td,
+            .items thead th {
+                border: 1px solid rgba(0, 0, 0, 0.06);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="paper">
-        {{-- <div style="width:100%;">
-            <div class="company-name">{{ $company['name'] ?? '' }}</div>
-        </div> --}}
         <table class="hdr" role="presentation">
             <tr>
                 <td class="logo-col" style="width:18%; vertical-align:middle;">
@@ -544,16 +452,17 @@
                                 <span class="small"><strong>Branch:</strong> {{ $company['branch_name'] }}</span>
                                 <span class="small"><strong>Udyam/MSME:</strong> {{ $company['udyam_no'] }}</span>
                                 <span class="small"><strong>IFSC:</strong> {{ $company['ifsc'] }}</span>
+                                <span class="small"
+                                    style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Quotation
+                                        No:</strong> {{ trim($quotation['no']) }}</span>
+                                <span class="small"
+                                    style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Date:</strong>
+                                    {{ trim($quotation['date']) }}</span>
+                                <span class="small"
+                                    style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Ref:</strong>
+                                    {{ $quotation['ref'] }}</span>
                             </div>
                         </div>
-
-                        <span class="meta-row"
-                            style="background:#fff2e6;padding:2px 6px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;">
-                            <span class="small"><strong>Quotation No:</strong> {{ trim($quotation['no']) }}</span>
-                            <span class="small"><strong>Date:</strong> {{ trim($quotation['date']) }}</span>
-                            <span class="small"><strong>Ref:</strong> {{ $quotation['ref'] }}</span>
-                        </span>
-
                     </div>
                 </td>
             </tr>
@@ -582,7 +491,7 @@
                     <col style="width:10%" />
                 </colgroup>
                 <thead>
-                    <tr style="color:#fff">
+                    <tr style="color:#fff; text-align: center;">
                         <th>To Company</th>
                         <th>Address</th>
                         <th>Contact</th>
@@ -621,9 +530,9 @@
                 <col style="width:60px" />
                 <col style="width:80px" />
                 <col style="width:90px" />
-                <col style="width:100px" />
+                <col style="width:90px" />
             </colgroup>
-            <thead style="background:#fddcb4; color:#fff">
+            <thead style="background:#fddcb4; color:#fff;">
                 <tr>
                     <th class="serial">#</th>
                     <th class="part">Part No.</th>
@@ -638,20 +547,21 @@
                     <th class="delivery">Delivery Status</th>
                 </tr>
             </thead>
-            <tbody style="border: 0.5px solid #fddcb4; !important">
+            <!-- removed inline border style; CSS handles hairlines -->
+            <tbody>
                 @foreach($items as $it)
                     <tr>
                         <td class="serial">{{ trim($it['no'] ?? '') }}</td>
                         <td class="part">{{ $it['part_no'] ?? '' }}</td>
                         <td class="hsn">{{ $it['hsn_code'] ?? '' }}</td>
-                        <td class="qty center">{{ $it['quantity'] ?? '' }}</td>
-                        <td class="qty center">{{ $it['price'] ?? '' }}</td>
-                        <td class="disc center">{{ $it['discount'] ?? '' }}</td>
-                        <td class="net right">{{ $it['net_price'] ?? '' }}</td>
-                        <td class="igst right">{{ $it['igst'] ?? '' }}</td>
-                        <td class="igstamt right">{{ $it['total'] ?? '' }}</td>
-                        <td class="amount right">{{ $it['total'] ?? '' }}</td>
-                        <td class="delivery center">{{ $it['notes'] ?? '' }}</td>
+                        <td class="qty">{{ $it['quantity'] ?? '' }}</td>
+                        <td class="qty">{{ $it['price'] ?? '' }}</td>
+                        <td class="disc">{{ $it['discount'] ?? '' }}</td>
+                        <td class="net">{{ $it['net_price'] ?? '' }}</td>
+                        <td class="igst">{{ $it['igst'] ?? '' }}</td>
+                        <td class="igstamt">{{ $it['total'] ?? '' }}</td>
+                        <td class="amount ">{{ $it['total'] ?? '' }}</td>
+                        <td class="delivery">{{ $it['notes'] ?? '' }}</td>
                     </tr>
                     <tr>
                         <td class="serial"></td>
@@ -667,13 +577,13 @@
        background-size: cover; background-position: center right; background-repeat: no-repeat;">
             <tr>
                 <!-- TERMS (left) -->
-                <td valign="top" width="52%" style="padding:8px; vertical-align:top;">
-                    <div style="padding:6px; border-radius:2px;">
-                        <strong style="font-size:10px; display:block; margin-bottom:6px;">Terms &amp;
+                <td valign="top" width="52%" style="padding:1px; vertical-align:top;">
+                    <div style="padding:2px; border-radius:2px;">
+                        <strong style="font-size:10px; margin-bottom: -100px;">Terms &amp;
                             Conditions</strong>
-                        <ul style="margin:0 0 0 12px; padding:0; font-size:9px; line-height:1.35;">
+                        <span style="padding:0; font-size:9px; line-height:0.5;">
                             {!! $terms !!}
-                        </ul>
+                        </span>
                     </div>
                 </td>
 
@@ -694,19 +604,25 @@
 
                 <!-- SUMMARY (right) -->
                 <td valign="top" width="22%"
-                    style="color: #e8f3ff, padding:8px; border-left:1px solid #e0e0e0; font-size:9px; line-height:1.35;">
+                    style="padding:8px; border-left:1px solid #e0e0e0; font-size:9px; line-height:1.35;">
                     <div>
-                        <div><strong>Sub Unit Total:</strong> {{ $totals['sub_unit_total'] ?? '' }}</div>
-                        <div><strong>Sub Net Total:</strong> {{ $totals['sub_net_total'] ?? '' }}</div>
-                        <div><strong>Sub IGST Total:</strong> {{ $totals['total_igst_total'] ?? '' }}</div>
+                        <div><strong>Sub Unit Total ( {{$currency['name'] ?? ''}} ) :</strong>
+                            {{ $totals['sub_unit_total'] ?? '' }}</div>
+                        <div><strong>Sub Net Total ( {{$currency['name'] ?? ''}} ) :</strong>
+                            {{ $totals['sub_net_total'] ?? '' }}</div>
+                        <div><strong>Sub IGST Total ( {{$currency['name'] ?? ''}} ) :</strong>
+                            {{ $totals['total_igst_total'] ?? '' }}
+                        </div>
                         <div style="margin-top:6px; font-weight:700; font-size:10px; color:green;">
-                            <strong>Grand Total:</strong> {{ $totals['grand_total'] ?? '' }}
+                            <strong>Grand Total {{$currency['name'] ?? ''}}:</strong> {{ $totals['grand_total'] ?? '' }}
                         </div>
                         <div style="margin-top:6px; font-size:8.5px; color:#444;">{{ $totals['in_words'] ?? '' }}</div>
-                        <div style="margin-top:8px; font-size:8px; color:#555;">
-                            We look forward to your valuable order! Thank you!
-                        </div>
                     </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align:center; padding:5px; font-size:12px;">
+                    We look forward to your valuable order! Thank you.
                 </td>
             </tr>
         </table>
@@ -727,7 +643,6 @@
                 $pdf->text($x,$y,$text,$font,$size);
             ');
         }
-    </script>
     </script>
 </body>
 
