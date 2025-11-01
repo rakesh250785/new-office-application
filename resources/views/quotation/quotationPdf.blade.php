@@ -34,22 +34,22 @@
             box-sizing: border-box;
         }
 
-        @page {
+        /* @page {
             margin: 6mm;
-        }
+        } */
 
         /* --- Collapsed Table Core --- */
         table {
             width: 100%;
             border-collapse: collapse;
-            border: 0.5px solid #f9d8ab;
+            border: 0.25 solid #f9d8ab;
             font-size: 9px;
             background: #fff;
         }
 
         th,
         td {
-            border: 0.5px solid #f9d8ab;
+            border: 0.25 solid #f9d8ab;
             padding: 3px 5px;
             text-align: left;
             vertical-align: top;
@@ -73,7 +73,7 @@
         /* --- Header Table --- */
         .hdr {
             width: 100%;
-            border: 0.5px solid #f9d8ab;
+            border: 0.25 solid #f9d8ab;
             background: #fdf1cb;
         }
 
@@ -93,9 +93,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fff;
-            border: 0.5px solid #ccc;
-            border-radius: 4px;
             overflow: hidden;
         }
 
@@ -121,10 +118,9 @@
         /* --- Authorised Section --- */
         .authorised {
             margin-top: 8px;
-            border: 0.5px solid #ccc;
+            border: 0.25 solid #fddcb4;
             background: #fffdf7;
             padding: 8px;
-            border-radius: 4px;
             font-size: 9px;
             color: #333;
             text-align: center;
@@ -133,9 +129,8 @@
         /* --- Shipping Table --- */
         .ship-wrap {
             border-collapse: collapse;
-            border: 0.5px solid #ccc;
+            border: 0.25 solid #fddcb4;
             background: #fafafa;
-            border-radius: 3px;
             margin-top: 8px;
             margin-bottom: 8px;
         }
@@ -148,11 +143,11 @@
         /* --- Item Table --- */
         .items th {
             background: #fddcb4;
-            border: 0.5px solid #c7a86a;
+            border: 0.25 solid #c7a86a;
         }
 
         .items td {
-            border: 0.5px solid #ddd;
+            border: 0.25 solid #ddd;
         }
 
         .items tbody tr:nth-child(odd) {
@@ -171,8 +166,7 @@
 
         /* --- Terms and Summary --- */
         .terms {
-            border: 0.5px solid #ddd;
-            border-radius: 3px;
+            border: 0.25 solid #ddd;
             padding: 8px;
             background: #fdfcf9;
             font-size: 9px;
@@ -190,8 +184,7 @@
         }
 
         .summary {
-            border: 0.5px solid #ccc;
-            border-radius: 3px;
+            border: 0.25 solid #ccc;
             padding: 8px;
             background: #fff9f3;
             font-size: 9px;
@@ -200,7 +193,6 @@
         .summary .row {
             display: flex;
             justify-content: space-between;
-            border-bottom: 0.5px solid #eee;
             padding: 2px 0;
         }
 
@@ -208,7 +200,6 @@
             background: #f58220;
             color: #fff;
             padding: 4px 6px;
-            border-radius: 2px;
             font-weight: 700;
             margin-top: 6px;
         }
@@ -225,7 +216,7 @@
 
             th,
             td {
-                border: 0.5px solid #bbb !important;
+                border: 0.25 solid #bbb !important;
             }
         }
     </style>
@@ -250,29 +241,31 @@
 
                 <td class="center-col" style="width:82%; vertical-align:middle;">
                     <div style="width:100%;">
-                        <div class="company-meta">
-                            <div class="meta-row">
-                                <span class="small"><strong>Address:</strong>
-                                    {{ trim($company['address_line1']) }}</span>
-                                <span class="small"><strong>Tel:</strong> {{ trim($company['contact']) }}</span>
-                                <span class="small"><strong>Email:</strong> {{ $company['email'] }}</span>
-                                <span class="small"><strong>GSTIN:</strong> {{ $company['gstin'] }}</span>
-                                <span class="small"><strong>A/C:</strong> {{ $company['account'] }}</span>
-                                <span class="small"><strong>Bank:</strong> {{ $company['bank'] }}</span>
-                                <span class="small"><strong>Branch:</strong> {{ $company['branch_name'] }}</span>
-                                <span class="small"><strong>Udyam/MSME:</strong> {{ $company['udyam_no'] }}</span>
-                                <span class="small"><strong>IFSC:</strong> {{ $company['ifsc'] }}</span>
-                                <span class="small"
-                                    style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Quotation
-                                        No:</strong> {{ trim($quotation['no']) }}</span>
-                                <span class="small"
-                                    style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Date:</strong>
-                                    {{ trim($quotation['date']) }}</span>
-                                <span class="small"
-                                    style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Ref:</strong>
-                                    {{ $quotation['ref'] }}</span>
-                            </div>
-                        </div>
+                        <span class="small"><strong>Address:</strong>
+                            {{ trim($company['address_line1']) }}</span>
+                        <span class="small"><strong>Tel:</strong> {{ trim($company['contact']) }}</span>
+                        <span class="small"><strong>Email:</strong> {{ $company['email'] }}</span>
+                        <span class="small"><strong>GSTIN:</strong> {{ $company['gstin'] }}</span>
+                        <span class="small"><strong>A/C:</strong> {{ $company['account'] }}</span>
+                        <span class="small"><strong>Bank:</strong> {{ $company['bank'] }}</span>
+                        <span class="small"><strong>Branch:</strong> {{ $company['branch_name'] }}</span>
+                        <span class="small"><strong>Udyam/MSME:</strong> {{ $company['udyam_no'] }}</span>
+                        <span class="small"><strong>IFSC:</strong> {{ $company['ifsc'] }}</span>
+                        <span class="small"><strong>Click :</strong>
+                            <span style="color:blue;">{{ $company['web'] ?? 'www.chromatographyworld.com' }} for
+                                more
+                                details</span></span>
+
+
+                        <span class="small"
+                            style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Quotation
+                                No:</strong> {{ trim($quotation['no']) }}</span>
+                        <span class="small"
+                            style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Date:</strong>
+                            {{ trim($quotation['date']) }}</span>
+                        <span class="small"
+                            style="background:#fff2e6;padding:2px;border-radius:3px;color:#b85c12;font-weight:700;margin-top:10px;"><strong>Ref:</strong>
+                            {{ $quotation['ref'] }}</span>
                     </div>
                 </td>
             </tr>
@@ -282,9 +275,7 @@
             <span style="display:inline-block; margin-left:6px;"><strong>Authorised For : </strong> Qualisil, Qaliseal,
                 Gas World, Macherey Nagel,
                 G.L.Science (GC Columns), S.A.S.Corporation, Nomura Chemicals (Develosil), Sielc (Primesep), Sciencix,
-                Poly LC, MZAnalysentechnik, Sepax, Frontier Lab. Click <span
-                    style="color:blue;">{{ $company['web'] ?? 'www.chromatographyworld.com' }}</span> for more
-                details.</span>
+                Poly LC, MZAnalysentechnik, Sepax, Frontier Lab.
         </div>
 
         <!-- SHIPPING -->
@@ -359,9 +350,9 @@
             </thead>
             <!-- removed inline border style; CSS handles hairlines -->
             <tbody>
-                @foreach($items as $it)
+                @foreach($items as $k => $it)
                     <tr>
-                        <td class="serial">{{ trim($it['no'] ?? '') }}</td>
+                        <td class="serial">{{ trim($k + 1 ?? '') }}</td>
                         <td class="part">{{ $it['part_no'] ?? '' }}</td>
                         <td class="hsn">{{ $it['hsn_code'] ?? '' }}</td>
                         <td class="qty">{{ $it['quantity'] ?? '' }}</td>
@@ -414,7 +405,7 @@
 
                 <!-- SUMMARY (right) -->
                 <td valign="top" width="22%"
-                    style="padding:8px; border-left:0.5px solid #e0e0e0; font-size:9px; line-height:1.35;">
+                    style="padding:8px; border-left:0.25 solid #e0e0e0; font-size:9px; line-height:1.35;">
                     <div>
                         <div><strong>Sub Unit Total ( {{$currency['name'] ?? ''}} ) :</strong>
                             {{ $totals['sub_unit_total'] ?? '' }}</div>

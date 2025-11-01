@@ -126,7 +126,7 @@ class QuotationDetailController extends Controller
             $adminId = Auth::id();
             $branchId = Auth::user()->branch_id;
             $branchName = Branch::findOrFail($branchId)->name;
-            $quotationDate = Carbon::now()->format('Y-m-d 00:00:00');
+            $quotationDate = Carbon::now()->format('Y-m-d');
 
             // Customer and currency info
             $customerInfo = Customer::findOrFail($data['company_id']);
