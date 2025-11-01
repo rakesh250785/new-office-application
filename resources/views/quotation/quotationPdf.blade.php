@@ -34,10 +34,6 @@
             box-sizing: border-box;
         }
 
-        /* @page {
-            margin: 6mm;
-        } */
-
         /* --- Collapsed Table Core --- */
         table {
             width: 100%;
@@ -133,11 +129,35 @@
             background: #fafafa;
             margin-top: 8px;
             margin-bottom: 8px;
+            /* table-layout: fixed; */
+            word-wrap: break-word;
+            white-space: normal;
+            /* width: 100%; */
         }
 
-        .ship-wrap th {
+
+        .ship-wrap th,
+        .ship-wrap td {
+            border: 0.5px solid #fddcb4;
+            padding: 3px 5px;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+            white-space: normal;
+            overflow: hidden;
+        }
+
+        .ship-wrap thead th {
             background: #fddcb4;
             color: #222;
+            font-weight: 600;
+        }
+
+        .ship-wrap td.part,
+        .ship-wrap td.desc,
+        .ship-wrap td.delivery {
+            max-width: 200px;
+            /* adjust per need */
         }
 
         /* --- Item Table --- */
