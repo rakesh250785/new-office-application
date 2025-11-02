@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Quotation</title>
+    <title>Order</title>
     <style>
         body,
         table,
@@ -121,7 +121,7 @@
         }
 
         /* --- Shipping Table --- */
-        .ship-wrap {
+        .billing-wrap {
             border-collapse: collapse;
             border: 0.25 solid #fddcb4;
             background: #fafafa;
@@ -134,8 +134,8 @@
         }
 
 
-        .ship-wrap th,
-        .ship-wrap td {
+        .billing-wrap th,
+        .billing-wrap td {
             border: 0.5px solid #fddcb4;
             padding: 3px 5px;
             text-align: left;
@@ -145,15 +145,15 @@
             overflow: hidden;
         }
 
-        .ship-wrap thead th {
+        .billing-wrap thead th {
             background: #fddcb4;
             color: #222;
             font-weight: 600;
         }
 
-        .ship-wrap td.part,
-        .ship-wrap td.desc,
-        .ship-wrap td.delivery {
+        .billing-wrap td.part,
+        .billing-wrap td.desc,
+        .billing-wrap td.delivery {
             max-width: 200px;
             /* adjust per need */
         }
@@ -242,6 +242,9 @@
 
 <body>
     <div class="paper">
+
+        <!-- Company info -->
+
         <table class="hdr" role="presentation">
             <tr>
                 <td class="logo-col" style="width:18%; vertical-align:middle;">
@@ -288,7 +291,8 @@
                                 style="color: maroon;">DATE : </strong>
                             {{ trim($quotation['date']) }}</span>&nbsp;
                         <span class="small"
-                            style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong  style="color: maroon;">REF
+                            style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong
+                                style="color: maroon;">REF
                                 : </strong>
                             {{ $quotation['ref'] }}</span>&nbsp;
                     </div>
@@ -303,8 +307,50 @@
                 Poly LC, MZAnalysentechnik, Sepax, Frontier Lab.
         </div>
 
-        <!-- SHIPPING -->
-        <div class="ship-wrap">
+        <!-- General info -->
+        <div class="billing-wrap">
+            <table role="presentation">
+                <colgroup>
+                    <col style="width:12%" />
+                    <col style="width:28%" />
+                    <col style="width:12%" />
+                    <col style="width:12%" />
+                    <col style="width:10%" />
+                    <col style="width:15%" />
+                    <col style="width:15%" />
+                    <col style="width:10%" />
+                </colgroup>
+                <thead>
+                    <tr style="text-align: center;">
+                        <th>Customer Order</th>
+                        <th>Order Date</th>
+                        <th>Quotation No.</th>
+                        <th>Quotation Date </th>
+                        <th>Order Ref </th>
+                        <th>Date</th>
+                        <th>Credit Terms</th>
+                        <th>Prefered Courier</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ $customer_order ?? '-' }}</td>
+                        <td>{{ $order_date ?? '-' }}</td>
+                        <td>{{ $unique_quotation_no ?? '-' }}</td>
+                        <td>{{ $quotation_created_date ?? '-' }}</td>
+                        <td>{{ $order_ref ?? '-' }}</td>
+                        <td>{{ $date ?? '-' }}</td>
+                        <td>{{ $credit_term ?? '-' }}</td>
+                        <td>{{ $courier ?? '-' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+
+        <!-- Billing info -->
+        <div class="billing-wrap">
             <table role="presentation">
                 <colgroup>
                     <col style="width:12%" />
@@ -323,19 +369,72 @@
                         <th>Contact</th>
                         <th>GSTN</th>
                         <th>City</th>
+                        <th>State</th>
+                        <th>Country</th>
                         <th>Pincode</th>
+                        <th>Phone</th>
                         <th>Mobile</th>
                         <th>Email</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{ $shipping['company'] ?? '-' }}</td>
+                        <td>{{ $billing['billing_name'] ?? '-' }}</td>
+                        <td>{{ $billing['billing_address'] ?? '' }}</td>
+                        <td>{{ $billing['contact_person'] ?? '' }}</td>
+                        <td class="break-all">{{ $billing['gstn'] ?? '' }}</td>
+                        <td>{{ $billing['city'] ?? '' }}</td>
+                        <td>{{ $billing['state'] ?? '' }}</td>
+                        <td>{{ $billing['country'] ?? '' }}</td>
+                        <td>{{ $billing['pincode'] ?? '' }}</td>
+                        <td>{{ $billing['landline'] ?? '' }}</td>
+                        <td>{{ $billing['mobile'] ?? '' }}</td>
+                        <td class="break-all">{{ $billing['email'] ?? '' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Shipping info -->
+        <div class="billing-wrap">
+            <table role="presentation">
+                <colgroup>
+                    <col style="width:12%" />
+                    <col style="width:28%" />
+                    <col style="width:12%" />
+                    <col style="width:12%" />
+                    <col style="width:10%" />
+                    <col style="width:15%" />
+                    <col style="width:15%" />
+                    <col style="width:10%" />
+                </colgroup>
+                <thead>
+                    <tr style="text-align: center;">
+                        <th>To Company</th>
+                        <th>Address</th>
+                        <th>Contact</th>
+                        <th>GSTN</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Country</th>
+                        <th>Pincode</th>
+                        <th>Phone</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>{{ $shipping['shipping_name'] ?? '-' }}</td>
                         <td>{{ $shipping['address'] ?? '' }}</td>
                         <td>{{ $shipping['contact_person'] ?? '' }}</td>
                         <td class="break-all">{{ $shipping['gstn'] ?? '' }}</td>
                         <td>{{ $shipping['city'] ?? '' }}</td>
-                        <td>{{ $shipping['pincode'] ?? '' }}</td>
+                        <td>{{ $shipping['state'] ?? '' }}</td>
+                        <td>{{ $shipping['country'] ?? '' }}</td>
+                        <td>{{ $shipping['pin_code'] ?? '' }}</td>
+                        <td>{{ $shipping['landline'] ?? '' }}</td>
                         <td>{{ $shipping['mobile'] ?? '' }}</td>
                         <td class="break-all">{{ $shipping['email'] ?? '' }}</td>
                     </tr>
@@ -343,8 +442,9 @@
             </table>
         </div>
 
+
         <!-- ITEMS -->
-        <table class="ship-wrap" role="presentation">
+        <table class="billing-wrap" role="presentation">
             <colgroup>
                 <col class="serial-col" />
                 <col style="width:210px" />
@@ -424,7 +524,8 @@
                             <strong style="font-size:9px; color:black;">Authorized Signatory</strong>
                         </div>
                         <div>
-                            <strong style="font-size:8px; color: black; text-decoration:underline;">{{ $prepared_by }}</strong>
+                            <strong
+                                style="font-size:8px; color: black; text-decoration:underline;">{{ $prepared_by }}</strong>
                         </div>
                     </div>
                 </td>
@@ -450,7 +551,8 @@
             </tr>
             <tr>;
                 <td colspan="3" style="text-align:center; padding:5px; font-size:12px; color:red">
-                    <strong  style="color: maroon;">We look forward to your valuable order ! Thank you !</strong>
+                    <span>{{ $branch_address }}</span>
+                    <strong style="color: maroon;">We look forward to your valuable order ! Thank you !</strong>
                 </td>
             </tr>
         </table>
@@ -475,3 +577,8 @@
 </body>
 
 </html>
+
+
+
+
+

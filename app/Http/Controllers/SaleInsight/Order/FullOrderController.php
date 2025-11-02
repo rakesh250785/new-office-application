@@ -6,12 +6,14 @@ use App\Exports\OrderExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Jobs\CloseOrder;
+use App\Jobs\ProcessOrder;
 use App\Models\Branch;
 use App\Models\Courier;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use App\Models\PaymentDayAdvance;
 use App\Models\PendingQuotation;
 use App\Models\QuatationAdd;
 use App\Models\Quotation;
@@ -149,12 +151,12 @@ class FullOrderController extends Controller
             // Auth info
             $adminId = Auth::id();
             $branchId = Auth::user()->branch_id;
-            $branchName = Branch::findOrFail($branchId)->name;
+            $branchName = Branch::find($branchId)->name;
             $orderDate = Carbon::now()->format('Y-m-d 00:00:00');
 
             // Customer and currency info
-            $customerInfo = Customer::findOrFail($data['company_id']);
-            $currencyInfo = Currency::findOrFail($data['currency_id']);
+            $customerInfo = Customer::find($data['company_id']);
+            $currencyInfo = Currency::find($data['currency_id']);
 
             // Get unique order number
             $orderNumber = $this->generateOrderNumber($branchName, $branchId, $orderDate);
@@ -308,90 +310,136 @@ class FullOrderController extends Controller
                 return Utility::apiError('Fail to insert updated order details', [], 221);
             }
 
-            // Refresh quotation product details
-            $quotationDetailDelete = QuotationDetail::where('quotation_id', $data['quotation_id'])->delete();
+            // // Refresh quotation product details
+            // $quotationDetailDelete = QuotationDetail::where('quotation_id', $data['quotation_id'])->delete();
+
+            // // Return if fail
+            // if (! $quotationDetailDelete) {
+            //     return Utility::apiError('Fail to delete existing quotation details', [], 221);
+            // }
+
+            // // Insert quotation details
+            // $insertStatus = QuotationDetail::insert($productList);
+
+            // // Return if fail
+            // if (! $insertStatus) {
+            //     return Utility::apiError('Fail to delete quotation details', [], 221);
+            // }
+
+            // // Update quotation flags
+            // $quotationFilter = [
+            //     'id' => $data['quotation_id'],
+            //     'company_id' => $data['company_id'],
+            // ];
+
+            // // Update quotation status
+            // $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => '0']);
 
             // Return if fail
-            if (! $quotationDetailDelete) {
-                return Utility::apiError('Fail to delete existing quotation details', [], 221);
-            }
-
-            // Insert quotation details
-            $insertStatus = QuotationDetail::insert($productList);
-
-            // Return if fail
-            if (! $insertStatus) {
-                return Utility::apiError('Fail to delete quotation details', [], 221);
-            }
-
-            // Update quotation flags
-            $quotationFilter = [
-                'id' => $data['quotation_id'],
-                'company_id' => $data['company_id'],
-            ];
-
-            // Update quotation status
-            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => '0']);
-
-            // Return if fail
-            if (! $updateQuotationStatus) {
-                return Utility::apiError('Fail to update quotation status', [], 221);
-            }
+            // if (! $updateQuotationStatus) {
+            //     return Utility::apiError('Fail to update quotation status', [], 221);
+            // }
 
             // Mark pending quotation deleted
-            $pendingFilter = ['unique_quotation_no' => $data['unique_quotation_no'], 'quotation_id' => $data['quotation_id']];
+            // $pendingFilter = ['unique_quotation_no' => $data['unique_quotation_no'], 'quotation_id' => $data['quotation_id']];
 
-            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id' => 1]);
+            // $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id' => 1]);
 
-            // Return if fail
-            if (! $updatePendingQuotation) {
-                return Utility::apiError('Fail to update pending quotation', [], 221);
-            }
+            // // Return if fail
+            // if (! $updatePendingQuotation) {
+            //     return Utility::apiError('Fail to update pending quotation', [], 221);
+            // }
 
-            // Get pdf info
+            // // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
+            $deliveryPeriod = PaymentDayAdvance::where('id', $data['delivery_date_id'])->first();
 
-            // Prepare Pdf data
-            $responsePayload = array_merge($data, [
-                'product_list' => $productList,
-                'quotation_info' => [
-                    'state_id' => $states[$customerInfo->state_id] ?? null,
-                    'shiping_state' => $states[$customerInfo->state_id] ?? null,
-                    'extra_notes' => $customerInfo->extra_notes,
-                    'gst' => $customerInfo->gst,
+            $pdfRec = [
+                'company' => [
+                    'name' => 'Chromatography World',
+                    'address_line1' => '217, 2nd Floor, Champaklal Industrial Estate, Sion East, Mumbai - 400022. India',
+                    'contact' => '+91 - 022 - 43159100',
+                    'email' => 'sales@chromatographyworld.com, speed@chromatographyworld.com, gm-support@chromatographyworld.com',
+                    'gstin' => '27AAGFC1217K1ZM',
+                    'udyam_no' => 'UDYAM-MH-19-0078510',
+                    'bank' => 'Kotak Mahindra Bank',
+                    'ifsc' => 'KKBK0000644',
+                    'account' => '4611234274',
+                    'web' => 'www.chromatographyworld.com',
+                    'branch_name' => 'Matunga ',
+                    'logo' => url('appLogo/logo.png'),
                 ],
-                'customer_info' => $customerInfo,
-                'tax_text' => 0,
-                'country' => $country->name ?? null,
-                'date' => $data['order_date'] ?? null,
-                'courier' => $courier->name ?? null,
-                'payment_term' => $paymentTerm->payment_type ?? null,
-                'preparing_by' => $data['prepard_by'] ?? null,
-                'branch_address' => $branchAddress,
-                'currency' => $currencyInfo,
-                'file_path' => $pdfFilePath,
-                'update_company_name' => $data['updated_company_name'] ?? null,
+                'extra_notes' => $customerInfo->extra_notes,
                 'quotation_type' => $data['quotation_type'] ?? null,
-                'email' => Auth::user()->email,
-                'order_created_at' => now()->format('Y-m-d'),
+                'currency' => $currencyInfo->name,
                 'overdue_no' => $data['overdue_number'] ?? null,
                 'overdue_name' => $data['overdue_value'] ?? null,
+                'customer_order' => $data['customer_order_no'],
+                'order_date' => $data['order_date'] ?? null,
+                'unique_quotation_no' => $data['unique_quotation_no'],
                 'order_prepared_by' => $data['order_prepared_by'] ?? null,
+                'update_company_name' => $data['updated_company_name'] ?? null,
                 'quotation_created_date' => $data['quotation_created_date'] ?? null,
-                'cc_email' => Auth::user()->cc_email,
-                'multiProdCal' => [
-                    'calculations' => $calculations,
-                    'grand_total' => $grandTotal,
-                ],
-                'totalcalc' => $grandTotal,
-            ]);
+                'order_ref' => $data['enq_ref'],
+                'date' => now()->format('Y-m-d'),
+                'payment_term' => $data['payment_term_condition'] ?? null,
+                'credit_term'=> $deliveryPeriod->date_type ?? null,
+                'courier' => $courier->name ?? null,
+                'user_id' => $adminId,
+                'branch_id' => $branchId,
+                'order_id' => $orderId,
+                'auth_email' => Auth::user()->email,
 
-            // Dispatch for pdf
-            // dispatch(new ProcessQuotation($responsePayload));
+                'billing' => [
+                    'billing_name' => $customerInfo->company_name,
+                    'contact_person' => $data['contact_person'],
+                    'billing_address' => $customerInfo->address,
+                    'gstn' => $customerInfo->gst_number,
+                    'city' => $customerInfo->city,
+                    'pincode' => $customerInfo->pin_code,
+                    'state' => $states[$customerInfo->state_id] ?? $customerInfo->other_state ?? null,
+                    'country' => $country->name ?? null,
+                    'landline' => $customerInfo->landline_no,
+                    'mobile' => $customerInfo->mobile_no,
+                    'email' => $customerInfo->email_id,
+                ],
+
+                'shipping' => [
+                    'shipping_name' => $customerInfo->company_name,
+                    'contact_person' => $data['contact_person'],
+                    'address' => $data['shipping_address'],
+                    'city' => $data['shipping_city'] ?? null,
+                    'pin_code' => $data['shipping_pin_code'] ?? null,
+                    'mobile' => $data['shipping_mobile'] ?? null,
+                    'email' => $data['shipping_email'] ?? null,
+                    'landline' => $data['shipping_landline'] ?? null,
+                    'gstn' => $customerInfo->gst_number,
+                    'state' => $states[$data['shipping_state_id']] ?? null,
+                    'country' => $country->name ?? null,
+                ],
+
+                'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
+
+                'pdf_name' => $pdfFilePath,
+                'old_pdf_name' => $checkExistingQuotationInfo?->pdf_name,
+                'prepared_by' => $data['prepard_by'],
+                'orderInfo' => [
+                    'id' => $orderId,
+                    'user_id' => $adminId,
+                    'branch_id' => $branchId,
+                    'unique_quotation_no' => $data['unique_quotation_no'],
+                ],
+                'products' => $productList,
+                'branch_address' => $branchAddress,
+            ];
+
+            ProcessOrder::dispatch($pdfRec)
+            // ->onQueue('order_pdf')
+                ->delay(0);
 
             // Return response
-            return Utility::apiSuccess('generated successfully', [], 200);
+            return Utility::apiSuccess('generated successfully', $pdfRec, 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
