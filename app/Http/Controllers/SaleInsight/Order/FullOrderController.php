@@ -239,7 +239,9 @@ class FullOrderController extends Controller
             // Initialize variable
             $orderId = $order->id;
             $grandTotal = 0;
-            $calculations = [];
+            $subUnitTotal = 0;
+            $subNetTotal = 0;
+            $totalIgstTotal = 0;
             $productList = [];
 
             // Sync order details
@@ -263,15 +265,11 @@ class FullOrderController extends Controller
                 $gstAmount = ($afterDiscount * $igst) / 100;
                 $totalAmount = $afterDiscount + $gstAmount;
 
-                $calculations[] = [
-                    'base_amount' => $baseAmount,
-                    'discount_amount' => $discountAmount,
-                    'net_price' => $afterDiscount,
-                    'gst_amount' => $gstAmount,
-                    'total' => $totalAmount,
-                ];
-
                 $grandTotal += $totalAmount;
+                $subUnitTotal += $price;
+                $subNetTotal += $afterDiscount;
+                $totalIgstTotal += $totalAmount;
+
                 $productList[] = [
                     'order_id' => $orderId,
                     'quotation_id' => $data['quotation_id'],
@@ -310,45 +308,45 @@ class FullOrderController extends Controller
                 return Utility::apiError('Fail to insert updated order details', [], 221);
             }
 
-            // // Refresh quotation product details
-            // $quotationDetailDelete = QuotationDetail::where('quotation_id', $data['quotation_id'])->delete();
-
-            // // Return if fail
-            // if (! $quotationDetailDelete) {
-            //     return Utility::apiError('Fail to delete existing quotation details', [], 221);
-            // }
-
-            // // Insert quotation details
-            // $insertStatus = QuotationDetail::insert($productList);
-
-            // // Return if fail
-            // if (! $insertStatus) {
-            //     return Utility::apiError('Fail to delete quotation details', [], 221);
-            // }
-
-            // // Update quotation flags
-            // $quotationFilter = [
-            //     'id' => $data['quotation_id'],
-            //     'company_id' => $data['company_id'],
-            // ];
-
-            // // Update quotation status
-            // $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => '0']);
+            // Refresh quotation product details
+            $quotationDetailDelete = QuotationDetail::where('quotation_id', $data['quotation_id'])->delete();
 
             // Return if fail
-            // if (! $updateQuotationStatus) {
-            //     return Utility::apiError('Fail to update quotation status', [], 221);
-            // }
+            if (! $quotationDetailDelete) {
+                return Utility::apiError('Fail to delete existing quotation details', [], 221);
+            }
+
+            // Insert quotation details
+            $insertStatus = QuotationDetail::insert($productList);
+
+            // Return if fail
+            if (! $insertStatus) {
+                return Utility::apiError('Fail to delete quotation details', [], 221);
+            }
+
+            // Update quotation flags
+            $quotationFilter = [
+                'id' => $data['quotation_id'],
+                'company_id' => $data['company_id'],
+            ];
+
+            // Update quotation status
+            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => '0']);
+
+            // Return if fail
+            if (! $updateQuotationStatus) {
+                return Utility::apiError('Fail to update quotation status', [], 221);
+            }
 
             // Mark pending quotation deleted
-            // $pendingFilter = ['unique_quotation_no' => $data['unique_quotation_no'], 'quotation_id' => $data['quotation_id']];
+            $pendingFilter = ['unique_quotation_no' => $data['unique_quotation_no'], 'quotation_id' => $data['quotation_id']];
 
-            // $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id' => 1]);
+            $updatePendingQuotation = PendingQuotation::where($pendingFilter)->update(['status_code' => 'win', 'reason_status_id' => 1]);
 
-            // // Return if fail
-            // if (! $updatePendingQuotation) {
-            //     return Utility::apiError('Fail to update pending quotation', [], 221);
-            // }
+            // Return if fail
+            if (! $updatePendingQuotation) {
+                return Utility::apiError('Fail to update pending quotation', [], 221);
+            }
 
             // // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
@@ -370,6 +368,7 @@ class FullOrderController extends Controller
                     'branch_name' => 'Matunga ',
                     'logo' => url('appLogo/logo.png'),
                 ],
+                'order_no' => $orderNumber,
                 'extra_notes' => $customerInfo->extra_notes,
                 'quotation_type' => $data['quotation_type'] ?? null,
                 'currency' => $currencyInfo->name,
@@ -383,8 +382,8 @@ class FullOrderController extends Controller
                 'quotation_created_date' => $data['quotation_created_date'] ?? null,
                 'order_ref' => $data['enq_ref'],
                 'date' => now()->format('Y-m-d'),
-                'payment_term' => $data['payment_term_condition'] ?? null,
-                'credit_term'=> $deliveryPeriod->date_type ?? null,
+                'terms' => $data['payment_term_condition'],
+                'credit_term' => $deliveryPeriod->date_type ?? null,
                 'courier' => $courier->name ?? null,
                 'user_id' => $adminId,
                 'branch_id' => $branchId,
@@ -430,7 +429,14 @@ class FullOrderController extends Controller
                     'branch_id' => $branchId,
                     'unique_quotation_no' => $data['unique_quotation_no'],
                 ],
-                'products' => $productList,
+                'totals' => [
+                    'sub_unit_total' => $subUnitTotal,
+                    'sub_net_total' => $subNetTotal,
+                    'total_igst_total' => $totalIgstTotal,
+                    'grand_total' => $grandTotal,
+                    'in_words' => Utility::numberToWords($grandTotal, $currencyInfo->name),
+                ],
+                'items' => $productList,
                 'branch_address' => $branchAddress,
             ];
 
@@ -605,8 +611,9 @@ class FullOrderController extends Controller
 
             $query->orderByDesc('id');
 
-            // Pagination (if download requested you might want different handling — kept consistent with getQuotation)
-            $orderData = $query->paginate($perPage);
+            $orderData = $query->paginate($perPage)->toArray();
+            $year = date('Y');
+            $orderData['base_pdf_url'] = url("storage/ordersPdf/{$year}/");
 
             return Utility::apiSuccess('list_order', $orderData, 200);
         } catch (Exception $ex) {

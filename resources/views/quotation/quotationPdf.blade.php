@@ -99,14 +99,11 @@
         .logo-fallback {
             font-size: 12px;
             font-weight: 700;
-            color: #fff;
-            background: #0a2a30;
+            color: grey;
             text-align: center;
-            width: 100%;
-            height: 100%;
-            display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 10px !important;
         }
 
         /* --- Authorised Section --- */
@@ -245,13 +242,12 @@
         <table class="hdr" role="presentation">
             <tr>
                 <td class="logo-col" style="width:18%; vertical-align:middle;">
+                    <span class="logo-fallback">QUOTATION INVOICE</span>
                     <div class="logo" aria-hidden="true">
                         @if(!empty($company['logo']) && file_exists($company['logo']))
                             <img src="{{ $company['logo'] }}" alt="logo" />
                         @elseif(!empty($company['logo']))
                             <img src="{{ $company['logo'] }}" alt="logo" />
-                        @else
-                            <div class="logo-fallback">LOGO</div>
                         @endif
                     </div>
                 </td>
@@ -288,7 +284,8 @@
                                 style="color: maroon;">DATE : </strong>
                             {{ trim($quotation['date']) }}</span>&nbsp;
                         <span class="small"
-                            style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong  style="color: maroon;">REF
+                            style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong
+                                style="color: maroon;">REF
                                 : </strong>
                             {{ $quotation['ref'] }}</span>&nbsp;
                     </div>
@@ -424,7 +421,8 @@
                             <strong style="font-size:9px; color:black;">Authorized Signatory</strong>
                         </div>
                         <div>
-                            <strong style="font-size:8px; color: black; text-decoration:underline;">{{ $prepared_by }}</strong>
+                            <strong
+                                style="font-size:8px; color: black; text-decoration:underline;">{{ $prepared_by }}</strong>
                         </div>
                     </div>
                 </td>
@@ -450,7 +448,7 @@
             </tr>
             <tr>;
                 <td colspan="3" style="text-align:center; padding:5px; font-size:12px; color:red">
-                    <strong  style="color: maroon;">We look forward to your valuable order ! Thank you !</strong>
+                    <strong style="color: maroon;">We look forward to your valuable order ! Thank you !</strong>
                 </td>
             </tr>
         </table>

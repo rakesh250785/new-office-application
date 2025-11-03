@@ -99,14 +99,11 @@
         .logo-fallback {
             font-size: 12px;
             font-weight: 700;
-            color: #fff;
-            background: #0a2a30;
+            color: grey;
             text-align: center;
-            width: 100%;
-            height: 100%;
-            display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 10px !important;
         }
 
         /* --- Authorised Section --- */
@@ -248,13 +245,12 @@
         <table class="hdr" role="presentation">
             <tr>
                 <td class="logo-col" style="width:18%; vertical-align:middle;">
+                    <span class="logo-fallback">PURCHASE ORDER INVOICE</span>
                     <div class="logo" aria-hidden="true">
                         @if(!empty($company['logo']) && file_exists($company['logo']))
                             <img src="{{ $company['logo'] }}" alt="logo" />
                         @elseif(!empty($company['logo']))
                             <img src="{{ $company['logo'] }}" alt="logo" />
-                        @else
-                            <div class="logo-fallback">LOGO</div>
                         @endif
                     </div>
                 </td>
@@ -285,16 +281,16 @@
                             details</span>&nbsp;
                         <span class="small"
                             style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong
-                                style="color: maroon;">QUOTE NO : </strong> {{ trim($quotation['no']) }}</span>&nbsp;
+                                style="color: maroon;">Order No. : </strong> {{ trim($order_no) }}</span>&nbsp;
                         <span class="small"
                             style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong
                                 style="color: maroon;">DATE : </strong>
-                            {{ trim($quotation['date']) }}</span>&nbsp;
+                            {{ trim($order_date) }}</span>&nbsp;
                         <span class="small"
                             style="background:#fff2e6;padding:2px;border-radius:3px;font-weight:700;margin-top:10px;"><strong
                                 style="color: maroon;">REF
                                 : </strong>
-                            {{ $quotation['ref'] }}</span>&nbsp;
+                            {{ $order_ref }}</span>&nbsp;
                     </div>
                 </td>
             </tr>
@@ -323,11 +319,8 @@
                 <thead>
                     <tr style="text-align: center;">
                         <th>Customer Order</th>
-                        <th>Order Date</th>
                         <th>Quotation No.</th>
                         <th>Quotation Date </th>
-                        <th>Order Ref </th>
-                        <th>Date</th>
                         <th>Credit Terms</th>
                         <th>Prefered Courier</th>
                     </tr>
@@ -335,11 +328,8 @@
                 <tbody>
                     <tr>
                         <td>{{ $customer_order ?? '-' }}</td>
-                        <td>{{ $order_date ?? '-' }}</td>
                         <td>{{ $unique_quotation_no ?? '-' }}</td>
                         <td>{{ $quotation_created_date ?? '-' }}</td>
-                        <td>{{ $order_ref ?? '-' }}</td>
-                        <td>{{ $date ?? '-' }}</td>
                         <td>{{ $credit_term ?? '-' }}</td>
                         <td>{{ $courier ?? '-' }}</td>
                     </tr>
@@ -364,7 +354,7 @@
                 </colgroup>
                 <thead>
                     <tr style="text-align: center;">
-                        <th>To Company</th>
+                        <th>Billing Company</th>
                         <th>Address</th>
                         <th>Contact</th>
                         <th>GSTN</th>
@@ -410,7 +400,7 @@
                 </colgroup>
                 <thead>
                     <tr style="text-align: center;">
-                        <th>To Company</th>
+                        <th>Shipping Company</th>
                         <th>Address</th>
                         <th>Contact</th>
                         <th>GSTN</th>
@@ -534,25 +524,30 @@
                 <td valign="top" width="22%"
                     style="padding:8px; border-left:0.25 solid #e0e0e0; font-size:9px; line-height:1.35;">
                     <div>
-                        <div><strong>Sub Unit Total ( {{$currency['name'] ?? ''}} ) :</strong>
+                        <div><strong>Sub Unit Total ( {{$currency ?? ''}} ) :</strong>
                             {{ $totals['sub_unit_total'] ?? '' }}</div>
-                        <div><strong>Sub Net Total ( {{$currency['name'] ?? ''}} ) :</strong>
+                        <div><strong>Sub Net Total ( {{$currency ?? ''}} ) :</strong>
                             {{ $totals['sub_net_total'] ?? '' }}</div>
-                        <div><strong>Sub IGST Total ( {{$currency['name'] ?? ''}} ) :</strong>
+                        <div><strong>Sub IGST Total ( {{$currency ?? ''}} ) :</strong>
                             {{ $totals['total_igst_total'] ?? '' }}
                         </div>
                         <div style="margin-top:6px; font-weight:700; font-size:10px; color:green;">
-                            <strong>Grand Total ( {{$currency['name'] ?? ''}} ):</strong>
+                            <strong>Grand Total ( {{$currency ?? ''}} ):</strong>
                             {{ $totals['grand_total'] ?? '' }}
                         </div>
                         <div style="margin-top:6px; font-size:8.5px; color:#444;">{{ $totals['in_words'] ?? '' }}</div>
                     </div>
                 </td>
             </tr>
-            <tr>;
-                <td colspan="3" style="text-align:center; padding:5px; font-size:12px; color:red">
-                    <span>{{ $branch_address }}</span>
-                    <strong style="color: maroon;">We look forward to your valuable order ! Thank you !</strong>
+            <tr style="vertical-align: middle;">
+                <td colspan="4" style="padding: 8px 10px; text-align: left;">
+                    <div style="margin-bottom: 4px; text-align: center; font-size: 10px;">
+                        <span>{{ $branch_address }}</span>
+                    </div>
+                    <div
+                        style="text-align: center; font-size: 12px; color: maroon; font-weight: bold; margin-top: 6px;">
+                        We look forward to your valuable order! Thank you!
+                    </div>
                 </td>
             </tr>
         </table>
@@ -577,8 +572,3 @@
 </body>
 
 </html>
-
-
-
-
-
