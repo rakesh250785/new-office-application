@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigIncrements('id');
 
             // Basic request meta
+            $table->string('sample')->nullable();
             $table->string('pharmacopoeia')->nullable();
             $table->string('sales_person')->nullable();
             $table->date('request_date')->nullable();
@@ -22,12 +23,18 @@ return new class extends Migration
             $table->text('matrices')->nullable();
 
             // Column / analysis specifics
-            $table->text('column_column')->nullable()->enum('hpcl', 'gc', 'sample_analysis');
+            
+            $table->boolean('column_sample_analysis')->default(false);
+            $table->boolean('column_column')->default(false);
+            $table->boolean('column_hplc')->default(false);
+            $table->boolean('column_gc')->default(false);
+
             $table->text('in_use_column_description')->nullable();
             $table->text('required_column_description')->nullable();
-            $table->boolean('is_guard_column_used')->default(false);
+            $table->text('is_guard_column_used')->nullable();
             $table->text('guard_column_details')->nullable();
             $table->string('part_no')->nullable();
+            $table->string('problem_description')->nullable();
 
             // Customer acceptability
             $table->boolean('is_brand_change_acceptable')->default(false);

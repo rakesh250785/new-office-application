@@ -28,14 +28,18 @@ class ColumnApprovalController extends Controller
                 'sales_person',
                 'date',
                 'matrices',
+
+                'column_sample_analysis',
                 'column_column',
+                'column_hplc',
+                'column_gc',
 
                 'organisation',
                 'location',
                 'department',
                 'contact_name',
                 'designation',
-                'email_or_fax',
+                'email_fax',
                 'mobile',
 
                 'in_use_column_description',
@@ -48,7 +52,7 @@ class ColumnApprovalController extends Controller
                 'diluents_solvent',
                 'standard_preparation',
                 'mobile_phase',
-                'flow_rate_per_min',
+                'flow_rate',
                 'gradient_temp_program',
                 'injection_volume',
                 'detector',
@@ -56,13 +60,11 @@ class ColumnApprovalController extends Controller
                 'instrument_used',
                 'additional_information',
                 'expected_column_consumption',
-
+                'problem_description',
                 'analytical_method_monograph',
                 'id',
             ]);
 
-
-            dd($data);
             // Validation rules (required fields marked with *)
             $validator = Validator::make($data, [
                 'sample' => 'required|string|max:128',
@@ -72,28 +74,32 @@ class ColumnApprovalController extends Controller
                 'date' => 'required|date',
                 'matrices' => 'required|string',
 
-                'column_column' => 'required|string',
+                'column_sample_analysis' => 'sometimes|boolean',
+                'column_column' => 'sometimes|boolean',
+                'column_hplc' => 'sometimes|boolean',
+                'column_gc' => 'sometimes|boolean',
 
                 'organisation' => 'required|string|max:255',
                 'location' => 'required|string|max:255',
                 'department' => 'required|string|max:255',
                 'contact_name' => 'required|string|max:255',
                 'designation' => 'required|string|max:255',
-                'email_or_fax' => 'required|string|max:255',
+                'email_fax' => 'required|string|max:255',
                 'mobile' => 'required|string|max:50',
 
                 'in_use_column_description' => 'required|string',
                 'required_column_description' => 'required|string',
 
-                'is_guard_column_used' => 'sometimes|boolean',
+                'is_guard_column_used' => 'sometimes|string',
                 'guard_column_details' => 'required|string',
                 'part_no' => 'required',
                 'is_brand_change_acceptable' => 'sometimes|boolean',
+                'problem_description' => 'sometimes|nullable',
 
                 'diluents_solvent' => 'sometimes|string|nullable',
                 'standard_preparation' => 'sometimes|string|nullable',
                 'mobile_phase' => 'sometimes|string|nullable',
-                'flow_rate_per_min' => 'sometimes|string|nullable',
+                'flow_rate' => 'sometimes|string|nullable',
                 'gradient_temp_program' => 'sometimes|string|nullable',
                 'injection_volume' => 'sometimes|string|nullable',
                 'detector' => 'sometimes|string|nullable',
@@ -112,34 +118,38 @@ class ColumnApprovalController extends Controller
 
             // Prepare payload
             $payload = [
-                'sample' =>  $data['sample'] ?? null,
+                'sample' => $data['sample'] ?? null,
                 'pharmacopoeia' => $data['pharmacopoeia'] ?? null,
                 'sales_person' => $data['sales_person'] ?? null,
-                'request_date' => isset($data['date']) ? Carbon::parse($data['date'])->format('d-m-Y h:i:s') : null,
+                'request_date' => isset($data['date']) ? Carbon::parse($data['date'])->format('Y-m-d') : null,
                 'application_type' => $data['api_type'] ?? null,
                 'matrices' => $data['matrices'] ?? null,
 
+                'column_sample_analysis' => $data['column_sample_analysis'] ?? null,
                 'column_column' => $data['column_column'] ?? null,
+                'column_hplc' => $data['column_hplc'] ?? null,
+                'column_gc' => $data['column_gc'] ?? null,
 
                 'organisation' => $data['organisation'] ?? null,
                 'location' => $data['location'] ?? null,
                 'department' => $data['department'] ?? null,
                 'contact_name' => $data['contact_name'] ?? null,
                 'designation' => $data['designation'] ?? null,
-                'email_or_fax' => $data['email_or_fax'] ?? null,
+                'email_or_fax' => $data['email_fax'] ?? null,
                 'mobile' => $data['mobile'] ?? null,
 
                 'in_use_column_description' => $data['in_use_column_description'] ?? null,
                 'required_column_description' => $data['required_column_description'] ?? null,
-                'is_guard_column_used' => filter_var($data['is_guard_column_used'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'is_guard_column_used' => $data['is_guard_column_used'] ?? null,
                 'guard_column_details' => $data['guard_column_details'] ?? null,
                 'part_no' => $data['part_no'] ?? null,
                 'is_brand_change_acceptable' => filter_var($data['is_brand_change_acceptable'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'problem_description' => $data['problem_description'] ?? null,
 
                 'diluents_solvent' => $data['diluents_solvent'] ?? null,
                 'standard_preparation' => $data['standard_preparation'] ?? null,
                 'mobile_phase' => $data['mobile_phase'] ?? null,
-                'flow_rate_per_min' => $data['flow_rate_per_min'] ?? null,
+                'flow_rate_per_min' => $data['flow_rate'] ?? null,
                 'gradient_temp_program' => $data['gradient_temp_program'] ?? null,
                 'injection_volume' => $data['injection_volume'] ?? null,
                 'detector' => $data['detector'] ?? null,
@@ -284,7 +294,7 @@ class ColumnApprovalController extends Controller
             $data = $request->only(['id']);
 
             $validator = Validator::make($data, [
-                'id' => 'required|integer|exists:column_requests,id',
+                'id' => 'required|integer|exists:column_approval,id',
             ]);
 
             if ($validator->fails()) {

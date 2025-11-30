@@ -30,6 +30,7 @@ use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
+use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
 use App\Http\Controllers\Website\FaqController;
 use App\Http\Controllers\Website\FeedbackController;
@@ -253,5 +254,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateColumnApproval', [ColumnApprovalController::class, 'addUpdateColumnApproval']);
     Route::post('getColumnApproval', [ColumnApprovalController::class, 'getColumnApproval']);
     Route::post('deleteColumnApproval', [ColumnApprovalController::class, 'deleteColumnApproval']);
+
+    // Catelogue
+    Route::post('addUpdateCatelogue', [CatelogueController::class, 'addUpdateCatelogue']);
+    Route::post('getCatelogue', [CatelogueController::class, 'getCatelogue']);
+    Route::post('deleteCatelogue', [CatelogueController::class, 'deleteCatelogue']);
 
 });

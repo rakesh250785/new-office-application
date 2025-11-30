@@ -13,11 +13,14 @@ class ColumnApprovalModel extends Model
         'sample',
         'pharmacopoeia',
         'sales_person',
-        'date',
+        'request_date',
         'application_type',
         'matrices',
 
+        'column_sample_analysis',
         'column_column',
+        'column_hplc',
+        'column_gc',
 
         'organisation',
         'location',
@@ -29,7 +32,7 @@ class ColumnApprovalModel extends Model
 
         'in_use_column_description',
         'required_column_description',
-
+        'problem_description',
         'is_guard_column_used',
         'guard_column_details',
         'part_no',
