@@ -30,6 +30,9 @@ use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
+use App\Http\Controllers\Website\ColumnApprovalController;
+use App\Http\Controllers\Website\FaqController;
+use App\Http\Controllers\Website\FeedbackController;
 use Illuminate\Support\Facades\Route;
 
 // Public route
@@ -234,5 +237,21 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
     // Testing PDF
     Route::post('download', [QuotationDetailController::class, 'download']);
+
+    //  ********************  Website backend route ****************************
+
+    // Feedback
+    Route::post('getFeedback', [FeedbackController::class, 'getFeedback']);
+    Route::post('deleteFeedback', [FeedbackController::class, 'deleteFeedback']);
+
+    // FQA
+    Route::post('addUpdateFaq', [FaqController::class, 'addUpdateFqa']);
+    Route::post('getFaq', [FaqController::class, 'getFaq']);
+    Route::post('deleteFaq', [FaqController::class, 'deleteFaq']);
+
+    // Column approval
+    Route::post('addUpdateColumnApproval', [ColumnApprovalController::class, 'addUpdateColumnApproval']);
+    Route::post('getColumnApproval', [ColumnApprovalController::class, 'getColumnApproval']);
+    Route::post('deleteColumnApproval', [ColumnApprovalController::class, 'deleteColumnApproval']);
 
 });
