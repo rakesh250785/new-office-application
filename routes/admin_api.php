@@ -30,10 +30,12 @@ use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
+use App\Http\Controllers\Website\AppLogoController;
 use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
 use App\Http\Controllers\Website\FaqController;
 use App\Http\Controllers\Website\FeedbackController;
+use App\Http\Controllers\Website\RuningTextController;
 use Illuminate\Support\Facades\Route;
 
 // Public route
@@ -259,5 +261,15 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateCatelogue', [CatelogueController::class, 'addUpdateCatelogue']);
     Route::post('getCatelogue', [CatelogueController::class, 'getCatelogue']);
     Route::post('deleteCatelogue', [CatelogueController::class, 'deleteCatelogue']);
+
+    // Runing Text
+    Route::post('addUpdateRuningText', [RuningTextController::class, 'addUpdateRuningText']);
+    Route::post('getRuningText', [RuningTextController::class, 'getRuningText']);
+    Route::post('deleteRuningText', [RuningTextController::class, 'deleteRuningText']);
+
+    // App Logo
+    Route::post('addUpdateAppLogo', [AppLogoController::class, 'addUpdateAppLogo']);
+    Route::post('getAppLogo', [AppLogoController::class, 'getAppLogo']);
+    Route::post('deleteAppLogo', [AppLogoController::class, 'deleteAppLogo']);
 
 });

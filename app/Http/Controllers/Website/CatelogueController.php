@@ -113,13 +113,7 @@ class CatelogueController extends Controller
 
             $message = $request->filled('id') ? 'Updated successfully' : 'Created successfully';
 
-            // return the saved record info (including resolved file URL)
-            return Utility::apiSuccess($message, [
-                'id' => $catelogue->id,
-                'name' => $catelogue->name,
-                'file' => $fileUrl,
-                'created_at' => $catelogue->created_at,
-            ], 200);
+            return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error('Catelogue add/update error: '.$ex->getMessage());
 
@@ -130,15 +124,6 @@ class CatelogueController extends Controller
     public function getCatelogue(Request $request)
     {
         try {
-            $data = $request->only([
-                'page',
-                'per_page',
-                'start_date',
-                'end_date',
-                'search',
-                'id',
-            ]);
-
             $page = max(1, (int) $request->input('page', 1));
             $perPage = (int) $request->input('per_page', 10);
             $search = $request->input('search', null);
@@ -204,27 +189,38 @@ class CatelogueController extends Controller
     public function deleteCatelogue(Request $request)
     {
         try {
-            $data = $request->only(['id']);
-
-            $validator = Validator::make($data, [
-                'id' => 'required|integer|exists:catelogue,id',
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer|exists:app_logo,id',
             ]);
 
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            $deleted = CatelogueModel::where('id', $data['id'])->delete();
+            $record = CatelogueModel::find($request->id);
 
-            if (! $deleted) {
-                return Utility::apiError('Failed to delete record', [], 221);
+            if (! $record) {
+                return Utility::apiError('App logo not found', [], 404);
             }
 
-            return Utility::apiSuccess('Deleted successfully', [], 200);
-        } catch (Exception $ex) {
-            Log::error('Catelogue Request delete error: '.$ex->getMessage());
+            $filePath = 'catelogues/'.$record->image;
 
-            return Utility::apiError('Something went wrong while deleting record.', ['exception' => $ex->getMessage()], 500);
+            if (! empty($record->image) && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+
+            $record->delete();
+
+            return Utility::apiSuccess('Deleted successfully', [], 200);
+
+        } catch (Exception $ex) {
+            Log::error('deleteCatelogue delete error: '.$ex->getMessage());
+
+            return Utility::apiError(
+                'Something went wrong while deleting app logo.',
+                ['exception' => $ex->getMessage()],
+                500
+            );
         }
     }
 }
