@@ -70,7 +70,6 @@ class ColumnApprovalController extends Controller
                 'pharmacopoeia' => 'required|string|max:128',
                 'sales_person' => 'required|string|max:128',
                 'date' => 'required|date',
-                'application_type' => 'required|string|max:128',
                 'matrices' => 'required|string',
 
                 'column_column' => 'required|string',
