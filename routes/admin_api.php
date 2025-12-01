@@ -35,6 +35,7 @@ use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
 use App\Http\Controllers\Website\FaqController;
 use App\Http\Controllers\Website\FeedbackController;
+use App\Http\Controllers\Website\OurTeamController;
 use App\Http\Controllers\Website\RuningTextController;
 use Illuminate\Support\Facades\Route;
 
@@ -271,5 +272,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateAppLogo', [AppLogoController::class, 'addUpdateAppLogo']);
     Route::post('getAppLogo', [AppLogoController::class, 'getAppLogo']);
     Route::post('deleteAppLogo', [AppLogoController::class, 'deleteAppLogo']);
+
+    // Our Team
+    Route::post('addUpdateOurTeam', [OurTeamController::class, 'addUpdateOurTeam']);
+    Route::post('getOurTeam', [OurTeamController::class, 'getOurTeam']);
+    Route::post('deleteOurTeam', [OurTeamController::class, 'deleteOurTeam']);
 
 });
