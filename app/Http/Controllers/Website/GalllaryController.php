@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Website;
 
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
-use App\Models\Website\OurTeamModel;
+use App\Models\Website\GallaryModel;
 use Auth;
 use Exception;
 use Illuminate\Http\Request;
@@ -13,20 +13,18 @@ use Storage;
 use Str;
 use Validator;
 
-class OurTeamController extends Controller
+class GalllaryController extends Controller
 {
     /**
      * Add / Update team member
      */
-    public function addUpdateOurTeam(Request $request)
+    public function addUpdateGallary(Request $request)
     {
         try {
             $rules = [
                 'id' => 'nullable|integer|exists:our_team,id',
-                'name' => 'required|string|max:191',
-                'designation' => 'nullable|string|max:191',
-                'quote' => 'nullable|string',
-                'image' => 'sometimes|file|image|mimes:jpg,jpeg,png,webp|max:5120',
+                'message' => 'nullable|string',
+                'image' => 'required|file|image|mimes:jpg,jpeg,png,webp|max:5120',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -44,42 +42,36 @@ class OurTeamController extends Controller
 
             // Create or find existing
             $record = $request->filled('id')
-                ? OurTeamModel::find($request->id)
-                : new OurTeamModel;
+                ? GallaryModel::find($request->id)
+                : new GallaryModel;
 
             if (! $record) {
                 return Utility::apiError('Record not found', [], 404);
             }
 
-            $record->name = $request->name;
-            $record->designation = $request->designation;
-            $record->quote = $request->quote;
+            $record->message = $request->message;
             $record->user_id = Auth::id() ?? null;
-
-            // Image upload
-            $imageUrl = null;
 
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $ext = $file->getClientOriginalExtension();
                 $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'-'.time().'.'.$ext;
 
-                Storage::disk('public')->putFileAs('ourTeam', $file, $filename);
+                Storage::disk('public')->putFileAs('gallary', $file, $filename);
 
                 // Delete old image
                 if ($record->exists && $record->image) {
-                    $old = 'ourTeam/'.$record->image;
+                    $old = 'gallary/'.$record->image;
                     if (Storage::disk('public')->exists($old)) {
                         Storage::disk('public')->delete($old);
                     }
                 }
 
                 $record->image = $filename;
-
-                $imageUrl = Storage::disk('public')->url('ourTeam/'.$filename);
+                Storage::disk('public')->url('gallary/'.$filename);
             } else {
                 if (! empty($record->image)) {
-                    $imageUrl = Storage::disk('public')->url('ourTeam/'.$record->image);
+                    Storage::disk('public')->url('gallary/'.$record->image);
                 }
             }
 
@@ -90,7 +82,7 @@ class OurTeamController extends Controller
             return Utility::apiSuccess($msg, [], 200);
 
         } catch (Exception $ex) {
-            Log::error('OurTeam add/update error: '.$ex->getMessage());
+            Log::error('Gallary add/update error: '.$ex->getMessage());
 
             return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()], 500);
         }
@@ -99,7 +91,7 @@ class OurTeamController extends Controller
     /**
      * List team members with filters
      */
-    public function getOurTeam(Request $request)
+    public function getGallary(Request $request)
     {
         try {
             $page = max(1, (int) $request->input('page', 1));
@@ -108,14 +100,12 @@ class OurTeamController extends Controller
             $startDate = $request->input('start_date', null);
             $endDate = $request->input('end_date', null);
 
-            $query = OurTeamModel::query();
+            $query = GallaryModel::query();
 
             if (! empty($search)) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('designation', 'like', '%'.$search.'%')
-                        ->orWhere('quote', 'like', '%'.$search.'%');
-                });
+                    $q->where('message', 'like', '%'.$search.'%');
+                });column: 
             }
 
             if ($startDate) {
@@ -131,7 +121,7 @@ class OurTeamController extends Controller
                 $imageUrl = null;
 
                 if ($item->image) {
-                    $path = 'ourTeam/'.$item->image;
+                    $path = 'gallary/'.$item->image;
 
                     if (Storage::disk('public')->exists($path)) {
                         $imageUrl = Storage::disk('public')->url($path);
@@ -140,9 +130,7 @@ class OurTeamController extends Controller
 
                 return [
                     'id' => $item->id,
-                    'name' => $item->name,
-                    'designation' => $item->designation,
-                    'quote' => $item->quote,
+                    'message' => $item->message,
                     'image' => $imageUrl,
                     'created_at' => $item->created_at,
                 ];
@@ -163,25 +151,25 @@ class OurTeamController extends Controller
     /**
      * Delete team member
      */
-    public function deleteOurTeam(Request $request)
+    public function deleteGallary(Request $request)
     {
         try {
             $validator = Validator::make($request->only('id'), [
-                'id' => 'required|integer|exists:our_team,id',
+                'id' => 'required|integer|exists:gallary,id',
             ]);
 
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            $record = OurTeamModel::find($request->id);
+            $record = GallaryModel::find($request->id);
             if (! $record) {
                 return Utility::apiError('Record not found', [], 404);
             }
 
             // delete image
             if ($record->image) {
-                $path = 'ourTeam/'.$record->image;
+                $path = 'gallary/'.$record->image;
                 if (Storage::disk('public')->exists($path)) {
                     Storage::disk('public')->delete($path);
                 }
