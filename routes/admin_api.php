@@ -38,6 +38,7 @@ use App\Http\Controllers\Website\FeedbackController;
 use App\Http\Controllers\Website\GalllaryController;
 use App\Http\Controllers\Website\OurTeamController;
 use App\Http\Controllers\Website\RuningTextController;
+use App\Http\Controllers\Website\SliderController;
 use Illuminate\Support\Facades\Route;
 
 // Public route
@@ -283,5 +284,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateGallary', [GalllaryController::class, 'addUpdateGallary']);
     Route::post('getGallary', [GalllaryController::class, 'getGallary']);
     Route::post('deleteGallary', [GalllaryController::class, 'deleteGallary']);
+
+    // Gallary
+    Route::post('addUpdateSlider', [SliderController::class, 'addUpdateSlider']);
+    Route::post('getSlider', [SliderController::class, 'getSlider']);
+    Route::post('deleteSlider', [SliderController::class, 'deleteSlider']);
 
 });
