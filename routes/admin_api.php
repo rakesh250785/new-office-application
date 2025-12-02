@@ -31,7 +31,10 @@ use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
 use App\Http\Controllers\Website\AboutUsController;
+use App\Http\Controllers\Website\AddressController;
 use App\Http\Controllers\Website\AppLogoController;
+use App\Http\Controllers\Website\Authentication\AuthController;
+use App\Http\Controllers\Website\Authentication\ForgotPasswordCustomController;
 use App\Http\Controllers\Website\BlogController;
 use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
@@ -251,7 +254,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     // Testing PDF
     Route::post('download', [QuotationDetailController::class, 'download']);
 
-    //  ********************  Website backend route ****************************
+    //  ********************  Website backend route ****************************   //
 
     // Feedback
     Route::post('getFeedback', [FeedbackController::class, 'getFeedback']);
@@ -324,11 +327,21 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateGoogleMap', [GoogleMapController::class, 'addUpdateGoogleMap']);
     Route::post('getGoogleMap', [GoogleMapController::class, 'getGoogleMap']);
 
+    // Social Media
+    Route::post('addUpdateSocialMedia', [SocialMediaController::class, 'addUpdateSocialMedia']);
+    Route::post('getSocialMedia', [SocialMediaController::class, 'getSocialMedia']);
+    Route::post('deleteSocialMedia', [SocialMediaController::class, 'deleteSocialMedia']);
 
-     // Social Media
-     Route::post('addUpdateSocialMedia', [SocialMediaController::class, 'addUpdateSocialMedia']);
-     Route::post('getSocialMedia', [SocialMediaController::class, 'getSocialMedia']);
-     Route::post('deleteSocialMedia', [SocialMediaController::class, 'deleteSocialMedia']);
-    
+    // Forget Password
+    Route::post('getForgetPassword', [ForgotPasswordCustomController::class, 'getForgetPassword']);
+    Route::post('deleteForgetPassword', [ForgotPasswordCustomController::class, 'deleteForgetPassword']);
 
+    // Web User
+    Route::post('addUpdateWebUser', [AuthController::class, 'addUpdateWebUser']);
+    Route::post('getWebUser', [AuthController::class, 'getWebUser']);
+    Route::post('deleteWebUser', [AuthController::class, 'deleteWebUser']);
+
+    Route::post('addUpdateAddress', [AddressController::class, 'addUpdateAddress']);
+    Route::post('getAddress', [AddressController::class, 'getAddress']);
+    Route::post('deleteAddress', [AddressController::class, 'deleteAddress']);
 });

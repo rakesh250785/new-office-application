@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name', 191);                 
             $table->string('designation', 191)->nullable();
             $table->text('quote')->nullable();   
-            $table->bigIncrements('user_id');      
+            $table->bigInteger('user_id');      
             $table->timestamps();
         });
     }
