@@ -30,6 +30,7 @@ use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
+// Website Controller
 use App\Http\Controllers\Website\AboutUsController;
 use App\Http\Controllers\Website\AddressController;
 use App\Http\Controllers\Website\AppLogoController;
@@ -39,6 +40,7 @@ use App\Http\Controllers\Website\BlogController;
 use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
 use App\Http\Controllers\Website\ContactUsController;
+use App\Http\Controllers\Website\ContactUsRequestController;
 use App\Http\Controllers\Website\FaqController;
 use App\Http\Controllers\Website\FeedbackController;
 use App\Http\Controllers\Website\GalllaryController;
@@ -341,7 +343,18 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('getWebUser', [AuthController::class, 'getWebUser']);
     Route::post('deleteWebUser', [AuthController::class, 'deleteWebUser']);
 
+    // Biiling & Shipping
     Route::post('addUpdateAddress', [AddressController::class, 'addUpdateAddress']);
     Route::post('getAddress', [AddressController::class, 'getAddress']);
     Route::post('deleteAddress', [AddressController::class, 'deleteAddress']);
+
+    // Contact Us Request
+    Route::post('getContactUsRequest', [ContactUsRequestController::class, 'getContactUsRequest']);
+    Route::post('deleteContactUsRequest', [ContactUsRequestController::class, 'deleteContactUsRequest']);
+
+    // Cart
+    Route::post('getCartList', [AddressController::class, 'getCartList']);
+    Route::post('getCartDetails', [AddressController::class, 'getCartDetails']);
+    Route::post('removeCart', [AddressController::class, 'removeCart']);
+
 });
