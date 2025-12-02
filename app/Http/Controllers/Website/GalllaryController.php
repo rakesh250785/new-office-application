@@ -23,7 +23,7 @@ class GalllaryController extends Controller
         try {
             $rules = [
                 'id' => 'nullable|integer|exists:our_team,id',
-                'message' => 'nullable|string',
+                'message' => 'required|string',
                 'image' => 'sometimes|file|image|mimes:jpg,jpeg,png,webp|max:5120',
             ];
 
