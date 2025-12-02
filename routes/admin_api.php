@@ -42,6 +42,7 @@ use App\Http\Controllers\Website\GalllaryController;
 use App\Http\Controllers\Website\OurTeamController;
 use App\Http\Controllers\Website\RuningTextController;
 use App\Http\Controllers\Website\SliderController;
+use App\Http\Controllers\Website\TermConditionController;
 use Illuminate\Support\Facades\Route;
 
 // Public route
@@ -300,10 +301,15 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
 
     // About Us
     Route::post('addUpdateAboutUs', [AboutUsController::class, 'addUpdateAboutUs']);
+    Route::post('getAboutUs', [AboutUsController::class, 'getAboutUs']);
 
     // Contact Us
     Route::post('addUpdateContactUs', [ContactUsController::class, 'addUpdateContactUs']);
     Route::post('getContactUs', [ContactUsController::class, 'getContactUs']);
     Route::post('deleteContactUs', [ContactUsController::class, 'deleteContactUs']);
+
+    // About Us
+    Route::post('addUpdateTermCondition', [TermConditionController::class, 'addUpdateTermCondition']);
+    Route::post('getTermCondition', [TermConditionController::class, 'getTermCondition']);
 
 });

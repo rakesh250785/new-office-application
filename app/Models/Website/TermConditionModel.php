@@ -5,9 +5,10 @@ namespace App\Models\Website;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class AboutUsModel extends Model
+class TermConditionModel extends Model
 {
-    protected $table = 'about_us';
+    
+    protected $table = 'term_condition';
 
     protected $fillable = [
         'content',
@@ -22,5 +23,4 @@ class AboutUsModel extends Model
     {
         return Carbon::parse($value)->format('d-m-Y');
     }
-
 }

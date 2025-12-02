@@ -4,16 +4,16 @@ namespace App\Http\Controllers\Website;
 
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
-use App\Models\Website\AboutUsModel;
+use App\Models\Website\TermConditionModel;
 use Auth;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-class AboutUsController extends Controller
+class TermConditionController extends Controller
 {
-    public function addUpdateAboutUs(Request $request)
+    public function addUpdateTermCondition(Request $request)
     {
         try {
             $rules = [
@@ -33,7 +33,7 @@ class AboutUsController extends Controller
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            $record = $request->filled('id') ? AboutUsModel::find($request->input('id')) : new AboutUsModel;
+            $record = $request->filled('id') ? TermConditionModel::find($request->input('id')) : new TermConditionModel;
 
             if (! $record) {
                 return Utility::apiError('Record not found', [], 404);
@@ -47,21 +47,21 @@ class AboutUsController extends Controller
             return Utility::apiSuccess($msg, [], 200);
 
         } catch (Exception $ex) {
-            Log::error('AboutUs add/update error: '.$ex->getMessage());
+            Log::error('TermCondition add/update error: '.$ex->getMessage());
 
             return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()], 500);
         }
     }
 
-    public function getAboutUs(Request $request)
+    public function getTermCondition(Request $request)
     {
         try {
-            $rec = AboutUsModel::first();
+            $rec = TermConditionModel::first();
 
-            return Utility::apiSuccess('About Us list fetched successfully', $rec, 200);
+            return Utility::apiSuccess('TermCondition list fetched successfully', $rec, 200);
 
         } catch (Exception $ex) {
-            Log::error('AboutUs get error: '.$ex->getMessage());
+            Log::error('TermCondition get error: '.$ex->getMessage());
 
             return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()], 500);
         }
