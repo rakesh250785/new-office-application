@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('term_condition', function (Blueprint $table) {
+        Schema::create('social_media', function (Blueprint $table) {
             $table->id();
-            $table->longText('content')->nullable();
+            $table->string('type')->nullable();
+            $table->text('content')->nullable();
+            $table->boolean('status')->default(1);
             $table->bigInteger('user_id')->nullable();
             $table->timestamps();
         });
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('term_condition');
+        Schema::dropIfExists('social_media');
     }
 };

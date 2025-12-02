@@ -39,9 +39,12 @@ use App\Http\Controllers\Website\ContactUsController;
 use App\Http\Controllers\Website\FaqController;
 use App\Http\Controllers\Website\FeedbackController;
 use App\Http\Controllers\Website\GalllaryController;
+use App\Http\Controllers\Website\GoogleMapController;
+use App\Http\Controllers\Website\NewsLetterController;
 use App\Http\Controllers\Website\OurTeamController;
 use App\Http\Controllers\Website\RuningTextController;
 use App\Http\Controllers\Website\SliderController;
+use App\Http\Controllers\Website\SocialMediaController;
 use App\Http\Controllers\Website\TermConditionController;
 use Illuminate\Support\Facades\Route;
 
@@ -311,5 +314,21 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     // About Us
     Route::post('addUpdateTermCondition', [TermConditionController::class, 'addUpdateTermCondition']);
     Route::post('getTermCondition', [TermConditionController::class, 'getTermCondition']);
+
+    // News Letter
+    Route::post('addUpdateNewsLetter', [NewsLetterController::class, 'addUpdateNewsLetter']);
+    Route::post('getNewsLetter', [NewsLetterController::class, 'getNewsLetter']);
+    Route::post('deleteNewsLetter', [NewsLetterController::class, 'deleteNewsLetter']);
+
+    // Google Map
+    Route::post('addUpdateGoogleMap', [GoogleMapController::class, 'addUpdateGoogleMap']);
+    Route::post('getGoogleMap', [GoogleMapController::class, 'getGoogleMap']);
+
+
+     // Social Media
+     Route::post('addUpdateSocialMedia', [SocialMediaController::class, 'addUpdateSocialMedia']);
+     Route::post('getSocialMedia', [SocialMediaController::class, 'getSocialMedia']);
+     Route::post('deleteSocialMedia', [SocialMediaController::class, 'deleteSocialMedia']);
+    
 
 });

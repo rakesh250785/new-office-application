@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('term_condition', function (Blueprint $table) {
+        Schema::create('news_letter', function (Blueprint $table) {
             $table->id();
-            $table->longText('content')->nullable();
+            $table->string('email')->nullable();
+            $table->boolean('status')->nullable();
             $table->bigInteger('user_id')->nullable();
             $table->timestamps();
         });
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('term_condition');
+        Schema::dropIfExists('news_letter');
     }
 };
