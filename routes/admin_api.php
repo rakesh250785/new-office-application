@@ -37,6 +37,7 @@ use App\Http\Controllers\Website\AppLogoController;
 use App\Http\Controllers\Website\Authentication\AuthController;
 use App\Http\Controllers\Website\Authentication\ForgotPasswordCustomController;
 use App\Http\Controllers\Website\BlogController;
+use App\Http\Controllers\Website\CartController;
 use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
 use App\Http\Controllers\Website\ContactUsController;
@@ -51,6 +52,7 @@ use App\Http\Controllers\Website\RuningTextController;
 use App\Http\Controllers\Website\SliderController;
 use App\Http\Controllers\Website\SocialMediaController;
 use App\Http\Controllers\Website\TermConditionController;
+use App\Http\Controllers\Website\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 // Public route
@@ -353,8 +355,12 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('deleteContactUsRequest', [ContactUsRequestController::class, 'deleteContactUsRequest']);
 
     // Cart
-    Route::post('getCartList', [AddressController::class, 'getCartList']);
-    Route::post('getCartDetails', [AddressController::class, 'getCartDetails']);
-    Route::post('removeCart', [AddressController::class, 'removeCart']);
+    Route::post('getCartList', [CartController::class, 'getCartList']);
+    Route::post('getCartDetails', [CartController::class, 'getCartDetails']);
+    Route::post('removeCart', [CartController::class, 'removeCart']);
 
+    // Wish List
+    Route::post('getList', [WishlistController::class, 'getList']);
+    Route::post('getDetails', [WishlistController::class, 'getDetails']);
+    Route::post('remove', [WishlistController::class, 'remove']);
 });
