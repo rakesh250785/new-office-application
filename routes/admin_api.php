@@ -30,10 +30,12 @@ use App\Http\Controllers\SaleInsight\Quotation\QuotationDetailController;
 use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
+use App\Http\Controllers\Website\AboutUsController;
 use App\Http\Controllers\Website\AppLogoController;
 use App\Http\Controllers\Website\BlogController;
 use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
+use App\Http\Controllers\Website\ContactUsController;
 use App\Http\Controllers\Website\FaqController;
 use App\Http\Controllers\Website\FeedbackController;
 use App\Http\Controllers\Website\GalllaryController;
@@ -286,7 +288,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('getGallary', [GalllaryController::class, 'getGallary']);
     Route::post('deleteGallary', [GalllaryController::class, 'deleteGallary']);
 
-    // Gallary
+    // Slider
     Route::post('addUpdateSlider', [SliderController::class, 'addUpdateSlider']);
     Route::post('getSlider', [SliderController::class, 'getSlider']);
     Route::post('deleteSlider', [SliderController::class, 'deleteSlider']);
@@ -295,5 +297,13 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateBlog', [BlogController::class, 'addUpdateBlog']);
     Route::post('getBlog', [BlogController::class, 'getBlog']);
     Route::post('deleteBlog', [BlogController::class, 'deleteBlog']);
+
+    // About Us
+    Route::post('addUpdateAboutUs', [AboutUsController::class, 'addUpdateAboutUs']);
+
+    // Contact Us
+    Route::post('addUpdateContactUs', [ContactUsController::class, 'addUpdateContactUs']);
+    Route::post('getContactUs', [ContactUsController::class, 'getContactUs']);
+    Route::post('deleteContactUs', [ContactUsController::class, 'deleteContactUs']);
 
 });

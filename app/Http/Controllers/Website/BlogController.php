@@ -50,7 +50,7 @@ class BlogController extends Controller
             $record->title = $request->input('title');
             $record->heading = $request->input('heading');
             $record->content = $request->input('content');
-            // $record->user_id = Auth::id() ?? null;
+            $record->user_id = Auth::id() ?? null;
 
             // handle image upload
             if ($request->hasFile('image')) {
