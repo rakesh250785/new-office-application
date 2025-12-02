@@ -31,6 +31,7 @@ use App\Http\Controllers\Vendor\Courier\CourierController;
 use App\Http\Controllers\Vendor\Source\SourceController;
 use App\Http\Controllers\Vendor\Supplier\SupplierController;
 use App\Http\Controllers\Website\AppLogoController;
+use App\Http\Controllers\Website\BlogController;
 use App\Http\Controllers\Website\CatelogueController;
 use App\Http\Controllers\Website\ColumnApprovalController;
 use App\Http\Controllers\Website\FaqController;
@@ -289,5 +290,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('addUpdateSlider', [SliderController::class, 'addUpdateSlider']);
     Route::post('getSlider', [SliderController::class, 'getSlider']);
     Route::post('deleteSlider', [SliderController::class, 'deleteSlider']);
+
+    // Blog
+    Route::post('addUpdateBlog', [BlogController::class, 'addUpdateBlog']);
+    Route::post('getBlog', [BlogController::class, 'getBlog']);
+    Route::post('deleteBlog', [BlogController::class, 'deleteBlog']);
 
 });
