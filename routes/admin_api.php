@@ -50,6 +50,7 @@ use App\Http\Controllers\Website\NewsLetterController;
 use App\Http\Controllers\Website\OfferController;
 use App\Http\Controllers\Website\OurTeamController;
 use App\Http\Controllers\Website\RequestQuotationController;
+use App\Http\Controllers\Website\ReviewAndRatingController;
 use App\Http\Controllers\Website\RuningTextController;
 use App\Http\Controllers\Website\SliderController;
 use App\Http\Controllers\Website\SocialMediaController;
@@ -370,4 +371,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('listOffers', [OfferController::class, 'listOffers']);
     Route::post('removeEnquery', [OfferController::class, 'deleteOffer']);
 
+    // Review & rating
+    Route::post('addReview', [ReviewAndRatingController::class, 'addReview']);
+    Route::post('deleteReview', [ReviewAndRatingController::class, 'deleteReview']);
+    Route::post('listReview', [ReviewAndRatingController::class, 'listReview']);
+    Route::post('approveReview', [ReviewAndRatingController::class, 'adminApprove']);
+    Route::get('rating', [ReviewAndRatingController::class, 'getProductRating']);
 });
