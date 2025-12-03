@@ -47,12 +47,13 @@ use App\Http\Controllers\Website\FeedbackController;
 use App\Http\Controllers\Website\GalllaryController;
 use App\Http\Controllers\Website\GoogleMapController;
 use App\Http\Controllers\Website\NewsLetterController;
+use App\Http\Controllers\Website\OfferController;
 use App\Http\Controllers\Website\OurTeamController;
+use App\Http\Controllers\Website\RequestQuotationController;
 use App\Http\Controllers\Website\RuningTextController;
 use App\Http\Controllers\Website\SliderController;
 use App\Http\Controllers\Website\SocialMediaController;
 use App\Http\Controllers\Website\TermConditionController;
-use App\Http\Controllers\Website\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 // Public route
@@ -360,7 +361,13 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('removeCart', [CartController::class, 'removeCart']);
 
     // Wish List
-    Route::post('getList', [WishlistController::class, 'getList']);
-    Route::post('getDetails', [WishlistController::class, 'getDetails']);
-    Route::post('remove', [WishlistController::class, 'remove']);
+    Route::post('getEnquiryList', [RequestQuotationController::class, 'getEnquiryList']);
+    Route::post('getEnqueryDetails', [RequestQuotationController::class, 'getEnqueryDetails']);
+    Route::post('removeEnquery', [RequestQuotationController::class, 'removeEnquery']);
+
+    // Offer
+    Route::post('addUpdateOffer', [OfferController::class, 'addUpdateOffer']);
+    Route::post('listOffers', [OfferController::class, 'listOffers']);
+    Route::post('removeEnquery', [OfferController::class, 'deleteOffer']);
+
 });

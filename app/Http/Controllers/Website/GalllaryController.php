@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Log;
 use Storage;
 use Str;
-use Validator;
+use Validator;  
 
 class GalllaryController extends Controller
 {
