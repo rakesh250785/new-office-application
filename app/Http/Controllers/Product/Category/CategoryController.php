@@ -7,6 +7,7 @@ use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Category as Categories;
 use App\Models\Parameter;
+use App\Models\Product;
 use App\Models\Usp;
 use Carbon\Carbon;
 use Exception;
@@ -219,7 +220,7 @@ class CategoryController extends Controller
                     ->orderBy('usp_type')
                     ->get();
 
-                $recData['parameter'] = $params;    
+                $recData['parameter'] = $params;
                 $recData['usp_type'] = $usp;
             }
 
@@ -244,6 +245,20 @@ class CategoryController extends Controller
             // Validation rule
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:categories,id',
+            ]);
+
+            $validator = Validator::make($data, [
+                'id' => [
+                    'required',
+                    'integer',
+                    'exists:categories,id',
+                    function ($attribute, $value, $fail) {
+                        $exists = Product::where('category_id', $value)->exists();
+                        if ($exists) {
+                            $fail('This Category is already assigned to a product.');
+                        }
+                    },
+                ],
             ]);
 
             // Return validation error

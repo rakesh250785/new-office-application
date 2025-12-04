@@ -7,12 +7,9 @@ use Illuminate\Database\Seeder;
 
 class PaymentAdvanceDay extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $branches = [
+        $items = [
             1 => 'Advance Against Proforma Invoice',
             2 => 'Against PDC',
             3 => '30 Days from Date of Shipment',
@@ -21,11 +18,11 @@ class PaymentAdvanceDay extends Seeder
             6 => '90 Days from Date of Shipment',
         ];
 
-        foreach ($branches as $id => $name) {
-            PaymentDayAdvance::create([
-                'id' => $id,
-                'date_type' => $name,
-            ]);
+        foreach ($items as $id => $name) {
+            PaymentDayAdvance::updateOrCreate(
+                ['id' => $id],
+                ['date_type' => $name]
+            );
         }
     }
 }

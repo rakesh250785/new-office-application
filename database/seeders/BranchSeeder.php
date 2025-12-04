@@ -30,11 +30,13 @@ class BranchSeeder extends Seeder
         ];
 
         foreach ($branches as $id => $name) {
-            Branch::create([
-                'id' => $id,
-                'name' => $name,
-                'code' => Str::slug($name),
-            ]);
+            Branch::updateOrCreate(
+                ['id' => $id],
+                [
+                    'name' => $name,
+                    'code' => Str::slug($name),
+                ]
+            );
         }
     }
 }

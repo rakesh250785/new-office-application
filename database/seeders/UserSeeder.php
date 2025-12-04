@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
@@ -17,24 +17,41 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        $db_admins = User::all()->pluck('email')->toArray();
-        // $super_admin = Role::where('name', 'super-admin')->first();
-        if (! in_array('admin@office.com', $db_admins)) {
-            $super_admin = User::create([
+        $password = env('DEFAULT_ADMIN_PASSWORD', 'manoj@123');
+
+        $user = User::firstOrCreate(
+            ['email' => 'admin@office.com'],
+            [
                 'name' => 'SuperAdmin',
                 'last_name' => 'SuperAdmin',
                 'user_name' => 'suadmin',
-                'email' => 'admin@office.com',
                 'email_verified_at' => null,
-                'password' => Hash::make('manoj@123'),
+                'password' => Hash::make($password),
                 'cc_email' => 'admin@office.com',
                 'branch_id' => 1,
-                'remember_token' => 'nGSxaRYRMFm02Sqcaj8h3cc2deHdxFIn2O4cF57ce4L6Q76c0pJeeifN9TOO',
-                'token' => 'nGSxaRYRMFm02Sqcaj8h3cc2deHdxFIn2O4cF57ce4L6Q76c0pJeeifN9TOO',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-            // $super_admin->attachRole($super_admin);
+                'remember_token' => Str::random(60),
+                'token' => Str::random(60),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // If Spatie's HasRoles trait is used on User, assign admin role (if exists)
+        if (method_exists($user, 'assignRole')) {
+            // prefer existing 'admin' role; if missing, it will throw — so check first
+            if (class_exists(\Spatie\Permission\Models\Role::class)) {
+                $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')->first();
+                if ($adminRole) {
+                    $user->assignRole($adminRole->name);
+                }
+            } else {
+                // fallback if you use a custom Role model with assignRole available
+                try {
+                    $user->assignRole('admin');
+                } catch (\Throwable $e) {
+                    // silently ignore if role assignment not available
+                }
+            }
         }
     }
 }

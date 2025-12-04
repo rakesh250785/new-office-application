@@ -7,6 +7,7 @@ use App\Exports\ParameterExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
+use App\Models\Product;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Schema\Blueprint;
@@ -177,48 +178,48 @@ class ParameterController extends Controller
     public function deleteParameter(Request $request)
     {
         try {
-
-            // Get specific fields
             $data = $request->only(['id']);
 
-            // Validation rule
+            // Basic validation: id must exist in parameters
             $validator = Validator::make($data, [
-                'id' => 'required|numeric',
+                'id' => ['required', 'integer', 'exists:parameters,id'],
             ]);
 
-            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            // Get existing parameter
+            // Fetch parameter
             $parameter = Parameter::find($data['id']);
-
-            // Return if not found
             if (! $parameter) {
                 return Utility::apiError('Parameter not found.', [], 404);
             }
 
-            // Get column info
-            $columnName = $parameter['column_name'];
+            $columnName = $parameter?->column_name;
 
-            // Delete param
-            $parameter->delete();
+            if (Schema::hasColumn('products', $columnName)) {
 
-            // Update schema of product
-            if (Schema::hasColumn('product', $columnName)) {
-                Schema::table('product', function (Blueprint $table) use ($columnName) {
-                    $table->dropColumn($columnName);
-                });
+                $used = Product::whereNotNull($columnName)
+                    ->where($columnName, '<>', '')
+                    ->exists();
+
+                if ($used) {
+                    return Utility::apiError(
+                        'Validation failed',
+                        ['id' => ['This Parameter is already assigned to a product.']],
+                        221
+                    );
+                }
             }
 
-            // Return response
-            return Utility::apiSuccess('deleted successfully.', [], 200);
+            $parameter->delete();
+
+            return Utility::apiSuccess('Deleted successfully', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
 
-            return Utility::apiError('Error deleting parameter', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Error deleting parameter', ['exception' => $ex->getMessage()], 500);
         }
     }
 }

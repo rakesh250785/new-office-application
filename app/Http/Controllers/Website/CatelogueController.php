@@ -193,6 +193,8 @@ class CatelogueController extends Controller
                 'id' => 'required|integer|exists:app_logo,id',
             ]);
 
+            
+
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }

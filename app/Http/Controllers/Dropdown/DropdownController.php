@@ -67,7 +67,6 @@ class DropdownController extends Controller
         }
     }
 
-
     public function getCountryDD()
     {
         try {
@@ -212,7 +211,7 @@ class DropdownController extends Controller
     {
         try {
             $search = trim((string) $request->input('search', ''));
-    
+
             $query = Customer::whereNull('deleted_at')
                 ->select(
                     'id',
@@ -230,34 +229,34 @@ class DropdownController extends Controller
                     'country_id'
                 )
                 ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
-    
+
             // if user supplied a search term, filter (company_name OR customer_name)
             if ($search !== '') {
                 $query->where(function ($q) use ($search) {
-                    $q->where('company_name', 'like', "%{$search}%")        
-                      ->orWhere('customer_name', 'like', "%{$search}%")
-                      ->orWhere('mobile_no', 'like', "%{$search}%");
+                    $q->where('company_name', 'like', "%{$search}%")
+                        ->orWhere('customer_name', 'like', "%{$search}%")
+                        ->orWhere('mobile_no', 'like', "%{$search}%");
                 });
             }
-    
+
             // If client requests a specific id (optional), return single item quickly
             if ($request->filled('id')) {
                 $id = (int) $request->input('id');
                 $item = $query->where('id', $id)->first();
+
                 return Utility::apiSuccess('DD getC     ompanyDD', $item ? [$item] : [], 200);
             }
-    
+
             // limit results to avoid loading all rows
             $results = $query->get();
-    
+
             return Utility::apiSuccess('DD getCompanyDD', $results, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Something went wrong in getCompanyDD', ['exception' => $ex->getMessage()], 500);
         }
     }
-    
-    
 
     public function getProductDD(Request $request)
     {
@@ -364,8 +363,11 @@ class DropdownController extends Controller
     {
         try {
             // Get type
-            $type = Category::whereIn('name', ['HPLC Columns', 'GC Capillary Column'])
-                ->pluck('name', 'id')
+            // $type = Category::whereIn('name', ['HPLC Columns', 'GC Capillary Column'])
+            //     ->pluck('name', 'id')
+            //     ->toArray();
+
+            $type = Category::pluck('name', 'id')
                 ->toArray();
 
             // Return response

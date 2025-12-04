@@ -8,9 +8,6 @@ use Illuminate\Support\Str;
 
 class ReasonStatus extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $status = [
@@ -21,12 +18,13 @@ class ReasonStatus extends Seeder
         ];
 
         foreach ($status as $id => $name) {
-            ReasonType::create([
-                'id' => $id,
-                'type' => $name,
-                'code' => Str::slug($name),
-            ]);
+            ReasonType::updateOrCreate(
+                ['id' => $id],
+                [
+                    'type' => $name,
+                    'code' => Str::slug($name),
+                ]
+            );
         }
-
     }
 }

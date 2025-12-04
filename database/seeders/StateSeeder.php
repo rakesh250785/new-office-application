@@ -7,12 +7,9 @@ use Illuminate\Database\Seeder;
 
 class StateSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $allIndianState = [
+        $states = [
             1 => 'Andhra Pradesh',
             2 => 'Arunachal Pradesh',
             3 => 'Assam',
@@ -51,12 +48,11 @@ class StateSeeder extends Seeder
             36 => 'Puducherry',
         ];
 
-        foreach ($allIndianState as $id => $name) {
-            States::create([
-                'id' => $id,
-                'name' => $name,
-            ]);
+        foreach ($states as $id => $name) {
+            States::updateOrCreate(
+                ['id' => $id],
+                ['name' => $name]
+            );
         }
-
     }
 }

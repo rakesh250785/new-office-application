@@ -51,7 +51,7 @@ class ProfileController extends Controller
             }
 
             return Utility::apiSuccess('Profile fetched successfully', $profile, 200);
-        } catch (Exception $ex) {
+        } catch (Exception $ex) {           
             Log::error('getProfile error: '.$ex);
 
             return Utility::apiError('Unexpected getProfile error occurred', [], 500);
