@@ -360,7 +360,7 @@ class DropdownController extends Controller
     }
 
     public function getUpsCategoryDD()
-    {
+    {                                               
         try {
             // Get type
             // $type = Category::whereIn('name', ['HPLC Columns', 'GC Capillary Column'])
