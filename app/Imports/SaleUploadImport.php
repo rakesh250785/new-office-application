@@ -4,7 +4,6 @@ namespace App\Imports;
 
 use App\Models\ImportJob;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,15 +12,12 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class SaleUploadImport implements  ToCollection, WithChunkReading, WithHeadingRow
+class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
 {
     public int $jobId;
 
     public array $updateCols;
 
-    protected string $tmpDir;
-
-    // Tunables (adjust to environment)
     protected int $readChunkSize = 2000;
 
     protected int $upsertChunkSize = 1500;
@@ -35,18 +31,10 @@ class SaleUploadImport implements  ToCollection, WithChunkReading, WithHeadingRo
             'customer name', 'branch', 'description', 'part no',
             'categories', 'principal name', 'authorised', 'qty', 'amount',
         ];
-        // normalize and filter incoming headers
-        $this->updateCols = array_values(array_intersect($allowed, array_map('strtolower', $updateCols)));
 
-        $this->tmpDir = $tmpDir ?: storage_path('app/import_chunks');
-        if (! is_dir($this->tmpDir)) {
-            @mkdir($this->tmpDir, 0755, true);
-        }
+        $this->updateCols = array_values(array_intersect($allowed, array_map('strtolower', $updateCols)));
     }
 
-    /**
-     * Called per chunk. $rows uses heading row keys (thanks to WithHeadingRow).
-     */
     public function collection(Collection $rows)
     {
         if (empty($this->updateCols) || $rows->isEmpty()) {
@@ -55,35 +43,46 @@ class SaleUploadImport implements  ToCollection, WithChunkReading, WithHeadingRo
 
         $now = Carbon::now()->toDateTimeString();
         $batch = [];
-        $validRowCount = 0; // number of rows we'll treat as valid (non-empty & upserted)
+        $validRowCount = 0;
 
         foreach ($rows as $r) {
-            $part = isset($r['part_no']) ? trim((string) $r['part_no']) : null;
-            $orderNo = isset($r['order_no']) ? trim((string) $r['order_no']) : null;
+            $rawPart = $r['part_no'] ?? null;
+            $rawOrder = $r['invoice'] ?? null;
 
-            // skip invalid rows
-            if (! $part || ! $orderNo) {
+            // skip rows missing keys
+            if ($rawPart === null || $rawOrder === null) {
                 continue;
             }
 
-            $qty = isset($r['qty']) && is_numeric($r['qty']) ? (int) $r['qty'] : 0;
-            $amount = isset($r['amount']) && is_numeric($r['amount']) ? round((float) $r['amount'], 2) : 0.00;
+            $part = trim((string) $rawPart);
+            $orderNo = trim((string) $rawOrder);
+
+            if ($part === '' || $orderNo === '') {
+                continue;
+            }
+
+            // normalize to reduce mismatch (choose one: upper or lower)
+            $part = mb_strtoupper($part);
+            $orderNo = mb_strtoupper($orderNo);
+
+            $qty = isset($r['qty']) && is_numeric($r['qty']) ? (int) $r['qty'] : null;
+            $amount = isset($r['amount']) && is_numeric($r['amount']) ? round((float) $r['amount'], 2) : null;
             $invoiceDate = $this->resolveInvoiceDate($r['invoice_date'] ?? null);
 
             $batch[] = [
-                'qtr' => $r['qtr'] ?? null,
-                'month' => $r['month'] ?? null,
-                'fy_year' => $r['year'] ?? null,
-                'invoice' => $r['invoice'] ?? null,
+                'qtr' => $this->nullableTrim($r['qtr'] ?? null),
+                'month' => $this->nullableTrim($r['month'] ?? null),
+                'fy_year' => $this->nullableTrim($r['year'] ?? null),
+                'invoice' => $this->nullableTrim($r['invoice'] ?? null),
                 'invoice_date' => $invoiceDate,
                 'order_no' => $orderNo,
-                'customer_name' => $r['customer_name'] ?? null,
-                'branch' => $r['branch'] ?? null,
-                'description' => $r['description'] ?? null,
+                'customer_name' => $this->nullableTrim($r['customer_name'] ?? null),
+                'branch' => $this->nullableTrim($r['branch'] ?? null),
+                'description' => $this->nullableTrim($r['description'] ?? null),
                 'part_no' => $part,
-                'category' => $r['categories'] ?? null,
-                'principal_name' => $r['principal_name'] ?? null,
-                'authorised' => $r['authorised'] ?? null,
+                'category' => $this->nullableTrim($r['categories'] ?? null),
+                'principal_name' => $this->nullableTrim($r['principal_name'] ?? null),
+                'authorised' => $this->nullableTrim($r['authorised'] ?? null),
                 'qty' => $qty,
                 'amount' => $amount,
                 'created_at' => $now,
@@ -92,63 +91,56 @@ class SaleUploadImport implements  ToCollection, WithChunkReading, WithHeadingRo
 
             $validRowCount++;
 
-            // flush to DB in smaller upsert batches to limit memory and DB lock
             if (count($batch) >= $this->upsertChunkSize) {
                 $this->flushUpsert($batch);
                 $batch = [];
             }
         }
 
-        // final flush
         if (! empty($batch)) {
             $this->flushUpsert($batch);
-            $batch = [];
         }
 
-        // Update ImportJob processed_rows only (do NOT increment total_rows here)
         if ($validRowCount > 0) {
             try {
                 ImportJob::where('id', $this->jobId)->increment('processed_rows', $validRowCount);
-                // Do NOT touch total_rows here — completion is set by the job handler after import ends.
             } catch (Exception $e) {
                 Log::error("Failed to increment processed_rows for ImportJob {$this->jobId}: ".$e->getMessage());
             }
         }
     }
 
-    /**
-     * Upsert helper with exception handling.
-     */
     protected function flushUpsert(array $rows)
     {
         if (empty($rows)) {
             return;
         }
+
         try {
-            DB::table('performance_reports')->upsert(
-                $rows,
-                ['order_no', 'part_no'],
-                [
-                    'qty', 'amount', 'customer_name', 'branch', 'description', 'category',
-                    'principal_name', 'authorised', 'invoice', 'invoice_date', 'month',
-                    'qtr', 'fy_year', 'updated_at',
-                ]
-            );
+            DB::transaction(function () use ($rows) {
+                DB::table('performance_reports')->upsert(
+                    $rows,
+                    ['invoice', 'part_no'],
+                    [
+                        'qty', 'amount', 'customer_name', 'branch', 'description', 'category',
+                        'principal_name', 'authorised', 'invoice', 'invoice_date', 'month',
+                        'qtr', 'fy_year', 'updated_at',
+                    ]
+                );
+            }, 3);
         } catch (Exception $e) {
-            Log::error("Upsert failed on job {$this->jobId}: ".$e->getMessage());
+            Log::error("Upsert failed on job {$this->jobId}: ".$e->getMessage(), [
+                'rows' => count($rows),
+            ]);
         }
     }
 
-    /**
-     * Try several strategies to normalize invoice date.
-     */
     protected function resolveInvoiceDate($raw)
     {
         if ($raw === null || $raw === '') {
             return null;
         }
 
-        // excel serial number -> date
         if (is_numeric($raw) && (float) $raw > 0) {
             try {
                 $dt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $raw);
@@ -159,12 +151,21 @@ class SaleUploadImport implements  ToCollection, WithChunkReading, WithHeadingRo
             }
         }
 
-        // try parseable string
         try {
             return Carbon::parse($raw)->format('Y-m-d');
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    protected function nullableTrim($v)
+    {
+        if ($v === null) {
+            return null;
+        }
+        $t = trim((string) $v);
+
+        return $t === '' ? null : $t;
     }
 
     public function chunkSize(): int
