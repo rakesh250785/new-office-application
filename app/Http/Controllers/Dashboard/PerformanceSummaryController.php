@@ -61,12 +61,24 @@ class PerformanceSummaryController extends Controller
             $query = SaleReport::query();
             if (! empty($data['q'])) {
                 $q = $data['q'];
+
                 $query->where(function ($qq) use ($q) {
                     $qq->where('invoice', 'like', "%{$q}%")
                         ->orWhere('order_no', 'like', "%{$q}%")
                         ->orWhere('customer_name', 'like', "%{$q}%")
+                        ->orWhere('branch', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%")
                         ->orWhere('part_no', 'like', "%{$q}%")
-                        ->orWhere('description', 'like', "%{$q}%");
+                        ->orWhere('category', 'like', "%{$q}%")
+                        ->orWhere('principal_name', 'like', "%{$q}%")
+                        ->orWhere('authorised', 'like', "%{$q}%")
+                        ->orWhere('month', 'like', "%{$q}%")
+                        ->orWhere('fy_year', 'like', "%{$q}%")
+                        ->orWhere('qtr', 'like', "%{$q}%")
+                        ->orWhere('amount', 'like', "%{$q}%")
+                        ->orWhere('invoice_date', 'like', "%{$q}%")
+                        ->orWhere('created_at', 'like', "%{$q}%")
+                        ->orWhere('updated_at', 'like', "%{$q}%");
                 });
             }
 

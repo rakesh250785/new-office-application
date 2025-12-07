@@ -1,24 +1,26 @@
 <?php
 
 namespace App\Http\Controllers\ClientUser\Customer;
+
 use App\Exports\CustomerExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\Request;
 use App\Models\Customer;
-use Exception, Log;
+use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Log;
 
 class CustomerController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
+
     public function addUpdateCustomer(Request $request)
     {
         try {
-            # Extract relevant fields
+            // Extract relevant fields
             $data = $request->only([
                 'gst_number',
                 'company_name',
@@ -35,16 +37,22 @@ class CustomerController extends Controller
                 'other_state',
                 'pin_code',
                 'city',
-                'state_dd'
+                'state_dd',
             ]);
 
-            # Basic validation rules
+            // Basic validation rules
             $rules = [
-                'company_name' => 'required|string|max:255',
+                'company_name' => [
+                    Rule::requiredIf(! $request->customer_id),
+                    'string',
+                    'max:255',
+                    Rule::unique('customers', 'company_name')
+                        ->ignore($request->customer_id),
+                ],
                 'customer_name' => 'required|string|max:255',
                 'email_id' => 'required|email|max:255',
-                'mobile_no' => 'required|digits_between:10,11',
-                'landline_no' => 'required|digits_between:6,11',
+                'mobile_no' => 'sometimes|nullable|digits_between:10,11',
+                'landline_no' => 'sometimes|nullable|digits_between:6,11',
 
                 'address' => 'required|string|max:1000',
                 'customer_id' => 'nullable|integer|exists:customers,id',
@@ -58,20 +66,20 @@ class CustomerController extends Controller
                 'other_state' => 'required|string|max:255',
             ];
 
-            # Option validation rule
+            // Option validation rule
             if ($data['state_dd'] == 'India') {
-                $rules['gst_number'] = 'required|string|max:20';
+                $rules['gst_number'] = 'sometimes|nullable|max:20';
                 $rules['state_id'] = 'required|integer';
                 $rules['other_state'] = 'nullable|string|max:255';
             }
 
-            # Validation error
+            // Validation error
             $validator = Validator::make($data, $rules);
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Create or update customer
+            // Create or update customer
             $customer = Customer::updateOrCreate(
                 [
                     'id' => $data['customer_id'] ?? null,
@@ -98,15 +106,18 @@ class CustomerController extends Controller
                 ]
             );
 
-            # Return if empty
-            if (!$customer) {
+            // Return if empty
+            if (! $customer) {
                 return Utility::apiError('Failed to save customer.', [], 221);
             }
 
-            # Return response
-            return Utility::apiSuccess('created successfully.', [], 200);
+            $message = ! empty($data['customer_id']) ? 'updated successfully.' : 'created successfully.';
+
+            // Return response
+            return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to customer.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -114,7 +125,7 @@ class CustomerController extends Controller
     public function getCustomer(Request $request)
     {
         try {
-            # Extract incoming inputs
+            // Extract incoming inputs
             $data = $request->only([
                 'page',
                 'per_page',
@@ -132,7 +143,7 @@ class CustomerController extends Controller
             $startDate = $data['start_date'] ?? null;
             $endDate = $data['end_date'] ?? null;
 
-            if (!empty($data['download'])) {
+            if (! empty($data['download'])) {
                 $columns = [
                     'customer_name' => 'Customer Name',
                     'company_name' => 'Company Name',
@@ -152,9 +163,9 @@ class CustomerController extends Controller
                     'created_at' => 'Created At',
                 ];
 
-                $filename = 'customer_' . now()->format('Ymd_His') . '.xlsx';
+                $filename = 'customer_'.now()->format('Ymd_His').'.xlsx';
 
-                # queue the export (uses same pattern as your Owner example)
+                // queue the export (uses same pattern as your Owner example)
                 (new CustomerExport($data, $columns, Customer::class))
                     ->queue("exports/{$filename}", 'public');
 
@@ -164,36 +175,36 @@ class CustomerController extends Controller
                 ]);
             }
 
-            # Build base query with relationships
+            // Build base query with relationships
             $query = Customer::with([
                 'owner:id,name',
                 'branch:id,name',
                 'state:id,name',
                 'classification:id,name',
-                'country:id,name'
+                'country:id,name',
             ])->whereNull('deleted_at');
 
-            # Apply date filters (created_at)
-            if (!empty($startDate)) {
+            // Apply date filters (created_at)
+            if (! empty($startDate)) {
                 $query->whereDate('created_at', '>=', $startDate);
             }
-            if (!empty($endDate)) {
+            if (! empty($endDate)) {
                 $query->whereDate('created_at', '<=', $endDate);
             }
 
-            # Apply branch filter
-            if (!empty($data['branch_list'])) {
+            // Apply branch filter
+            if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Apply owner filter
-            if (!empty($data['owner_list'])) {
+            // Apply owner filter
+            if (! empty($data['owner_list'])) {
                 $query->whereIn('owner_id', (array) $data['owner_list']);
             }
 
-            # Search across fields & relations
+            // Search across fields & relations
             if ($search !== '') {
-                $like = '%' . $search . '%';
+                $like = '%'.$search.'%';
                 $query->where(function ($q) use ($like) {
                     $q->where('customer_name', 'like', $like)
                         ->orWhere('company_name', 'like', $like)
@@ -204,58 +215,57 @@ class CustomerController extends Controller
                         ->orWhere('mobile_no', 'like', $like)
                         ->orWhere('landline_no', 'like', $like)
                         ->orWhere('other_state', 'like', $like)
-                        ->orWhereHas('classification', fn($b) => $b->where('name', 'like', $like))
-                        ->orWhereHas('country', fn($b) => $b->where('name', 'like', $like))
-                        ->orWhereHas('state', fn($b) => $b->where('name', 'like', $like))
-                        ->orWhereHas('branch', fn($b) => $b->where('name', 'like', $like))
-                        ->orWhereHas('owner', fn($o) => $o->where('name', 'like', $like));
+                        ->orWhereHas('classification', fn ($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('country', fn ($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('state', fn ($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', $like))
+                        ->orWhereHas('owner', fn ($o) => $o->where('name', 'like', $like));
                 });
             }
 
-            # Paginate and return
+            // Paginate and return
             $customer = $query->orderByDesc('id')->paginate($perPage, ['*'], 'page', $page);
 
             return Utility::apiSuccess('Customer list fetched successfully.', $customer, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to fetch customers.', ['exception' => $ex->getMessage()], 500);
         }
     }
 
-
     public function deleteCustomer(Request $request)
     {
         try {
-            # Extract relevant fields
+            // Extract relevant fields
             $data = $request->only([
                 'id',
             ]);
 
-            #  Validation rule
+            //  Validation rule
             $validator = Validator::make($data, [
-                'id' => 'required'
+                'id' => 'required',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Delete user
+            // Delete user
             $records = Customer::where('id', $data['id'])->delete();
 
-            # Return if fail
-            if (!$records) {
+            // Return if fail
+            if (! $records) {
                 return Utility::apiError('Failed to delete customer', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Error in  deleteCustomer.', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 }
-
