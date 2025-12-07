@@ -34,7 +34,6 @@ class ExpencesController extends Controller
                 $companyDetail = ExpansesCompanyDetail::create([
                     'company_id' => $data['company_id'] ?? null,
                     'concern_person_name' => $data['concern_person_name'] ?? '',
-                    'designation' => $data['designation'] ?? '',
                     'contact_details' => $data['contact_details'] ?? '',
                     'phone_no' => $data['phone_no'] ?? '',
                     'email_id' => $data['email_id'] ?? '',
@@ -44,6 +43,7 @@ class ExpencesController extends Controller
                 // Step 2: Create default department-customer entry
                 ExpansesCompanyDepartmentCustomer::create([
                     'expanses_company_detail_id' => $companyDetail->id,
+                    'department_custom' => $item['department_custom'] ?? null,
                     'department' => $data['department'] ?? '',
                     'customer_name' => $data['customer_name'] ?? '',
                     'user_id' => $userId,
@@ -116,7 +116,6 @@ class ExpencesController extends Controller
             'id',
             'company_id',
             'concern_person_name',
-            'designation',
             'contact_details',
             'phone_no',
             'email_id',
@@ -124,12 +123,11 @@ class ExpencesController extends Controller
         ]);
         $validator = Validator::make($data, [
             'id' => 'nullable|integer|exists:expanses_company_details,id',
-            'company_id' => 'required|integer',
-            'concern_person_name' => 'required|string|max:255',
-            'designation' => 'required|string|max:255',
-            'contact_details' => 'required|string|max:255',
-            'phone_no' => 'required|string|max:20',
-            'email_id' => 'required|email|max:255',
+            'company_id' => 'required',
+            'concern_person_name' => 'sometimes|nullable|string|max:255',
+            'contact_details' => 'sometimes|nullable|string|max:255',
+            'phone_no' => 'sometimes|nullable|string|max:20',
+            'email_id' => 'sometimes|nullable|email|max:255',
         ]);
 
         // Return validation error
@@ -138,12 +136,18 @@ class ExpencesController extends Controller
         }
 
         try {
+
+            if (($data['company_id'] ?? null) === 'no_company') {
+                $user = Auth::id() ?? 0;
+                $rand = random_int(1000, 999999);
+                $data['company_id'] = (int) ($user.$rand);
+            }
+
             $companyDetail = ExpansesCompanyDetail::updateOrCreate(
                 ['id' => $data['id'] ?? null],
                 [
                     'company_id' => $data['company_id'],
                     'concern_person_name' => $data['concern_person_name'],
-                    'designation' => $data['designation'],
                     'contact_details' => $data['contact_details'],
                     'phone_no' => $data['phone_no'],
                     'email_id' => $data['email_id'],
@@ -162,6 +166,7 @@ class ExpencesController extends Controller
                         ],
                         [
                             'department' => $item['department'] ?? null,
+                            'department_custom' => $item['department_custom'] ?? null,
                             'customer_name' => $item['customer_name'] ?? null,
                             'user_id' => Auth::id(),
                         ]
@@ -327,7 +332,7 @@ class ExpencesController extends Controller
             'labor.*.persons' => 'nullable|integer|min:0',
             'labor.*.amount' => 'nullable|numeric|min:0',
 
-            'purpose' => 'nullable|string|max:255',
+            'purpose' => 'required|string|max:255',
             'totals' => 'required|array',
             'totals.equip' => 'nullable|numeric|min:0',
             'totals.hardware' => 'nullable|numeric|min:0',
@@ -474,8 +479,9 @@ class ExpencesController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'id' => 'sometimes|nullable|integer',
+                'company_id' => 'required|integer',
                 'expanses_company_detail_id' => 'required|integer',
-                'order_no' => 'nullable',
+                'order_no' => 'required',
                 'totals' => 'required',
                 'totals.grand' => 'nullable|numeric|min:0',
                 'file_upload' => 'sometimes',
@@ -583,10 +589,10 @@ class ExpencesController extends Controller
                 'departmentCustomers',
                 'company',
                 'travelExpanses',
-                'linkOrder',                    
+                'linkOrder',
                 'paymentBill',
                 'serviceReport',
-            ];              
+            ];
 
             $query = ExpansesCompanyDetail::with($with)
                 ->when(isset($data['id']) && $data['id'] !== '', function ($q) use ($data) {

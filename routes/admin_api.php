@@ -260,6 +260,8 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     // Testing PDF
     Route::post('download', [QuotationDetailController::class, 'download']);
 
+    Route::post('getExpansedClassificationDD', [DropdownController::class, 'getExpansedClassificationDD']);
+
     //  ********************  Website backend route ****************************   //
 
     // Feedback
@@ -377,4 +379,5 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('listReview', [ReviewAndRatingController::class, 'listReview']);
     Route::post('approveReview', [ReviewAndRatingController::class, 'adminApprove']);
     Route::get('rating', [ReviewAndRatingController::class, 'getProductRating']);
+
 });

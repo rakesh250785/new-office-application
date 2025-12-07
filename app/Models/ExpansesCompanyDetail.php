@@ -13,7 +13,6 @@ class ExpansesCompanyDetail extends Model
     protected $fillable = [
         'company_id',
         'concern_person_name',
-        'designation',
         'contact_details',
         'phone_no',
         'email_id',

@@ -12,6 +12,7 @@ class ExpansesCompanyDepartmentCustomer extends Model
     protected $fillable = [
         'expanses_company_detail_id',
         'department',
+        'department_custom',
         'customer_name',
         'user_id',
     ];

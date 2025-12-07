@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('expanses_company_details', function (Blueprint $table) {
             $table->id();
-            $table->integer('company_id')->nullable();
+            $table->string('company_id', 32)->nullable();
             $table->string('concern_person_name')->nullable();
             $table->string('designation')->nullable();
+            $table->string('department_custom')->nullable();
             $table->string('contact_details')->nullable();
             $table->string('phone_no', 20)->nullable();
             $table->string('email_id')->nullable()->nullable();

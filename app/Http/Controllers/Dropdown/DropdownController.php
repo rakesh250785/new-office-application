@@ -112,6 +112,36 @@ class DropdownController extends Controller
         }
     }
 
+    public function getExpansedClassificationDD()
+    {
+        try {
+    
+            $department = [
+                1 => 'QC',
+                2 => 'User',
+                3 => 'Purchase',
+                4 => 'Laboratory',
+                5 => 'R & D',
+                6 => 'Engineer',
+                7 => 'Scientist',
+                8 => 'Others',
+            ];
+    
+            return Utility::apiSuccess('Exapnsed department DD', $department, 200);
+    
+        } catch (Exception $ex) {
+            Log::error($ex);
+    
+            return Utility::apiError(
+                'Something went wrong in getExpansedClassificationDD',
+                ['exception' => $ex->getMessage()],
+                500
+            );
+        }
+    }
+    
+
+
     public function getBranchDD()
     {
         try {
