@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Exports\ExpansesFullExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\BillExpansesPayment;
@@ -10,12 +11,14 @@ use App\Models\ExpansesCompanyDetail;
 use App\Models\ExpansesServiceReport;
 use App\Models\LinkExpansesOrder;
 use App\Models\TravelExpanses;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExpencesController extends Controller
 {
@@ -622,30 +625,53 @@ class ExpencesController extends Controller
                 'search',
             ]);
 
-            $records = ExpansesCompanyDetail::with([
-                'company' => function ($q) {
-                    $q->select('id', 'company_name');
-                },
-                'travelExpanses' => function ($q) {
-                    $q->select('id', 'expanses_company_detail_id', 'totals');
-                },
-                'linkOrder' => function ($q) {
-                    $q->select('id', 'expanses_company_detail_id', 'purpose_order_no', 'totals');
-                },
-                'paymentBill' => function ($q) {
-                    $q->select('id', 'expanses_company_detail_id', 'totals');
-                },
-                'serviceReport' => function ($q) {
-                    $q->select('id', 'expanses_company_detail_id', 'order_no', 'totals');
-                },
-                'user' => function ($q) {
-                    $q->select('id', 'user_name', 'email', 'team_type');
-                },
-            ])
-                ->whereNotNull('company_id');
+            $query = ExpansesCompanyDetail::with([
+                'company:id,company_name',
+                'travelExpanses',
+                'linkOrder',
+                'paymentBill',
+                'serviceReport',
+                'user:id,user_name,email,team_type',
+            ])->whereNotNull('company_id');
+
+            if (! empty($data['search'])) {
+                $search = $data['search'];
+                $query->where(function ($q) use ($search) {
+                    $q->where('company_id', 'like', "%$search%")
+                        ->orWhere('email_id', 'like', "%$search%")
+                        ->orWhereHas('company', fn ($b) => $b->where('company_name', 'like', "%$search%"))
+                        ->orWhereHas('user', fn ($u) => $u->where('user_name', 'like', "%$search%"));
+                });
+            }
+
+            if (! empty($data['branch_list'])) {
+                $query->whereIn('branch_id', (array) $data['branch_list']);
+            }
+
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($data['start_date'])->startOfDay(),
+                    Carbon::parse($data['end_date'])->endOfDay(),
+                ]);
+            }
+
+            // If download requested => export all fields
+            if (! empty($data['download'])) {
+                $rows = $query->orderByDesc('id')->get();
+
+                $filename = 'expanses_history_full_'.now()->format('Ymd_His').'.xlsx';
+
+                // Queue the export (uses ShouldQueue in export class)
+                Excel::store(new ExpansesFullExport($rows), "exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
 
             $perPage = $data['per_page'] ?? config('constant.per_page', 10);
-            $history = $records->orderByDesc('id')->paginate($perPage);
+            $history = $query->orderByDesc('id')->paginate($perPage);
 
             return Utility::apiSuccess('fetch expanses history', $history, 200);
         } catch (Exception $ex) {
@@ -655,7 +681,6 @@ class ExpencesController extends Controller
                 'exception' => $ex->getMessage(),
             ], 500);
         }
-
     }
 
     public function deleteExpanses(Request $request)
