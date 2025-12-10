@@ -39,7 +39,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('billing_state_id');
             $table->unsignedBigInteger('shipping_state_id');
             $table->unsignedBigInteger('company_id');
-            $table->unsignedBigInteger('notification_id');
+            // $table->unsignedBigInteger('notification_id');
             $table->unsignedBigInteger('owner_id');
             $table->unsignedBigInteger('currency_id');
             $table->unsignedBigInteger('branch_id');

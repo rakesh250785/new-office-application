@@ -51,7 +51,7 @@ class QuotationDetailController extends Controller
                 'shipping_email',
                 'company_id',
                 'quotation_type_id',
-                'notification_id',
+                // 'notification_id',
                 'owner_id',
                 'date',
                 'enq_ref',
@@ -78,11 +78,12 @@ class QuotationDetailController extends Controller
                 'billing_address' => 'required|string',
                 'billing_city' => 'required|string|max:255',
                 'billing_state_id' => 'required|integer|exists:states,id',
-                'billing_mobile' => 'required|string|max:15',
-                'billing_email' => 'required|email|max:255',
-                'billing_landline' => 'required|string|max:15',
+                'billing_mobile' => 'sometimes|nullable|string|max:15',
+                'billing_email' => 'sometimes|nullable|email|max:255',
+                'billing_landline' => 'sometimes|nullable|string|max:15',
                 'billing_pin_code' => 'required|string|max:10',
                 'contact_person' => 'required|string|max:255',
+
                 'shipping_address' => 'required|string',
                 'shipping_city' => 'required|string|max:255',
                 'shipping_state_id' => 'required|integer|exists:states,id',
@@ -92,7 +93,7 @@ class QuotationDetailController extends Controller
                 'shipping_landline' => 'required|string|max:15',
                 'company_id' => 'required|integer|exists:customers,id',
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
-                'notification_id' => 'required|integer|exists:notifications_email,id',
+                // 'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
@@ -164,7 +165,7 @@ class QuotationDetailController extends Controller
                 'product_description' => $data['product_description'] ?? null,
                 'delivery_date_id' => $data['delivery_date_id'] ?? null,
                 'lead_from' => $data['lead_from'] ?? null,
-                'notification_id' => $data['notification_id'] ?? null,
+                // 'notification_id' => $data['notification_id'] ?? null,
                 'owner_id' => $data['owner_id'] ?? null,
                 'quotation_type_id' => $data['quotation_type_id'] ?? null,
                 'payment_term_condition' => $data['payment_term_condition'] ?? null,
@@ -352,7 +353,7 @@ class QuotationDetailController extends Controller
                 ->delay(0);
 
             // Return response
-            return Utility::apiSuccess(!empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
+            return Utility::apiSuccess(! empty($data['quotation_id']) ? 'updated successfully.' : 'added successfully.', [], 200);
 
         } catch (Exception $ex) {
             Log::error($ex);
@@ -453,7 +454,6 @@ class QuotationDetailController extends Controller
             return Utility::apiError('Failed getQuotation server error', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 
     public function deleteQuotation(Request $request)
     {
