@@ -66,6 +66,7 @@ class QuotationDetailController extends Controller
                 'update_status',
                 'quotation_id',
                 'total_amount',
+                'delivery_date_custom',
             ]);
 
             // Validation rule
@@ -164,6 +165,7 @@ class QuotationDetailController extends Controller
                 'shipping_landline' => $data['shipping_landline'] ?? null,
                 'product_description' => $data['product_description'] ?? null,
                 'delivery_date_id' => $data['delivery_date_id'] ?? null,
+                'delivery_date_custom'=> $data['delivery_date_custom'] ?? null,
                 'lead_from' => $data['lead_from'] ?? null,
                 // 'notification_id' => $data['notification_id'] ?? null,
                 'owner_id' => $data['owner_id'] ?? null,

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Quotation extends Model
 {
     protected $table = 'quotations';
+
     protected $primaryKey = 'id';
 
     protected $fillable = [
@@ -45,12 +46,12 @@ class Quotation extends Model
         'currency_id',
         'company_id',
         'delivery_date_id',
+        'delivery_date_custom',
         'tin_number',
         'total_amount',
         'user_id',
-        'status'
+        'status',
     ];
-
 
     public function getCreatedAtAttribute($value)
     {
@@ -61,7 +62,6 @@ class Quotation extends Model
     {
         return $value ? Carbon::parse($value)->format('d-m-Y') : null;
     }
-    
 
     public function companyDetails()
     {
@@ -77,7 +77,6 @@ class Quotation extends Model
     {
         return $this->belongsTo(Owner::class, 'owner_id');
     }
-    
 
     public function branchDetails()
     {

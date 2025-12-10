@@ -16,6 +16,7 @@ class PaymentAdvanceDay extends Seeder
             4 => '45 Days from Date of Shipment',
             5 => '60 Days from Date of Shipment',
             6 => '90 Days from Date of Shipment',
+            7 => 'Write ...',
         ];
 
         foreach ($items as $id => $name) {
