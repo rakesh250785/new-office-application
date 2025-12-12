@@ -112,7 +112,7 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
 
     protected function flushUpsert(array $rows)
     {
-        if (empty($rows)) {
+        if (empty($rows)) {     
             return;
         }
 

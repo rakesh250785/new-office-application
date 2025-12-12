@@ -223,7 +223,10 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('customerSummaryReport', [PerformanceSummaryController::class, 'customerSummaryReport']);
     Route::post('categorySummaryReport', [PerformanceSummaryController::class, 'categorySummaryReport']);
     Route::post('authorisedSummaryReport', [PerformanceSummaryController::class, 'authorisedSummaryReport']);
+    Route::post('updateInvoiceStatus', [PerformanceSummaryController::class, 'updateInvoiceStatus']);
+    Route::post('deleteSaleRecords', [PerformanceSummaryController::class, 'deleteSaleRecords']);
 
+    
     Route::get('/download-export/{filename}', [ExportController::class, 'downloadExport']);
 
     // Landing dashboard
@@ -379,5 +382,4 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('listReview', [ReviewAndRatingController::class, 'listReview']);
     Route::post('approveReview', [ReviewAndRatingController::class, 'adminApprove']);
     Route::get('rating', [ReviewAndRatingController::class, 'getProductRating']);
-
 });

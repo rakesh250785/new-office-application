@@ -26,7 +26,7 @@ class PerformanceSummaryController extends Controller
         try {
             $data = $request->validate([
                 'page' => ['nullable', 'integer', 'min:1'],
-                'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
+                'per_page' => ['nullable', 'integer', 'min:1', 'max:1000'],
                 'sort_by' => [
                     'nullable',
                     Rule::in([
@@ -101,7 +101,7 @@ class PerformanceSummaryController extends Controller
 
             $records = $query->paginate($perPage);
 
-            return Utility::apiSuccess('Quotation status summary', $records, 200);
+            return Utility::apiSuccess('Sale report list', $records, 200);
         } catch (Exception $ex) {
             Log::error($ex);
 
@@ -117,12 +117,12 @@ class PerformanceSummaryController extends Controller
                 'file' => 'required|mimes:xlsx,xls,csv|max:10240',
             ]);
             if ($validator->fails()) {
-                return Utility::apiError('Validation failed', $validator->errors(), 422);
+                return Utility::apiError('Validation failed', $validator->errors(), 211);
             }
 
             $uploaded = $request->file('file');
             if (! $uploaded || ! $uploaded->isValid()) {
-                return Utility::apiError('Invalid uploaded file', [], 422);
+                return Utility::apiError('Invalid uploaded file', [], 211);
             }
 
             // store safely inside storage (no public webroot)
@@ -255,12 +255,12 @@ class PerformanceSummaryController extends Controller
             $data = $request->only(['id']);
 
             if (empty($data['id'])) {
-                return Utility::apiError('Priduct upload job id  not found', [], 422);
+                return Utility::apiError('Priduct upload job id  not found', [], 211);
             }
             $job = ImportJob::find($data['id']);
 
             if (! $job) {
-                return Utility::apiError('Job not found', [], 422);
+                return Utility::apiError('Job not found', [], 211);
             }
 
             return Utility::apiSuccess('File uploaded successfully. Processing started.', [
@@ -412,7 +412,7 @@ class PerformanceSummaryController extends Controller
             }
 
             // Query with filters
-            $query = DB::table('performance_reports');
+            $query = DB::table('performance_reports')->where('status', 'approved');
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
@@ -571,7 +571,7 @@ class PerformanceSummaryController extends Controller
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports');
+            $query = DB::table('performance_reports')->where('status', 'approved');
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
@@ -730,7 +730,7 @@ class PerformanceSummaryController extends Controller
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports');
+            $query = DB::table('performance_reports')->where('status', 'approved');
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
@@ -888,7 +888,7 @@ class PerformanceSummaryController extends Controller
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports');
+            $query = DB::table('performance_reports')->where('status', 'approved');
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
@@ -1052,7 +1052,7 @@ class PerformanceSummaryController extends Controller
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports');
+            $query = DB::table('performance_reports')->where('status', 'approved');
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
@@ -1104,6 +1104,68 @@ class PerformanceSummaryController extends Controller
             Log::error($ex);
 
             return Utility::apiError('Error authorisedSummaryReport', ['exception' => $ex->getMessage()]);
+        }
+    }
+
+    public function updateInvoiceStatus(Request $request)
+    {
+        try {
+
+            $data = $request->only('ids', 'status');
+            $validator = Validator::make($request->all(), [
+                'ids' => 'array|min:1',
+                'status' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return Utility::apiError('Validation failed', $validator->errors(), 211);
+            }
+
+            $msg = 'status updated successsfully.';
+            if ($data['status'] == 'flush_all') {
+                $msg = 'data flush';
+                $status = SaleReport::delete();
+
+            } else {
+                $status = SaleReport::whereIn('id', $data['ids'])->update(['status' => $data['status']]);
+            }
+
+            if (! $status) {
+                return Utility::apiError('Update status error', $validator->errors(), 211);
+            }
+
+            return Utility::apiSuccess($msg, [], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Error updateInvoiceStatus', ['exception' => $ex->getMessage()]);
+        }
+    }
+
+    public function deleteSaleRecords(Request $request)
+    {
+        try {
+
+            $data = $request->only('ids', 'status');
+
+            if (! empty($data['ids'])) {
+                $status = SaleReport::whereIn('id', $data['ids'])->delete();
+            }
+
+            if (empty($data['ids'])) {
+                $status = SaleReport::query()->delete();
+            }
+            if (! $status) {
+                return Utility::apiError('Fail to delete records', [], 211);
+            }
+
+            return Utility::apiSuccess('records deleted successfully', [], 200);
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Error deleted sale report', ['exception' => $ex->getMessage()]);
         }
     }
 }
