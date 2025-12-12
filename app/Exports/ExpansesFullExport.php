@@ -44,7 +44,7 @@ class ExpansesFullExport implements FromCollection, WithEvents
         // Top header
         $username = $this->rows->first()['user']['user_name'] ?? '';
         $branch = $this->rows->first()['user']['branch']['name'] ?? '';
-        $out->push(['', 'Name', $username, '', 'Branch - '.$branch, '', '', "October' 25", '']);
+        $out->push(['', 'Name - '.$username, '', 'Branch - '.$branch, '', '', "October' 25", '']);
 
         // Blank
         $out->push([]);
