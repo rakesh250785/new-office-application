@@ -8,23 +8,43 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('expanses_company_department_customers', function (Blueprint $table) {
-            $table->string('department_custom', 32)->nullable()->change();
-        });
+        // Table 1
+        if (Schema::hasColumn('expanses_company_department_customers', 'department_custom')) {
+            Schema::table('expanses_company_department_customers', function (Blueprint $table) {
+                $table->string('department_custom', 32)->nullable()->change();
+            });
+        } else {
+            Schema::table('expanses_company_department_customers', function (Blueprint $table) {
+                $table->string('department_custom', 32)->nullable();
+            });
+        }
 
-        Schema::table('expanses_company_details', function (Blueprint $table) {
-            $table->string('company_id', 32)->nullable()->change();
-        });
+        // Table 2
+        if (Schema::hasColumn('expanses_company_details', 'company_id')) {
+            Schema::table('expanses_company_details', function (Blueprint $table) {
+                $table->string('company_id', 32)->nullable()->change();
+            });
+        } else {
+            Schema::table('expanses_company_details', function (Blueprint $table) {
+                $table->string('company_id', 32)->nullable();
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('expanses_company_department_customers', function (Blueprint $table) {
-            $table->string('department_custom', 32)->nullable(false)->change();
-        });
+        // Table 1
+        if (Schema::hasColumn('expanses_company_department_customers', 'department_custom')) {
+            Schema::table('expanses_company_department_customers', function (Blueprint $table) {
+                $table->string('department_custom', 32)->nullable(false)->change();
+            });
+        }
 
-        Schema::table('expanses_company_details', function (Blueprint $table) {
-            $table->string('company_id', 32)->nullable(false)->change();
-        });
+        // Table 2
+        if (Schema::hasColumn('expanses_company_details', 'company_id')) {
+            Schema::table('expanses_company_details', function (Blueprint $table) {
+                $table->string('company_id', 32)->nullable(false)->change();
+            });
+        }
     }
 };
