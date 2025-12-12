@@ -43,7 +43,7 @@ class ExpansesFullExport implements FromCollection, WithEvents
 
         // Top header
         $username = $this->rows->first()['user']['user_name'] ?? '';
-        $branch = $this->rows->first()['user']['branch']['name'] ?? "";
+        $branch = $this->rows->first()['user']['branch']['name'] ?? '';
         $out->push(['', 'Name', $username, '', 'Branch - '.$branch, '', '', "October' 25", '']);
 
         // Blank
@@ -121,7 +121,7 @@ class ExpansesFullExport implements FromCollection, WithEvents
                             '',
                             '',
                             '',
-                            '',
+                            $amt,
                         ]);
                     }
                 }
@@ -156,8 +156,8 @@ class ExpansesFullExport implements FromCollection, WithEvents
 
         $out->push([]); // spacer
         $out->push(['', '', '', '', '', '', 'Total Expense Amount', $sumTravel, $sumFood, $sumHotel, $sumOthers, $sumGrand]);
-        $out->push(['', '', '', '', '', '', 'Advance Payment', $advance, '', '', '', '']);
-        $out->push(['', '', '', '', '', '', 'Final Amount', $finalPaid, '', '', '', '']);
+        $out->push(['', '', '', '', '', '', 'Advance Payment', '', '', '', '', $advance]);
+        $out->push(['', '', '', '', '', '', 'Final Amount', '', '', '', '', $finalPaid]);
 
         return $out;
     }
@@ -220,7 +220,10 @@ class ExpansesFullExport implements FromCollection, WithEvents
                 // Outer thick green border
                 $sheet->getStyle($rangeBox)->getBorders()->getOutline()
                     ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THICK)
-                    ->getColor()->setARGB('FF28A745'); // green
+                    ->getColor()->setARGB('FF000000'); // green
+
+                $sheet->getStyle($rangeBox)->getFont()->setBold(true);
+                $sheet->getStyle("L3:L{$highest}")->getFont()->setBold(true);
 
                 // Thin inner borders
                 $sheet->getStyle($rangeBox)->getBorders()->getInside()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
