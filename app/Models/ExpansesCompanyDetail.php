@@ -61,7 +61,7 @@ class ExpansesCompanyDetail extends Model
 
     public function user()
     {
-        return $this->hasOne(User::class, 'id', 'user_id')->select('username', 'team_type', 'id');
+        return $this->hasOne(User::class, 'id', 'user_id')->select('username', 'team_type', 'id', 'branch_id')->with('branch');
 
     }
 }

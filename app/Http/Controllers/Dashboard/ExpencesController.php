@@ -631,7 +631,7 @@ class ExpencesController extends Controller
                 'linkOrder',
                 'paymentBill',
                 'serviceReport',
-                'user:id,user_name,email,team_type',
+                'user:id,user_name,email,team_type,branch_id',
             ])->whereNotNull('company_id');
 
             if (! empty($data['search'])) {
@@ -640,7 +640,8 @@ class ExpencesController extends Controller
                     $q->where('company_id', 'like', "%$search%")
                         ->orWhere('email_id', 'like', "%$search%")
                         ->orWhereHas('company', fn ($b) => $b->where('company_name', 'like', "%$search%"))
-                        ->orWhereHas('user', fn ($u) => $u->where('user_name', 'like', "%$search%"));
+                        ->orWhereHas('user', fn ($u) => $u->where('user_name', 'like', "%$search%"))
+                        ->orWhereHas('linkOrder', fn ($b) => $b->where('purpose_order_no', 'like', "%$search%"));
                 });
             }
 
@@ -655,13 +656,11 @@ class ExpencesController extends Controller
                 ]);
             }
 
-            // If download requested => export all fields
             if (! empty($data['download'])) {
                 $rows = $query->orderByDesc('id')->get();
 
-                $filename = 'expanses_history_full_'.now()->format('Ymd_His').'.xlsx';
+                $filename = 'expanses_history_'.now()->format('Ymd_His').'.xlsx';
 
-                // Queue the export (uses ShouldQueue in export class)
                 Excel::store(new ExpansesFullExport($rows), "exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

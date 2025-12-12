@@ -50,7 +50,13 @@ class CustomerController extends Controller
                         ->ignore($request->customer_id),
                 ],
                 'customer_name' => 'required|string|max:255',
-                'email_id' => 'required|email|max:255',
+                'email_id' => [
+                    'required',
+                    'email',
+                    'max:255',
+                    Rule::unique('customers', 'email_id')
+                        ->ignore($request->customer_id),
+                ],
                 'mobile_no' => 'sometimes|nullable|digits_between:10,11',
                 'landline_no' => 'sometimes|nullable|digits_between:6,11',
 
