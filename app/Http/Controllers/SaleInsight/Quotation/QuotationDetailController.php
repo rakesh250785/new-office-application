@@ -67,12 +67,14 @@ class QuotationDetailController extends Controller
                 'quotation_id',
                 'total_amount',
                 'delivery_date_custom',
+                'submit_type',
             ]);
 
             // Validation rule
             $validator = Validator::make($data, [
+                'submit_type' => 'required',
                 'product_id' => 'nullable|integer|exists:products,id',
-                'product_description' => 'required|string',
+                'product_description' => 'sometimes|nullable',
                 'principal_type' => 'nullable|string',
                 'payment_term_condition' => 'required|string',
                 'lead_from' => 'required|string|max:255',
@@ -96,9 +98,9 @@ class QuotationDetailController extends Controller
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
                 // 'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
-                'currency_id' => 'required|integer|exists:currencies,id',
+                'currency_id' => 'required|integer|exists:currencies,id',           
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
-                'date' => 'required|date|after_or_equal:today',
+                'date' => 'required|date',
                 'enq_ref' => 'required|string|max:255',
                 'prepard_by' => 'required|string|max:255',
                 'update_status' => 'required|boolean',
@@ -122,6 +124,10 @@ class QuotationDetailController extends Controller
             // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation error', $validator->errors(), 221);
+            }
+
+            if ($data['submit_type'] == 'quotation_preview') {
+                return Utility::apiSuccess('quotation_preview', [], 200);
             }
 
             // Auth info
@@ -165,7 +171,7 @@ class QuotationDetailController extends Controller
                 'shipping_landline' => $data['shipping_landline'] ?? null,
                 'product_description' => $data['product_description'] ?? null,
                 'delivery_date_id' => $data['delivery_date_id'] ?? null,
-                'delivery_date_custom'=> $data['delivery_date_custom'] ?? null,
+                'delivery_date_custom' => $data['delivery_date_custom'] ?? null,
                 'lead_from' => $data['lead_from'] ?? null,
                 // 'notification_id' => $data['notification_id'] ?? null,
                 'owner_id' => $data['owner_id'] ?? null,
@@ -409,7 +415,7 @@ class QuotationDetailController extends Controller
             $query = QuotationAdd::with([
                 'quotationDetails',
                 'quotationDetails.principal:id,type',
-                'companyDetails:id,company_name,email_id',
+                'companyDetails:id,company_name,email_id,gst_number,state_id,country_id',
                 'branchDetails:id,name',
                 'currencyDetails:id,code',
                 'ownerDetails:id,name',

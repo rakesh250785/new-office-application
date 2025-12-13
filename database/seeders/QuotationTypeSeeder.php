@@ -11,7 +11,7 @@ class QuotationTypeSeeder extends Seeder
     {
         $types = [
             1 => 'CW',
-            2 => 'TW',
+            2 => 'GW',
         ];
 
         foreach ($types as $id => $name) {

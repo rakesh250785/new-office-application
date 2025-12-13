@@ -65,7 +65,7 @@ class Quotation extends Model
 
     public function companyDetails()
     {
-        return $this->belongsTo(Customer::class, 'company_id');
+        return $this->belongsTo(Customer::class, 'company_id')->with(['state', 'country']);
     }
 
     public function quotationDetails()
