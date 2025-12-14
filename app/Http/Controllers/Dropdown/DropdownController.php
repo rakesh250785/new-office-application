@@ -115,7 +115,7 @@ class DropdownController extends Controller
     public function getExpansedClassificationDD()
     {
         try {
-    
+
             $department = [
                 1 => 'QC',
                 2 => 'User',
@@ -126,12 +126,12 @@ class DropdownController extends Controller
                 7 => 'Scientist',
                 8 => 'Others',
             ];
-    
+
             return Utility::apiSuccess('Exapnsed department DD', $department, 200);
-    
+
         } catch (Exception $ex) {
             Log::error($ex);
-    
+
             return Utility::apiError(
                 'Something went wrong in getExpansedClassificationDD',
                 ['exception' => $ex->getMessage()],
@@ -139,8 +139,6 @@ class DropdownController extends Controller
             );
         }
     }
-    
-
 
     public function getBranchDD()
     {
@@ -247,7 +245,7 @@ class DropdownController extends Controller
                     'id',
                     'customer_name',
                     'company_name',
-                    'address',
+                    'address',              
                     'owner_id',
                     'state_id',
                     'other_state',
@@ -256,7 +254,8 @@ class DropdownController extends Controller
                     'pin_code',
                     'mobile_no',
                     'landline_no',
-                    'country_id'
+                    'country_id',               
+                    'gst_number',
                 )
                 ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
 
@@ -390,7 +389,7 @@ class DropdownController extends Controller
     }
 
     public function getUpsCategoryDD()
-    {                                               
+    {
         try {
             // Get type
             // $type = Category::whereIn('name', ['HPLC Columns', 'GC Capillary Column'])
