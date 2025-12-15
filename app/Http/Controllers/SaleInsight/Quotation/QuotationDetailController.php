@@ -276,7 +276,7 @@ class QuotationDetailController extends Controller
                         'hsn_code' => $item['hsn_code'] ?? '',
                         'quantity' => $quantity,
                         'in_stock' => $item['in_stock'] ?? 0,
-                        'price' => $afterDiscount,
+                        'price' => $price,
                         'discount' => $discount,
                         'net_price' => $afterDiscount,
                         'igst' => $igst,
