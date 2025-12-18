@@ -41,5 +41,9 @@ class QuotationDetail extends Model
     {
         return $this->belongsTo(Principal::class, 'principal_id');
     }
+    public function uom()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
 }
           

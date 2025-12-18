@@ -92,9 +92,11 @@ class ProductController extends Controller
             ];
 
             // File rule
-            $fileRules = [
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:3072',
-            ];
+            $fileRules = [];                                                        
+
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $fileRules['image'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:3072';
+            }
 
             // If there is dynamic fields
             $dynamicRules = [];

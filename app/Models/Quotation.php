@@ -97,4 +97,10 @@ class Quotation extends Model
     {
         return $this->hasOne(PendingQuotation::class, 'quotation_id', 'id');
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+    
 }

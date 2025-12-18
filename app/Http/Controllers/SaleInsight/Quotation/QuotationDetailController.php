@@ -61,7 +61,7 @@ class QuotationDetailController extends Controller
                 'shipping_mobile',
                 'shipping_email',
                 'shipping_landline',
-                'delivery_date_id',
+                'delivery_date_id',         
                 'product_list',
                 'update_status',
                 'quotation_id',
@@ -419,6 +419,7 @@ class QuotationDetailController extends Controller
                 'branchDetails:id,name',
                 'currencyDetails:id,code',
                 'ownerDetails:id,name',
+                'quotationDetails.uom:id,uom',
                 'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
             ])
                 ->whereNull('deleted_at')

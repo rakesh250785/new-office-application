@@ -223,7 +223,7 @@ class DropdownController extends Controller
     {
         try {
             // Get currency
-            $notifiaction = NotificationEmail::pluck('name', 'id')->toArray();
+            $notifiaction = NotificationEmail::pluck('name', 'id')->toArray();                  
 
             // Return response
             return Utility::apiSuccess('DD getNotificationDD', $notifiaction, 200);
@@ -245,7 +245,7 @@ class DropdownController extends Controller
                     'id',
                     'customer_name',
                     'company_name',
-                    'address',              
+                    'address',
                     'owner_id',
                     'state_id',
                     'other_state',
@@ -254,7 +254,7 @@ class DropdownController extends Controller
                     'pin_code',
                     'mobile_no',
                     'landline_no',
-                    'country_id',               
+                    'country_id',
                     'gst_number',
                 )
                 ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
@@ -309,7 +309,7 @@ class DropdownController extends Controller
 
             $products = Product::with(['principal:id,type'])
                 ->join(DB::raw("($subQuery) AS latest"), 'products.id', '=', 'latest.id')
-                ->select('products.id', 'products.part_no', 'products.description', 'products.principal_id', 'products.hsn_no', 'products.description', 'products.quantity', 'products.price', 'products.discount', 'products.price as net_price', 'products.igst_rate')
+                ->select('products.id', 'products.part_no', 'products.description', 'products.uom', 'products.specification', 'products.principal_id', 'products.hsn_no', 'products.description', 'products.quantity', 'products.price', 'products.discount', 'products.price as net_price', 'products.igst_rate')
                 ->addBinding($bindings, 'select')
                 ->get();
 
