@@ -82,7 +82,7 @@ class ProductController extends Controller
                 'brand_id' => 'required',
                 'price' => 'required|numeric',
                 'uom' => 'required',
-                'igst_rate' => 'required|string',
+                'igst_rate' => 'required|numeric',
                 'discount' => 'required|numeric',
                 'quantity' => 'required|numeric',
                 'description' => 'required|string',

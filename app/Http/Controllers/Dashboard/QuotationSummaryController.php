@@ -87,11 +87,11 @@ class QuotationSummaryController extends Controller
                     (float) ($row->open_cnt ?? 0),
                     (float) ($row->win_cnt ?? 0),
                     (float) ($row->lose_cnt ?? 0),
-                    (float) ($row->closed_cnt ?? 0),
+                    (float) ($row->closed_cnt ?? 0),                
                 ],
                 'total' => $totalCount,
                 'filters' => [
-                    'from' => $validated['from'] ?? null,
+                    'from' => $validated['from'] ?? null,       
                     'to' => $validated['to'] ?? null,
                     'branch_id' => $validated['branch_id'] ?? null,
                     'user_id' => $validated['user_id'] ?? null,
@@ -107,7 +107,7 @@ class QuotationSummaryController extends Controller
                 'Error quotationStatusReport',
                 ['exception' => $ex->getMessage()]
             );
-        }
+        }   
 
     }
 
