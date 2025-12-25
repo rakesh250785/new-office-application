@@ -4,52 +4,64 @@ namespace App\Observers;
 
 use App\Models\Branch;
 use App\Models\Quotation;
+use App\Models\User;
 use App\Notifications\EntityCreated;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 
 class QuotationObserver
 {
-    public function created(Quotation $quotation)
+    public function created(Quotation $quotation): void
     {
-        Log::info('QuotationObserver created fired for id: '.$quotation->id);
-        $recipients = Auth::user();
-        $status = $quotation->pendingQuotationDetails->status_code ?? null;
-        $branchName = Branch::findOrFail($recipients->branch_id)->name;
-        Notification::send($recipients, new EntityCreated('quotation', $quotation->id, [
-            'amount' => $quotation->total_amount,
-            'status' => $status,
-            'branch' => $branchName,
-            'created_at' => Carbon::parse($quotation->created_at)->format('d-m-Y h:i:s A'),
-            'created_by' => Auth::user()->name,
-            'message' => 'New Quotation',
-            'quotation_no' => $quotation->unique_quotation_no,
-            'type' => 'quotation',
-        ]));
+        $this->notify($quotation, 'created');
     }
 
     public function updated(Quotation $quotation): void
     {
-        $recipients = Auth::user();
-        Log::info('QuotationObserver updated fired for id: '.$quotation->id);
+        $this->notify($quotation, 'updated');
+    }
 
-        if (! empty($recipients)) {
-            $recipients = $recipients->toArray();
-            $branchName = Branch::findOrFail($recipients['branch_id'])->name;
-            $status = $quotation->pendingQuotationDetails->status_code ?? null;
+    private function notify(Quotation $quotation, string $event): void
+    {
+        $user = User::find($quotation->user_id);
 
-            Notification::send($recipients, new EntityCreated('quotation', $quotation->id, [
+        if (! $user) {
+            Log::warning("Quotation {$event}: user not found", [
+                'quotation_id' => $quotation->id,
+                'user_id' => $quotation->user_id,
+            ]);
+
+            return;
+        }
+
+        $branchName = optional(
+            Branch::find($user->branch_id)
+        )->name;
+
+        Log::info("QuotationObserver {$event} fired", [
+            'quotation_id' => $quotation->id,
+            'user_id' => $user->id,
+        ]);
+
+        $user->notify(new EntityCreated(
+            'quotation',
+            $quotation->id,
+            [
                 'amount' => $quotation->total_amount,
-                'status' => $status,
-                'branch' => $branchName ?? null,
-                'created_at' => Carbon::parse($quotation->created_at)->format('d-m-Y h:i:s A'),
-                'created_by' => $recipients['name'],
-                'message' => 'Quotation updated',
+                'status' => $quotation->pendingQuotationDetails->status_code ?? null,
+                'branch' => $branchName,
+                'created_at' => Carbon::parse(
+                    $event === 'created'
+                        ? $quotation->created_at
+                        : $quotation->updated_at
+                )->format('d-m-Y h:i:s A'),
+                'created_by' => $user->name,
+                'message' => $event === 'created'
+                                    ? 'New Quotation'
+                                    : 'Quotation Updated',
                 'quotation_no' => $quotation->unique_quotation_no,
                 'type' => 'quotation',
-            ]));
-        }
+            ]
+        ));
     }
 }

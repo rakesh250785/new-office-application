@@ -20,6 +20,7 @@ use App\Models\PaymentDayAdvance;
 use App\Models\Principal;
 use App\Models\PrincipalType;
 use App\Models\Product;
+use App\Models\QuotationFormat;
 use App\Models\QuotationType;
 use App\Models\ReasonType;
 use App\Models\Role;
@@ -28,6 +29,7 @@ use App\Models\States;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Log;
 
 class DropdownController extends Controller
@@ -223,7 +225,7 @@ class DropdownController extends Controller
     {
         try {
             // Get currency
-            $notifiaction = NotificationEmail::pluck('name', 'id')->toArray();                  
+            $notifiaction = NotificationEmail::pluck('name', 'id')->toArray();
 
             // Return response
             return Utility::apiSuccess('DD getNotificationDD', $notifiaction, 200);
@@ -329,15 +331,29 @@ class DropdownController extends Controller
             $quotationType = QuotationType::pluck('type', 'id')->toArray();
 
             // Return response
-            return Utility::apiSuccess('DD getQuotationFormatDD', $quotationType, 200);
+            return Utility::apiSuccess('DD getQuotationTypeDD', $quotationType, 200);
         } catch (Exception $ex) {
             Log::error($ex);
 
-            return Utility::apiError('Something went wrong in getPartNumberDD', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Something went wrong in getQuotationTypeDD', ['exception' => $ex->getMessage()], 500);
         }
     }
 
-    public function getQuotationFormatDD() {}
+    public function getQuotationFormatDD()
+    {
+        try {
+            // Get quotation format
+            $quotationFormat = QuotationFormat::select('branch_id', 'branch_address', 'billing_address')->where('branch_id', Auth::user()->branch_id)->first();
+
+            // Return response
+            return Utility::apiSuccess('DD getQuotationFormatDD', $quotationFormat, 200);
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Something went wrong in getQuotationFormatDD', ['exception' => $ex->getMessage()], 500);
+        }
+
+    }
 
     public function getPaymentAdvanceDD()
     {

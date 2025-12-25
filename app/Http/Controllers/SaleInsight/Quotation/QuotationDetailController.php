@@ -304,7 +304,7 @@ class QuotationDetailController extends Controller
             // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
 
-            $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
+            $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('branch_address');
             $pdfRec = [
                 'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
                 'pdf_name' => $pdfFilePath,

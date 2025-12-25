@@ -94,6 +94,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('/getCourierDD', [DropdownController::class, 'getCourierDD']);
     Route::post('/getRoleDD', [DropdownController::class, 'getRoleDD']);
     Route::post('/getOrderStatusDD', [DropdownController::class, 'getOrderStatusDD']);
+    Route::post('/getQuotationFormatDD', [DropdownController::class, 'getQuotationFormatDD']);
 
     // Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);
@@ -226,7 +227,6 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('updateInvoiceStatus', [PerformanceSummaryController::class, 'updateInvoiceStatus']);
     Route::post('deleteSaleRecords', [PerformanceSummaryController::class, 'deleteSaleRecords']);
 
-    
     Route::get('/download-export/{filename}', [ExportController::class, 'downloadExport']);
 
     // Landing dashboard

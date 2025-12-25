@@ -2,78 +2,66 @@
 
 namespace App\Observers;
 
-use App\Models\PartialOrder;
 use App\Models\Branch;
+use App\Models\PartialOrder;
+use App\Models\User;
 use App\Notifications\EntityCreated;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+
 class PartialOrderObserver
 {
-    /**
-     * Handle the PartialOrder "created" event.
-     */
     public function created(PartialOrder $partialOrder): void
     {
-        Log::info('PartialOrderObserver created fired for id: ' . $partialOrder->id);
-
-        $recipients = Auth::user();
-        $branchName = Branch::findOrFail($recipients->branch_id)->name;
-        Notification::send($recipients, new EntityCreated('partial_order', $partialOrder->id, [
-            'amount' => $partialOrder->total_amount,
-            'status' => "new",
-            'branch' => $branchName,
-            'created_at' => Carbon::parse($partialOrder->created_at)->format('d-m-Y h:i:s A'),
-            'created_by' => Auth::user()->name,
-            'message' => 'New Partial Order',
-            'partial_order_no' => $partialOrder->unique_partial_order_no,
-            'type' => 'partial_order',
-        ]));
+        $this->notify($partialOrder, 'created');
     }
 
-    /**
-     * Handle the PartialOrder "updated" event.
-     */
     public function updated(PartialOrder $partialOrder): void
     {
-        Log::info('PartialOrderObserver updated fired for id: ' . $partialOrder->id);
-
-        $recipients = Auth::user();
-        $branchName = Branch::findOrFail($recipients->branch_id)->name;
-        Notification::send($recipients, new EntityCreated('partial_order', $partialOrder->id, [
-            'amount' => $partialOrder->total_amount,
-            'status' => "new",
-            'branch' => $branchName,
-            'created_at' => Carbon::parse($partialOrder->created_at)->format('d-m-Y h:i:s A'),
-            'created_by' => Auth::user()->name,
-            'message' => 'Partial Order Update',
-            'partial_order_no' => $partialOrder->unique_partial_order_no,
-            'type' => 'partial_order',
-        ]));
+        $this->notify($partialOrder, 'updated');
     }
 
-    /**
-     * Handle the PartialOrder "deleted" event.
-     */
-    public function deleted(PartialOrder $partialOrder): void
+    private function notify(PartialOrder $partialOrder, string $event): void
     {
-        //
-    }
+        $user = User::find($partialOrder->user_id);
 
-    /**
-     * Handle the PartialOrder "restored" event.
-     */
-    public function restored(PartialOrder $partialOrder): void
-    {
-        //
-    }
+        if (! $user) {
+            Log::warning("PartialOrder {$event}: user not found", [
+                'partial_order_id' => $partialOrder->id,
+                'user_id' => $partialOrder->user_id,
+            ]);
 
-    /**
-     * Handle the PartialOrder "force deleted" event.
-     */
-    public function forceDeleted(PartialOrder $partialOrder): void
-    {
-        //
+            return;
+        }
+
+        $branchName = optional(
+            Branch::find($user->branch_id)
+        )->name;
+
+        Log::info("PartialOrder {$event} fired", [
+            'partial_order_id' => $partialOrder->id,
+            'user_id' => $user->id,
+        ]);
+
+        $user->notify(new EntityCreated(
+            'partial_order',
+            $partialOrder->id,
+            [
+                'amount' => $partialOrder->total_amount,
+                'status' => 'new',
+                'branch' => $branchName,
+                'created_at' => Carbon::parse(
+                    $event === 'created'
+                        ? $partialOrder->created_at
+                        : $partialOrder->updated_at
+                )->format('d-m-Y h:i:s A'),
+                'created_by' => $user->name,
+                'message' => $event === 'created'
+                                        ? 'New Partial Order'
+                                        : 'Partial Order Updated',
+                'partial_order_no' => $partialOrder->unique_partial_order_no,
+                'type' => 'partial_order',
+            ]
+        ));
     }
 }
