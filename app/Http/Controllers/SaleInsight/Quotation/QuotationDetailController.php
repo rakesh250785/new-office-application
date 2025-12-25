@@ -61,13 +61,17 @@ class QuotationDetailController extends Controller
                 'shipping_mobile',
                 'shipping_email',
                 'shipping_landline',
-                'delivery_date_id',         
+                'delivery_date_id',
                 'product_list',
                 'update_status',
                 'quotation_id',
                 'total_amount',
                 'delivery_date_custom',
                 'submit_type',
+                'state',
+                'country',
+                'quotation_type',
+
             ]);
 
             // Validation rule
@@ -98,7 +102,7 @@ class QuotationDetailController extends Controller
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
                 // 'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
-                'currency_id' => 'required|integer|exists:currencies,id',           
+                'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
                 'date' => 'required|date',
                 'enq_ref' => 'required|string|max:255',
@@ -299,6 +303,7 @@ class QuotationDetailController extends Controller
 
             // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
+
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
             $pdfRec = [
                 'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
@@ -329,6 +334,7 @@ class QuotationDetailController extends Controller
                     'no' => $quotationNumber,
                     'date' => $quotationDate,
                     'ref' => $data['enq_ref'],
+                    'quotation_type' => $data['quotation_type'],
                 ],
                 'shipping' => [
                     'company' => $customerInfo->company_name,
@@ -339,10 +345,11 @@ class QuotationDetailController extends Controller
                     'landline' => $customerInfo->landline_no,
                     'mobile' => $customerInfo->mobile_no,
                     'email' => $customerInfo->email_id,
-                    'state' => $states[$customerInfo->state_id] ?? $customerInfo->other_state ?? null,
+                    'state' => $states->name ?? $customerInfo->other_state ?? null,
                     'contact_person' => $data['contact_person'],
+                    'country' => $data['company_details']['country']['name'] ?? null,
                 ],
-                'items' => $productList,
+                'items' => $data['product_list'],
                 'branch_address' => $branchAddress,
                 'currency' => $currencyInfo,
                 'totals' => [

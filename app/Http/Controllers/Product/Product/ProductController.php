@@ -77,7 +77,7 @@ class ProductController extends Controller
                     Rule::unique('products', 'part_no')->ignore($data['product_id'] ?? null),
                 ],
                 'hsn_no' => 'required|string',
-                'principal_id' => 'required',
+                'principal_id' => 'required',           
                 'category_id' => 'required',
                 'brand_id' => 'required',
                 'price' => 'required|numeric',
@@ -87,7 +87,7 @@ class ProductController extends Controller
                 'quantity' => 'required|numeric',
                 'description' => 'required|string',
                 'additional_description' => 'sometimes|nullable',
-                'specification' => 'sometimes|nullable',
+                'specification' => 'sometimes|nullable',                                    
                 'product_id' => 'nullable|numeric|exists:products,id',
             ];
 
