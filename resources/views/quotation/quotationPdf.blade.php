@@ -662,18 +662,43 @@
                     @if(!empty($it['heading']) || !empty($it['product_specification']))
                         <tr class="comment-row">
                             <td></td>
-                            <td colspan="{{ $isMH ? 15 : 13 }}">
+                            <td colspan="{{ $isMH ? 15 : 13 }}" style="padding:6px 8px; font-size:11.5px;">
+
+                                {{-- HEADING : 30% --}}
                                 @if(!empty($it['heading']))
-                                    <b style="color:#6b4f1d;">HEADING :</b>
-                                    {!! $it['heading'] !!}<br>
+                                    <span style="
+                                            display:inline-block;
+                                            width:68%;
+                                            vertical-align:top;
+                                            padding-right:12px;
+                                            box-sizing:border-box;
+                                            line-height:1.35;
+                                        ">
+                                        <b style="color:#6b4f1d;">HEADING :</b><br>
+                                        {!! $it['heading'] !!}
+                                    </span>
                                 @endif
+
+                                {{-- COMMENTS : 70% --}}
                                 @if(!empty($it['product_specification']))
-                                    <b style="color:#6b4f1d;">COMMENTS :</b>
-                                    {!! $it['product_specification'] !!}
+                                    <span style="
+                                            display:inline-block;
+                                            width:30%;
+                                            vertical-align:top;
+                                            box-sizing:border-box;
+                                            line-height:1.35;
+                                        ">
+                                        <b style="color:#6b4f1d;">COMMENTS :</b><br>
+                                        {!! $it['product_specification'] !!}
+                                    </span>
                                 @endif
+
                             </td>
                         </tr>
                     @endif
+
+
+
                 @endforeach
 
                 {{-- TOTAL --}}
