@@ -28,7 +28,7 @@ class BranchSeeder extends Seeder
             12 => 'Delhi',
             13 => 'North-3',
         ];
-
+    
         foreach ($branches as $id => $name) {
             Branch::updateOrCreate(
                 ['id' => $id],
@@ -39,4 +39,5 @@ class BranchSeeder extends Seeder
             );
         }
     }
+    
 }

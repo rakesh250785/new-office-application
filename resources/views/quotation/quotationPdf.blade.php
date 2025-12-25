@@ -15,7 +15,6 @@
             line-height: 1.5;
             font-weight: 400;
             color: #1f1f1f;
-            border-collapse: collapse;
             font-variant-numeric: tabular-nums;
         }
 
@@ -36,55 +35,116 @@
             padding: 6mm;
         }
 
-        /* ================= TABLE ================= */
+        /* ================= TABLE CORE ================= */
         table {
+            width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
             table-layout: auto;
-            width: calc(100% - 0.01px);
         }
 
-        /* ================= CELLS ================= */
+        /* =================================================
+           UNIFORM BORDER SYSTEM (PDF SAFE)
+           ONE-DIRECTION DRAWING ONLY
+           ================================================= */
+
+        /* Reset all borders */
         th,
         td {
-            border: 0.25px solid rgba(0, 0, 0, 0.18);
+            border: none;
             padding: 2px;
             vertical-align: top;
             white-space: normal;
             word-break: break-word;
             overflow-wrap: anywhere;
+            box-sizing: border-box;
+
+            /* draw ONLY from right + bottom */
+            border-right: 0.4px solid #c8c8c8;
+            border-bottom: 0.4px solid #c8c8c8;
+        }
+
+        /* Close LEFT edge */
+        table tr th:first-child,
+        table tr td:first-child {
+            border-left: 0.4px solid #c8c8c8;
+        }
+
+        /* Close TOP edge */
+        table thead tr:first-child th,
+        table tbody tr:first-child td {
+            border-top: 0.4px solid #c8c8c8;
         }
 
         tr {
             page-break-inside: avoid;
         }
 
-        /* ================= HEADER ================= */
+        /* ================= HEADER (OLD-STYLE FLUSH) ================= */
         .hdr {
             background: #bcecfa;
             width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
             border: none !important;
-            /* ✅ remove outer border */
+            border-collapse: collapse;
         }
 
+        /* Remove all borders */
+        .hdr,
         .hdr tr,
         .hdr td {
             border: none !important;
-            /* ✅ remove cell borders */
         }
 
+        /* Force table row to hug content */
+        .hdr tr {
+            height: auto;
+        }
 
-
+        /* Cells */
         .hdr td {
-            color: #333;
-            padding: 6px 8px;
-            line-height: 1.35;
+            /* padding: 3px 8px 2px 8px; */
+            /* 🔑 tiny bottom padding like old */
+            vertical-align: top;
             font-weight: 500;
+            line-height: 1.2;
+            /* 🔑 tighter like old */
+            color: #333;
         }
 
-        /* ✅ remove extra left gap */
-        .hdr td:first-child {
-            padding-left: 0;
+        /* Logo — critical */
+        .hdr img {
+            display: block;
+            /* removes image baseline gap */
+            height: 60px;
+            margin: 0;
+            padding: 0;
         }
+
+        /* ISO text */
+        .hdr .iso,
+        .hdr-iso {
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+
+        /* Kill hidden spacing from inner elements */
+        .hdr p,
+        .hdr div,
+        .hdr span {
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+        }
+
+        /* No gap below header */
+        .hdr+* {
+            margin-top: 0 !important;
+        }
+
 
         /* ================= META ================= */
         .meta-label {
@@ -108,34 +168,79 @@
             color: #f5f2e8;
             text-align: center;
             font-size: 12px;
-            font-weight: 400;
             line-height: 1.4;
             letter-spacing: 0.25px;
+        }
+
+        .authorised td {
+            border: none !important;
         }
 
         .authorised b {
             font-weight: 600;
         }
 
-        /* ================= SHIPPING ================= */
+        /* ================= SHIPPING TABLE — CLEAN GRID ================= */
         .ship {
             background: #f2f8f9;
             margin-bottom: 7px;
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
         }
 
+        /* Reset inherited borders */
+        .ship th,
+        .ship td {
+            padding: 0px 4px;
+            vertical-align: middle;
+            word-break: break-word;
+            text-align: left;
+        }
+
+        /* Draw ONLY horizontal row lines */
+        .ship tr {
+            border-bottom: 0.2px solid #cfcfcf;
+        }
+
+        /* Top border */
+        .ship tr:first-child th,
+        .ship tr:first-child td {
+            border-top: 0.2px solid #cfcfcf;
+        }
+
+        /* Vertical separators — drawn once */
+        .ship th:not(:last-child),
+        .ship td:not(:last-child) {
+            border-right: 0.2px solid #cfcfcf;
+        }
+
+        /* Left & right edges */
+        .ship th:first-child,
+        .ship td:first-child {
+            border-left: 0.2px solid #cfcfcf;
+        }
+
+        .ship th:last-child,
+        .ship td:last-child {
+            border-right: 0.2px solid #cfcfcf;
+        }
+
+        /* Header cells */
         .ship th {
             color: #004f6e;
             font-weight: 600;
-            font-size: 12px;
-            text-align: left;
             white-space: nowrap;
-            padding: 2px 4px;
         }
 
+        /* Value cells */
         .ship td {
             color: #222;
-            font-weight: 500;
-            padding: 2px 4px;
+            font-weight: 240;
+            padding: 0px 4px;
+            vertical-align: middle;
+            word-break: break-word;
+            text-align: left;
         }
 
         /* ================= ITEMS ================= */
@@ -147,16 +252,14 @@
             background: #eef6f9;
             color: #004f6e;
             font-weight: 600;
-            font-size: 12px;
             text-align: left;
         }
 
-        /* RESET */
+        /* Row colors */
         .items tbody tr td {
             background: #ffffff;
         }
 
-        /* OLD PDF STYLE */
         .items tbody tr.odd td {
             background: #fff2f2;
         }
@@ -165,25 +268,21 @@
             background: #f2caca;
         }
 
-        /* SPEC ROW */
-        .items tbody tr.spec-row td {
-            font-size: 11.6px;
-            line-height: 1.4;
-        }
-
-        /* COMMENT ROW */
+        /* Spec / Comment rows */
+        .items tbody tr.spec-row td,
         .items tbody tr.comment-row td {
             font-size: 11.6px;
             line-height: 1.4;
         }
 
-        /* ================= TOTAL ================= */
+        /* ================= TOTAL ROW ================= */
         .items tbody tr.total-row td {
             background: #333 !important;
             color: #f5f2e8;
             font-size: 14.5px;
             font-weight: 600;
             letter-spacing: 0.3px;
+            border: none !important;
         }
 
         .total-row .label {
@@ -195,7 +294,7 @@
             font-weight: 700;
         }
 
-        /* ================= FOOTER ================= */
+        /* ================= FOOTER / TERMS ================= */
         .footer-title {
             color: #006c95;
             font-weight: 700;
@@ -236,11 +335,7 @@
             display: none;
         }
 
-        /* =========================================================
-   HTML EDITOR CONTENT — HARD RESET (SPEC / COMMENT / DESC)
-   ========================================================= */
-
-        /* Scope ONLY editor-driven content */
+        /* ================= HTML EDITOR HARD RESET ================= */
         .spec-row td,
         .comment-row td,
         .notes td,
@@ -250,7 +345,6 @@
             line-height: 1.2 !important;
         }
 
-        /* Kill editor default blocks */
         .spec-row td p,
         .comment-row td p,
         .notes td p,
@@ -261,7 +355,6 @@
             padding: 0 !important;
         }
 
-        /* Kill empty editor rows */
         .spec-row td p:empty,
         .comment-row td p:empty,
         .notes td p:empty,
@@ -269,7 +362,6 @@
             display: none !important;
         }
 
-        /* Remove <br> spacing injected by editor */
         .spec-row td br,
         .comment-row td br,
         .notes td br,
@@ -279,11 +371,9 @@
             display: none !important;
         }
 
-        /* Neutralize div/span spacing */
         .spec-row td div,
         .comment-row td div,
         .notes td div,
-
         .items td.description div,
         .items td.heading div,
         .items td.html-content div,
@@ -294,7 +384,6 @@
             line-height: 1.2 !important;
         }
 
-        /* Lists — compact but readable */
         .spec-row td ul,
         .spec-row td ol,
         .notes td ul,
@@ -313,24 +402,18 @@
             line-height: 1.2 !important;
         }
 
-        /* Bold / inline formatting */
-        .spec-row td b,
-        .spec-row td strong,
-        .notes td b,
-        .notes td strong,
-        .comment-row td b,
-        .comment-row td strong {
-            line-height: 1.2 !important;
-        }
-
-        /* Cell padding tightening */
         .spec-row td,
         .notes td,
         .comment-row td {
             padding-top: 2px !important;
             padding-bottom: 2px !important;
         }
+
+        .items thead {
+            display: table-row-group;
+        }
     </style>
+
 
 </head>
 
@@ -345,69 +428,70 @@
     <div class="paper">
 
         {{-- ================= HEADER ================= --}}
-        <table class="hdr">
+        <table class="hdr" width="100%" cellpadding="0" cellspacing="0" style="
+    border-collapse:collapse;
+    width:100%;
+    background:#cfeef9;
+">
             <tr>
-                <td style="width:18%; text-align:center; vertical-align:top;">
-                    <div style="display:inline-block; text-align:center;">
-                        @if(!empty($company['logo']))
-                            <img src="{{ $company['logo'] }}" style="display:block; margin:0 auto; height:60px;">
-                        @else
-                            <strong>QUOTATION</strong>
-                        @endif
+                <!-- LEFT : LOGO + ISO -->
+                <td style="
+            width:18%;
+            text-align:center;
+            vertical-align:top;
+            padding:6px 4px;
+        ">
+                    @if(!empty($company['logo']))
+                        <img src="{{ $company['logo'] }}"
+                            style="max-width:150px; height:auto; display:block; margin:0 auto;">
+                    @else
+                        <div style="font-weight:700; font-size:14px;">QUOTATION</div>
+                    @endif
 
-                        <div style="
-                                margin-top:4px;
-                                font-size:11px;
-                                font-weight:600;
-                                color:#333;
-                                text-align:center;
-                            ">
-                            ISO 9001-2015
-                        </div>
+                    <div style="
+                margin-top:-2px;
+                font-size:11.5px;
+                font-weight:600;
+                color:#111;
+            ">
+                        ISO 9001-2015
                     </div>
                 </td>
 
+                <!-- RIGHT : DETAILS -->
+                <td style="
+            vertical-align:top;
+            padding:6px 8px;
+            font-size:12px;
+            line-height:1.5;
+            color:#111;
+        ">
+                    <b style="color:#006c95">Address :</b>
+                    217, 2nd Floor, Champaklal Industrial Estate, Sion East,
+                    Mumbai – 400022, India&nbsp;&nbsp;
+                    <b style="color:#006c95">Call :</b> 91-022-43159100&nbsp;&nbsp;
+                    <b style="color:#006c95">IFSC :</b> KKBK0000644&nbsp;&nbsp;
+                    <b style="color:#006c95">A/C :</b> 4611234274
+                    <br>
 
-                <td style="vertical-align:top;">
-                    <div style="
-                    min-height:80px;
-                    padding:2px 4px;
-                    box-sizing:border-box;
-                    text-align:left;
-                    font-size: 12px;
-                    font-weight: 500;
-                    line-height: 1.4;
-                    letter-spacing: 1px;
-                    width: 100%;
-                ">
-                        <b class="meta-label">Address :</b>
-                        217, 2nd Floor, Champaklal Industrial Estate, Sion East,
-                        Mumbai – 400022, India&nbsp;&nbsp;
-                        <b class="meta-label">Call :</b> 91-022-43159100
-                        <br>
+                    <b style="color:#006c95">Email :</b>
+                    sales@chromatographyworld.com,
+                    speed@chromatographyworld.com,
+                    gm-support@chromatographyworld.com&nbsp;
+                    <b style="color:#006c95">Bank :</b> Kotak Mahindra Bank&nbsp;&nbsp;
 
-                        <b class="meta-label">Email :</b>
-                        sales@chromatographyworld.com,
-                        speed@chromatographyworld.com,
-                        gm-support@chromatographyworld.com
-                        <br>
+                    <br>
 
-                        <b class="meta-label alert">GSTN :</b> 27AAGFC1217K1ZM&nbsp;&nbsp;
-                        <b class="meta-label alert">UDYAM/MSME no. :</b> UDYAM-MH-19-0078510
+                    <b style="color:#800000">GSTN :</b> 27AAGFC1217K1ZM&nbsp;&nbsp;
+                    <b style="color:#800000">Udyam / MSME :</b> UDYAM-MH-19-0078510&nbsp;&nbsp;
+                    <b style="color:#006c95">Web :</b>
+                    <span style="color:#0b57d0;">www.chromatographyworld.com</span>&nbsp;&nbsp;
+                    <b style="color:#006c95">Branch :</b> Matunga&nbsp;&nbsp;
 
-
-                        <b class="meta-label">Web :</b>
-                        <span style="color:#0b57d0;">www.chromatographyworld.com</span>
-                        <br>
-
-                        <b class="meta-label">Bank :</b> Kotak Mahindra Bank&nbsp;&nbsp;
-                        <b class="meta-label">Branch :</b> Matunga&nbsp;&nbsp;
-                        <b class="meta-label">IFSC :</b> KKBK0000644&nbsp;&nbsp;
-                        <b class="meta-label">A/C :</b> 4611234274
-                    </div>
                 </td>
             </tr>
         </table>
+
 
         {{-- AUTHORISED --}}
         <div class="authorised">
@@ -417,10 +501,10 @@
             Nomura Chemicals (Develosil), Sielc (Primesep),
             Sciencix, Poly LC, MZAnalysentechnik, Sepax, Frontier Lab.
             Click <b style="
-            color:#f7f1e3;
-            font-weight:300;
-            text-decoration:underline;
-            border-bottom:1px solid #f7f1e3;
+            color:#fff2cc;
+            font-weight:600;
+            text-decoration:none;
+            font-size: 14px;
         ">
                 www.chromatographyworld.com
             </b>
@@ -430,7 +514,7 @@
         <h4 style="
         text-align:center;
         color:#800000;
-        font-size:15.5px;
+        font-size:18px;
         font-weight:600;
         margin:4px 0;
         letter-spacing:0.3px;
@@ -492,7 +576,7 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>Sr.</th>
                     <th>Part No.</th>
                     <th>Description</th>
 
