@@ -71,6 +71,7 @@ class QuotationDetailController extends Controller
                 'state',
                 'country',
                 'quotation_type',
+                'company_details',
 
             ]);
 

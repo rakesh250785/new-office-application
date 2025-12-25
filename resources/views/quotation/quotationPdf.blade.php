@@ -46,8 +46,8 @@
         /* ================= CELLS ================= */
         th,
         td {
-            border: 0.35px solid rgba(0, 0, 0, 0.18);
-            padding: 4px;
+            border: 0.25px solid rgba(0, 0, 0, 0.18);
+            padding: 2px;
             vertical-align: top;
             white-space: normal;
             word-break: break-word;
@@ -416,12 +416,28 @@
             G.L.Science (GC Columns), S.A.S.Corporation,
             Nomura Chemicals (Develosil), Sielc (Primesep),
             Sciencix, Poly LC, MZAnalysentechnik, Sepax, Frontier Lab.
-            Click <b style="color: #fff2f2;  font-weight: 400;">www.chromatographyworld.com</b> for more details.
+            Click <b style="
+            color:#f7f1e3;
+            font-weight:300;
+            text-decoration:underline;
+            border-bottom:1px solid #f7f1e3;
+        ">
+                www.chromatographyworld.com
+            </b>
+            for more details.
         </div>
 
-        <h3 style="text-align:center;color:#800000;font-size:18px;margin:5px;">
+        <h4 style="
+        text-align:center;
+        color:#800000;
+        font-size:15.5px;
+        font-weight:600;
+        margin:4px 0;
+        letter-spacing:0.3px;
+    ">
             Quotation
-        </h3>
+        </h4>
+
 
         {{-- ================= SHIPPING ================= --}}
         <table class="ship">
@@ -602,25 +618,30 @@
 
         {{-- ================= FOOTER ================= --}}
         <table width="100%" cellpadding="0" cellspacing="0" style="
-        border-collapse:collapse;
-        font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-        font-size:10px;
-        margin-top:6px;
+    border-collapse:collapse;
+    border:0;
+    outline:0;
+    box-shadow:none;
 
-        background-image: url('{{ $term_conditon_bg_img }}');
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 100% 100%;
-    ">
+    font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+    font-size:10px;
+    margin-top:6px;
+
+    background-image: url('{{ $term_conditon_bg_img }}');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+">
 
             <!-- TERMS + SIGNATORY -->
-            <tr>
+            <tr style="border:0;">
                 <!-- LEFT : TERMS -->
                 <td width="72%" valign="top" style="
-                padding:5px 7px;
-                line-height:1.25;
-                background: transparent;
-            ">
+            padding:5px 7px;
+            line-height:1.25;
+            background: transparent;
+            border:0;
+        ">
 
                     <div style="
                 font-weight:700;
@@ -630,13 +651,8 @@
                         Terms & Conditions:
                     </div>
 
-                    <!-- 🔑 TERMS CONTENT CONTROL -->
-                    <div style="
-                line-height:1.25;
-            ">
-
-
-                        <div class="terms">
+                    <div style="line-height:1.25; border:0;">
+                        <div class="terms" style="border:0;">
                             {!! $terms !!}
                         </div>
                     </div>
@@ -644,17 +660,18 @@
 
                 <!-- RIGHT : SIGNATORY -->
                 <td width="28%" valign="top" style="
-                padding:5px 7px;
-                text-align:right;
-                line-height:1.25;
-                background: transparent;
-            ">
+            padding:5px 7px;
+            text-align:right;
+            line-height:1.25;
+            background: transparent;
+            border:0;
+        ">
                     <div style="font-weight:700; color:#006c95;">
                         For Chromatography World
                     </div>
 
                     <div style="font-weight:700; color:#006c95; margin-top:4px;">
-                        Authorized signatory
+                        Authorized Signatory
                     </div>
 
                     <div style="margin-top:6px; font-weight:600;">
@@ -663,25 +680,52 @@
                 </td>
             </tr>
 
+
+
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" style="
+        border-collapse:collapse;
+        border:0;
+        outline:0;
+        box-shadow:none;
+    
+        font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+        font-size:10px;
+        margin-top:6px;
+    
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 100% 100%;
+    ">
+
+
+
             <!-- FOOT STRIP -->
-            <tr>
+            <tr style="border:0;">
                 <td colspan="2" style="
                 background:#c9f1ff;
                 text-align:center;
                 padding:6px 8px;
-                font-size:12px;
+                font-size:13px;
                 font-weight:500;
+                border:0;
             ">
                     <div style="margin-bottom:2px;">
                         {{ $branch_address }}
                     </div>
 
-                    <div style="color:maroon;font-size:14px;font-weight:700;">
+                    <div style="
+                    color:maroon;
+                    font-size:13px;
+                    font-weight:700;
+                ">
                         We Look Forward To Your Valuable Order! &nbsp; Thank You!
                     </div>
                 </td>
             </tr>
+
         </table>
+
 
 
 
