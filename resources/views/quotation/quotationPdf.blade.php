@@ -167,8 +167,8 @@
             background: #2b2b2b;
             color: #f5f2e8;
             text-align: center;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1;
             letter-spacing: 0.25px;
         }
 
@@ -196,6 +196,7 @@
             vertical-align: middle;
             word-break: break-word;
             text-align: left;
+            font-size: 10px;
         }
 
         /* Draw ONLY horizontal row lines */
@@ -269,17 +270,17 @@
         }
 
         /* Spec / Comment rows */
-        .items tbody tr.spec-row td,    
+        .items tbody tr.spec-row td,
         .items tbody tr.comment-row td {
             font-size: 9px;
-            line-height: 1.4;
+            line-height: 1;
         }
 
         /* ================= TOTAL ROW ================= */
         .items tbody tr.total-row td {
             background: #333 !important;
             color: #f5f2e8;
-            font-size: 14.5px;
+            font-size: 10px;
             font-weight: 600;
             letter-spacing: 0.3px;
             border: none !important;
@@ -399,7 +400,7 @@
         .comment-row td li {
             margin: 0 !important;
             padding: 0 !important;
-            line-height: 1.2 !important;
+            line-height: 1 !important;
         }
 
         .spec-row td,
@@ -423,6 +424,7 @@
         $currency = $currency->name ?? '';
         $isMH = ($shipping['state'] ?? '') === 'Maharashtra';
         $isGW = ($quotation['quotation_type'] ?? '') === 'GW';
+
     @endphp
 
     <div class="paper">
@@ -625,7 +627,7 @@
                         <td>{!! $it['description'] !!}</td>
 
                         @if($isGW)
-                            <td>{{ $it['principal']['type'] ?? '' }}</td>
+                            <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
                             <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
                         @endif
 
@@ -667,13 +669,13 @@
                                 {{-- HEADING : 30% --}}
                                 @if(!empty($it['heading']))
                                     <span style="
-                                            display:inline-block;
-                                            width:68%;
-                                            vertical-align:top;
-                                            padding-right:12px;
-                                            box-sizing:border-box;
-                                            line-height:1.35;
-                                        ">
+                                                                                display:inline-block;
+                                                                                width:68%;
+                                                                                vertical-align:top;
+                                                                                padding-right:12px;
+                                                                                box-sizing:border-box;
+                                                                                line-height:1;
+                                                                            ">
                                         <b style="color:#6b4f1d;">HEADING :</b><br>
                                         {!! $it['heading'] !!}
                                     </span>
@@ -682,12 +684,12 @@
                                 {{-- COMMENTS : 70% --}}
                                 @if(!empty($it['product_specification']))
                                     <span style="
-                                            display:inline-block;
-                                            width:30%;
-                                            vertical-align:top;
-                                            box-sizing:border-box;
-                                            line-height:1.35;
-                                        ">
+                                                                                display:inline-block;
+                                                                                width:30%;
+                                                                                vertical-align:top;
+                                                                                box-sizing:border-box;
+                                                                                line-height:1.35;
+                                                                            ">
                                         <b style="color:#6b4f1d;">COMMENTS :</b><br>
                                         {!! $it['product_specification'] !!}
                                     </span>
