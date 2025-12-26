@@ -289,7 +289,7 @@
             border: none !important;
         }
 
-        .total-row .label { 
+        .total-row .label {
             text-align: center;
         }
 
@@ -304,7 +304,7 @@
         .html-content ul,
         .html-content ol {
             padding-left: 18px;
-            margin: 6px 0;          
+            margin: 6px 0;
         }
 
         .html-content li {
@@ -422,6 +422,25 @@
         $currency = $currency->name ?? '';
         $isMH = ($shipping['state'] ?? '') === 'Maharashtra';
         $isGW = ($quotation['quotation_type'] ?? '') === 'GW';
+
+    @endphp
+
+    @php
+        $isGW = ($quotation['quotation_type'] === 'GW');
+        $isMH = ($shipping['state'] === 'Maharashtra');
+
+        if ($isGW) {
+            $itemMetaColspan = 15;
+            $noteColspan = 16;
+        } else {
+            if ($isMH) {
+                $itemMetaColspan = 13;
+                $noteColspan = 14;
+            } else {
+                $itemMetaColspan = 11;
+                $noteColspan = 13;
+            }
+        }
 
     @endphp
 
@@ -666,13 +685,13 @@
                                 {{-- HEADING : 30% --}}
                                 @if(!empty($it['heading']))
                                     <span style="
-                                                                                                                    display:inline-block;
-                                                                                                                    width:68%;
-                                                                                                                    vertical-align:top;
-                                                                                                                    padding-right:12px;
-                                                                                                                    box-sizing:border-box;
-                                                                                                                    line-height:1;
-                                                                                                                ">
+                                                                                        display:inline-block;
+                                                                                        width:68%;
+                                                                                        vertical-align:top;
+                                                                                        padding-right:12px;
+                                                                                        box-sizing:border-box;
+                                                                                        line-height:1;
+                                                                                    ">
                                         <b style="color:#6b4f1d; font-size: 8px">HEADING :</b><br>
                                         {!! $it['heading'] !!}
                                     </span>
@@ -681,12 +700,12 @@
                                 {{-- COMMENTS : 70% --}}
                                 @if(!empty($it['product_specification']))
                                     <span style="
-                                                                                                                    display:inline-block;
-                                                                                                                    width:30%;
-                                                                                                                    vertical-align:top;
-                                                                                                                    box-sizing:border-box;
-                                                                                                                    line-height:1.35;
-                                                                                                                ">
+                                                                                        display:inline-block;
+                                                                                        width:30%;
+                                                                                        vertical-align:top;
+                                                                                        box-sizing:border-box;
+                                                                                        line-height:1.35;
+                                                                                    ">
                                         <b style="color:#6b4f1d; font-size: 8px">COMMENTS :</b><br>
                                         {!! $it['product_specification'] !!}
                                     </span>
@@ -721,25 +740,33 @@
                     <td>{{ number_format($totals['grand_total'], 2) }}</td>
                     <td></td>
                 </tr>
+
+                @if(!empty($product_description))
+                    <tr>
+                        <td colspan="{{ $noteColspan }}" style="border:none; padding:6px 4px;">
+                            <b>NOTES :</b> {!! $product_description!!}
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
 
         {{-- ================= FOOTER ================= --}}
         <table width="100%" cellpadding="0" cellspacing="0" style="
-    border-collapse:collapse;
-    border:0;
-    outline:0;
-    box-shadow:none;
+            border-collapse:collapse;
+            border:0;
+            outline:0;
+            box-shadow:none;
 
-    font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-    font-size:10px;
-    margin-top:6px;
+            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+            font-size:10px;
+            margin-top:6px;
 
-    background-image: url('{{ $term_conditon_bg_img }}');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 100% 100%;
-">
+            background-image: url('{{ $term_conditon_bg_img }}');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100% 100%;
+        ">
 
             <!-- TERMS + SIGNATORY -->
             <tr style="border:0;">

@@ -366,6 +366,7 @@ class QuotationDetailController extends Controller
                     'in_words' => Utility::numberToWords($grandTotal, $currencyInfo->name),
                 ],
                 'terms' => $data['payment_term_condition'],
+                'product_description' => $data['product_description'],
             ];
 
             // Dispatch for pdf
