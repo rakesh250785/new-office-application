@@ -269,7 +269,7 @@ class QuotationDetailController extends Controller
                     $grandTotal += $totalAmount;
                     $subUnitTotal += $price;
                     $subNetTotal += $afterDiscount;
-                    $totalIgstTotal += $totalAmount;
+                    $totalIgstTotal += $gstAmount;
 
                     $productList[] = [
                         'quotation_id' => $quotationId,

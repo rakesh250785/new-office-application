@@ -196,7 +196,7 @@
             vertical-align: middle;
             word-break: break-word;
             text-align: left;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         /* Draw ONLY horizontal row lines */
@@ -257,42 +257,40 @@
         }
 
         /* Row colors */
-        .items tbody tr td {
-            background: #ffffff;
+        .items tbody tr td,
+        th {
+            background: #eef6f9;
+            font-size: 11px;
         }
 
         .items tbody tr.odd td {
-            background: #fff2f2;
+            background: #f2caca;
         }
 
         .items tbody tr.even td {
-            background: #f2caca;
+            background: #f8dede;
         }
 
         /* Spec / Comment rows */
         .items tbody tr.spec-row td,
         .items tbody tr.comment-row td {
-            font-size: 9px;
+            font-size: 8px;
             line-height: 1;
+            background: #fff7e6;
         }
 
         /* ================= TOTAL ROW ================= */
         .items tbody tr.total-row td {
             background: #333 !important;
             color: #f5f2e8;
-            font-size: 10px;
+            font-size: 15px;
             font-weight: 600;
             letter-spacing: 0.3px;
             border: none !important;
         }
 
-        .total-row .label {
+        .total-row .label { 
             text-align: center;
-        }
-
-        .total-row .grand-total {
-            font-size: 18.5px;
-            font-weight: 700;
         }
 
         /* ================= FOOTER / TERMS ================= */
@@ -306,7 +304,7 @@
         .html-content ul,
         .html-content ol {
             padding-left: 18px;
-            margin: 6px 0;
+            margin: 6px 0;          
         }
 
         .html-content li {
@@ -518,7 +516,8 @@
         color:#800000;
         font-size:18px;
         font-weight:600;
-        margin:4px 0;
+        margin:2px 0;
+        vertical-align: middle;
         letter-spacing:0.3px;
     ">
             Quotation
@@ -538,7 +537,9 @@
 
             <tr>
                 <th>Address</th>
-                <td colspan="5">{{ $shipping['address'] }}</td>
+                <td colspan="3">{{ $shipping['address'] }}</td>
+                <th>Enq. Ref.</th>
+                <td>{{ $quotation['ref'] }}</td>
             </tr>
 
             <tr>
@@ -568,10 +569,6 @@
                 <td>{{ $quotation['date'] }}</td>
             </tr>
 
-            <tr>
-                <th>Enq. Ref.</th>
-                <td colspan="5">{{ $quotation['ref'] }}</td>
-            </tr>
         </table>
 
         {{-- ================= ITEMS ================= --}}
@@ -655,7 +652,7 @@
                         <tr class="spec-row">
                             <td></td>
                             <td colspan="{{ $isMH ? 15 : 13 }}">
-                                <b style="color:#4f83b3;">SPECIFICATION :</b>
+                                <b style="color:#6b4f1d; font-size: 8px;">SPECIFICATION :</b>
                                 {!! $it['specification'] !!}
                             </td>
                         </tr>
@@ -669,14 +666,14 @@
                                 {{-- HEADING : 30% --}}
                                 @if(!empty($it['heading']))
                                     <span style="
-                                                                                display:inline-block;
-                                                                                width:68%;
-                                                                                vertical-align:top;
-                                                                                padding-right:12px;
-                                                                                box-sizing:border-box;
-                                                                                line-height:1;
-                                                                            ">
-                                        <b style="color:#6b4f1d;">HEADING :</b><br>
+                                                                                                                    display:inline-block;
+                                                                                                                    width:68%;
+                                                                                                                    vertical-align:top;
+                                                                                                                    padding-right:12px;
+                                                                                                                    box-sizing:border-box;
+                                                                                                                    line-height:1;
+                                                                                                                ">
+                                        <b style="color:#6b4f1d; font-size: 8px">HEADING :</b><br>
                                         {!! $it['heading'] !!}
                                     </span>
                                 @endif
@@ -684,13 +681,13 @@
                                 {{-- COMMENTS : 70% --}}
                                 @if(!empty($it['product_specification']))
                                     <span style="
-                                                                                display:inline-block;
-                                                                                width:30%;
-                                                                                vertical-align:top;
-                                                                                box-sizing:border-box;
-                                                                                line-height:1.35;
-                                                                            ">
-                                        <b style="color:#6b4f1d;">COMMENTS :</b><br>
+                                                                                                                    display:inline-block;
+                                                                                                                    width:30%;
+                                                                                                                    vertical-align:top;
+                                                                                                                    box-sizing:border-box;
+                                                                                                                    line-height:1.35;
+                                                                                                                ">
+                                        <b style="color:#6b4f1d; font-size: 8px">COMMENTS :</b><br>
                                         {!! $it['product_specification'] !!}
                                     </span>
                                 @endif
