@@ -269,9 +269,9 @@
         }
 
         /* Spec / Comment rows */
-        .items tbody tr.spec-row td,
+        .items tbody tr.spec-row td,    
         .items tbody tr.comment-row td {
-            font-size: 11.6px;
+            font-size: 9px;
             line-height: 1.4;
         }
 

@@ -277,17 +277,22 @@ class QuotationDetailController extends Controller
                         'product_id' => $item['product_id'] ?? 0,
                         'principal_id' => $item['principal_id'] ?? null,
                         'part_no' => $item['part_no'] ?? '',
-                        'description' => $item['description'] ?? '',
+
+                        'description' => $item['description'] ?? '', // Editable
+                        'principal' => $item['principal']['type'] ?? $item['principal'] ?? null, // Editable
+                        'heading' => $item['heading'] ?? '', // Editable
+                        'specification' => $item['specification'] ?? '', // Editable
+
                         'hsn_code' => $item['hsn_code'] ?? '',
-                        'quantity' => $quantity,
+                        'quantity' => $quantity, // Editable
                         'in_stock' => $item['in_stock'] ?? 0,
-                        'price' => $price,
-                        'discount' => $discount,
+                        'price' => $price, // Editable
+                        'discount' => $discount, // Editable
                         'net_price' => $afterDiscount,
                         'igst' => $igst,
                         'total' => $totalAmount,
-                        'notes' => $item['notes'] ?? null,
-                        'product_specification' => $item['product_specification'] ?? null,
+                        'notes' => $item['notes'] ?? null, // Editable
+                        'product_specification' => $item['product_specification'] ?? null, // Editable
                         'delivery_date_id' => $item['delivery_date_id'] ?? 0,
                         'deleted_at' => null,
                         'created_at' => now(),
@@ -422,7 +427,7 @@ class QuotationDetailController extends Controller
 
             $query = QuotationAdd::with([
                 'quotationDetails',
-                'quotationDetails.principal:id,type',
+                // 'quotationDetails.principal:id,type',
                 'companyDetails:id,company_name,email_id,gst_number,state_id,country_id',
                 'branchDetails:id,name',
                 'currencyDetails:id,code',
