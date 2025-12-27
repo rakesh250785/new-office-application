@@ -105,11 +105,11 @@
         /* Cells */
         .hdr td {
             /* padding: 3px 8px 2px 8px; */
-            /* 🔑 tiny bottom padding like old */
+            /*  tiny bottom padding like old */
             vertical-align: top;
             font-weight: 500;
             line-height: 1.2;
-            /* 🔑 tighter like old */
+            /*  tighter like old */
             color: #333;
         }
 
@@ -263,20 +263,18 @@
             font-size: 11px;
         }
 
-        .items tbody tr.odd td {
-            background: #f2caca;
+        /* ODD rows */
+        .items tbody tr.item-row.odd td,
+        .items tbody tr.spec-row.odd td,
+        .items tbody tr.comment-row.odd td {
+            background: #fdecec;
         }
 
-        .items tbody tr.even td {
-            background: #f8dede;
-        }
-
-        /* Spec / Comment rows */
-        .items tbody tr.spec-row td,
-        .items tbody tr.comment-row td {
-            font-size: 8px;
-            line-height: 1;
-            background: #fff7e6;
+        /* EVEN rows */
+        .items tbody tr.item-row.even td,
+        .items tbody tr.spec-row.even td,
+        .items tbody tr.comment-row.even td {
+            background: #f6d6d6;
         }
 
         /* ================= TOTAL ROW ================= */
@@ -459,16 +457,17 @@
             text-align:center;
             vertical-align:top;
             padding:6px 4px;
+              
         ">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}"
-                            style="max-width:150px; height:auto; display:block; margin:0 auto;">
+                            style="max-width:150px; height:auto; display:block; margin:0 auto;margin-top: -8px">
                     @else
                         <div style="font-weight:700; font-size:14px;">QUOTATION</div>
                     @endif
 
                     <div style="
-                margin-top:-2px;
+                margin-top: 0px;
                 font-size:11.5px;
                 font-weight:600;
                 color:#111;
@@ -668,7 +667,7 @@
                     </tr>
 
                     @if($isGW && !empty($it['specification']))
-                        <tr class="spec-row">
+                        <tr class="spec-row {{ $rowClass }}">
                             <td></td>
                             <td colspan="{{ $isMH ? 15 : 13 }}">
                                 <b style="color:#6b4f1d; font-size: 8px;">SPECIFICATION :</b>
@@ -678,20 +677,21 @@
                     @endif
 
                     @if(!empty($it['heading']) || !empty($it['product_specification']))
-                        <tr class="comment-row">
+                        <tr class="comment-row {{ $rowClass }}">
                             <td></td>
                             <td colspan="{{ $isMH ? 15 : 13 }}" style="padding:6px 8px; font-size:11.5px;">
 
                                 {{-- HEADING : 30% --}}
                                 @if(!empty($it['heading']))
-                                    <span style="
-                                                                                        display:inline-block;
-                                                                                        width:68%;
-                                                                                        vertical-align:top;
-                                                                                        padding-right:12px;
-                                                                                        box-sizing:border-box;
-                                                                                        line-height:1;
-                                                                                    ">
+                                    <span
+                                        style="
+                                                                                                                                                                                                                display:inline-block;
+                                                                                                                                                                                                                width:68%;
+                                                                                                                                                                                                                vertical-align:top;
+                                                                                                                                                                                                                padding-right:12px;
+                                                                                                                                                                                                                box-sizing:border-box;
+                                                                                                                                                                                                                line-height:1;
+                                                                                                                                                                                                            ">
                                         <b style="color:#6b4f1d; font-size: 8px">HEADING :</b><br>
                                         {!! $it['heading'] !!}
                                     </span>
@@ -699,13 +699,14 @@
 
                                 {{-- COMMENTS : 70% --}}
                                 @if(!empty($it['product_specification']))
-                                    <span style="
-                                                                                        display:inline-block;
-                                                                                        width:30%;
-                                                                                        vertical-align:top;
-                                                                                        box-sizing:border-box;
-                                                                                        line-height:1.35;
-                                                                                    ">
+                                    <span
+                                        style="
+                                                                                                                                                                                                                display:inline-block;
+                                                                                                                                                                                                                width:30%;
+                                                                                                                                                                                                                vertical-align:top;
+                                                                                                                                                                                                                box-sizing:border-box;
+                                                                                                                                                                                                                line-height:1.35;
+                                                                                                                                                                                                            ">
                                         <b style="color:#6b4f1d; font-size: 8px">COMMENTS :</b><br>
                                         {!! $it['product_specification'] !!}
                                     </span>
