@@ -308,7 +308,7 @@ class QuotationDetailController extends Controller
             }
 
             // Get pdf info
-            $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
+            $states = States::where('id', $data['billing_state_id'])->first() ?? null;
 
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('branch_address');
             $pdfRec = [

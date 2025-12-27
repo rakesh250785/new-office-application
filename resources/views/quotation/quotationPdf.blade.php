@@ -60,8 +60,7 @@
             box-sizing: border-box;
 
             /* draw ONLY from right + bottom */
-            border-right: 0.4px solid #c8c8c8;
-            border-bottom: 0.4px solid #c8c8c8;
+            border: 0.4px solid #c8c8c8;
         }
 
         /* Close LEFT edge */
@@ -201,30 +200,30 @@
 
         /* Draw ONLY horizontal row lines */
         .ship tr {
-            border-bottom: 0.2px solid #cfcfcf;
+            border: 0.2px solid #cfcfcf;
         }
 
         /* Top border */
         .ship tr:first-child th,
         .ship tr:first-child td {
-            border-top: 0.2px solid #cfcfcf;
+            border: 0.2px solid #cfcfcf;
         }
 
         /* Vertical separators — drawn once */
         .ship th:not(:last-child),
         .ship td:not(:last-child) {
-            border-right: 0.2px solid #cfcfcf;
+            border: 0.2px solid #cfcfcf;
         }
 
         /* Left & right edges */
         .ship th:first-child,
         .ship td:first-child {
-            border-left: 0.2px solid #cfcfcf;
+            border: 0.2px solid #cfcfcf;
         }
 
         .ship th:last-child,
         .ship td:last-child {
-            border-right: 0.2px solid #cfcfcf;
+            border: 0.2px solid #cfcfcf;
         }
 
         /* Header cells */
@@ -284,7 +283,26 @@
             font-size: 15px;
             font-weight: 600;
             letter-spacing: 0.3px;
+        }
+
+        /* Remove all inner borders first */
+        .items tbody tr.total-row td {
             border: none !important;
+        }
+
+        /* Left edge */
+        .items tbody tr.total-row td:first-child {
+            border-left: 0.5px solid #cfcfcf !important;
+        }
+
+        /* Right edge */
+        .items tbody tr.total-row td:last-child {
+            border-right: 0.5px solid #cfcfcf !important;
+        }
+
+        /* Bottom edge (entire row) */
+        .items tbody tr.total-row td {
+            border-bottom: 0.5px solid #cfcfcf !important;
         }
 
         .total-row .label {
@@ -427,17 +445,14 @@
         $isGW = ($quotation['quotation_type'] === 'GW');
         $isMH = ($shipping['state'] === 'Maharashtra');
 
-        if ($isGW) {
-            $itemMetaColspan = 15;
+        if (!$isGW && $isMH) {
+            $noteColspan = 14;
+        } else if (!$isGW && !$isMH) {
+            $noteColspan = 12;
+        } else if ($isGW && !$isMH) {
+            $noteColspan = 14;
+        } elseif ($isGW && $isMH) {
             $noteColspan = 16;
-        } else {
-            if ($isMH) {
-                $itemMetaColspan = 13;
-                $noteColspan = 14;
-            } else {
-                $itemMetaColspan = 11;
-                $noteColspan = 13;
-            }
         }
 
     @endphp
@@ -668,8 +683,7 @@
 
                     @if($isGW && !empty($it['specification']))
                         <tr class="spec-row {{ $rowClass }}">
-                            <td></td>
-                            <td colspan="{{ $isMH ? 15 : 13 }}">
+                            <td colspan="{{ $noteColspan}}">
                                 <b style="color:#6b4f1d; font-size: 8px;">SPECIFICATION :</b>
                                 {!! $it['specification'] !!}
                             </td>
@@ -678,44 +692,45 @@
 
                     @if(!empty($it['heading']) || !empty($it['product_specification']))
                         <tr class="comment-row {{ $rowClass }}">
-                            <td></td>
-                            <td colspan="{{ $isMH ? 15 : 13 }}" style="padding:6px 8px; font-size:11.5px;">
+                            <td colspan="{{ $noteColspan }}" style="padding:4px 6px;">
 
-                                {{-- HEADING : 30% --}}
-                                @if(!empty($it['heading']))
-                                    <span
-                                        style="
-                                                                                                                                                                                                                display:inline-block;
-                                                                                                                                                                                                                width:68%;
-                                                                                                                                                                                                                vertical-align:top;
-                                                                                                                                                                                                                padding-right:12px;
-                                                                                                                                                                                                                box-sizing:border-box;
-                                                                                                                                                                                                                line-height:1;
-                                                                                                                                                                                                            ">
-                                        <b style="color:#6b4f1d; font-size: 8px">HEADING :</b><br>
-                                        {!! $it['heading'] !!}
-                                    </span>
-                                @endif
+                                <table width="100%" cellpadding="0" cellspacing="0" style="
+                                                                                                    border:0;
+                                                                                                    border-collapse:collapse;
+                                                                                                ">
+                                    <tr>
+                                        {{-- LEFT : HEADING (60%) --}}
+                                        <td width="60%" valign="top" style="
+                                                                                                            border:0;
+                                                                                                            padding-right:8px;
+                                                                                                            font-size:8.5px;
+                                                                                                            line-height:1.35;
+                                                                                                            word-break:break-word;
+                                                                                                        ">
+                                            @if(!empty($it['heading']))
+                                                <b style="color:#6b4f1d;">HEADING:</b><br>
+                                                {!! $it['heading'] !!}
+                                            @endif
+                                        </td>
 
-                                {{-- COMMENTS : 70% --}}
-                                @if(!empty($it['product_specification']))
-                                    <span
-                                        style="
-                                                                                                                                                                                                                display:inline-block;
-                                                                                                                                                                                                                width:30%;
-                                                                                                                                                                                                                vertical-align:top;
-                                                                                                                                                                                                                box-sizing:border-box;
-                                                                                                                                                                                                                line-height:1.35;
-                                                                                                                                                                                                            ">
-                                        <b style="color:#6b4f1d; font-size: 8px">COMMENTS :</b><br>
-                                        {!! $it['product_specification'] !!}
-                                    </span>
-                                @endif
+                                        {{-- RIGHT : COMMENTS (40%) --}}
+                                        <td width="40%" valign="top" style="
+                                                                                                            border:0;
+                                                                                                            font-size:8.5px;
+                                                                                                            line-height:1.35;
+                                                                                                            word-break:break-word;
+                                                                                                        ">
+                                            @if(!empty($it['product_specification']))
+                                                <b style="color:#6b4f1d;">COMMENTS:</b><br>
+                                                {!! $it['product_specification'] !!}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                </table>
 
                             </td>
                         </tr>
                     @endif
-
 
 
                 @endforeach
@@ -834,8 +849,6 @@
         background-size: 100% 100%;
     ">
 
-
-
             <!-- FOOT STRIP -->
             <tr style="border:0;">
                 <td colspan="2" style="
@@ -859,11 +872,7 @@
                     </div>
                 </td>
             </tr>
-
         </table>
-
-
-
 
     </div>
     <script type="text/php">
