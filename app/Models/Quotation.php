@@ -43,7 +43,7 @@ class Quotation extends Model
         'branch_id',
         'pdf_name',
         'enq_ref',
-        'currency_id',
+        'currency_id',      
         'company_id',
         'delivery_date_id',
         'delivery_date_custom',
@@ -51,6 +51,11 @@ class Quotation extends Model
         'total_amount',
         'user_id',
         'status',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function getCreatedAtAttribute($value)
@@ -102,5 +107,4 @@ class Quotation extends Model
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
-    
 }
