@@ -19,7 +19,6 @@ use App\Models\QuatationAdd;
 use App\Models\Quotation;
 use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
-use App\Models\Reason;
 use App\Models\States;
 use Carbon\Carbon;
 use Config;
@@ -59,7 +58,7 @@ class FullOrderController extends Controller
                 'shipping_email',
                 'company_id',
                 'quotation_type_id',
-                'notification_id',
+                // 'notification_id',
                 'owner_id',
                 'date',
                 'enq_ref',
@@ -79,7 +78,7 @@ class FullOrderController extends Controller
                 'overdues_value',
                 'overdue_no',
                 'courier_id',
-
+                'submit_type',
             ]);
 
             // Validation rule
@@ -111,7 +110,7 @@ class FullOrderController extends Controller
                 'shipping_landline' => 'required|string|max:15',
                 'company_id' => 'required|integer|exists:customers,id',
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
-                'notification_id' => 'required|integer|exists:notifications_email,id',
+                // 'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
@@ -139,6 +138,10 @@ class FullOrderController extends Controller
             // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation error', $validator->errors(), 221);
+            }
+
+            if ($data['submit_type'] == 'order_preview') {
+                return Utility::apiSuccess('order_preview', [], 200);
             }
 
             // Check if quotation already exist
@@ -526,7 +529,7 @@ class FullOrderController extends Controller
                 'shipping_state_id',
                 'shipping_landline',
                 'product_description',
-                'notification_id',
+                // 'notification_id',
                 'quotation_type_id',
                 'payment_term_condition',
                 'date',
