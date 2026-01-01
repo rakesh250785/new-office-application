@@ -124,7 +124,8 @@ class QuotationDetailController extends Controller
                 'product_list.*.notes' => 'nullable|string|max:1000',
                 'product_list.*.product_specification' => 'nullable|string',
                 'product_list.*.specification' => 'nullable|string',
-                'product_list.*.principal.type' => 'required|string',
+                'product_list.*.principal' => 'required_without:product_list.*.principal.type',
+                'product_list.*.principal.type' => 'required_without:product_list.*.principal',
                 'total_amount' => 'required|numeric|min:0',
             ]);
 
@@ -154,7 +155,7 @@ class QuotationDetailController extends Controller
                 : $this->generateQuotationNumber($branchName, $quotationDate, $branchId);
 
             // PDF path
-            $pdfFilePath = 'quotation_'.time().'_'.date('dmy').'.pdf';
+            $pdfFilePath = now()->year.'/quotation_'.time().'_'.date('dmy').'.pdf';
 
             // Prepare quotation data
             $quotationData = [
@@ -469,8 +470,7 @@ class QuotationDetailController extends Controller
                 ->orderByDesc('id');
 
             $quotationData = $query->paginate($perPage)->toArray();
-            $year = date('Y');
-            $quotationData['base_pdf_url'] = url("storage/quotationsPdf/{$year}/");
+            $quotationData['base_pdf_url'] = url('storage/quotationsPdf/');
 
             return Utility::apiSuccess('list_quotation', $quotationData, 200);
 

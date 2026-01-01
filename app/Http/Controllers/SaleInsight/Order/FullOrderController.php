@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Jobs\CloseOrder;
 use App\Jobs\ProcessOrder;
 use App\Models\Branch;
-use App\Models\Courier;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Order;
@@ -21,7 +20,6 @@ use App\Models\QuotationFormat;
 use App\Models\QuotationType;
 use App\Models\States;
 use Carbon\Carbon;
-use Config;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -174,7 +172,7 @@ class FullOrderController extends Controller
             $orderNumber = $this->generateOrderNumber($branchName, $branchId, $orderDate);
 
             // PDF path
-            $pdfFilePath = 'order_'.time().'_'.date('dmy').'.pdf';
+            $pdfFilePath = now()->year.'/order_'.time().'_'.date('dmy').'.pdf';
 
             // Prepare order data
             $orderData = [
@@ -625,8 +623,7 @@ class FullOrderController extends Controller
             $query->orderByDesc('id');
 
             $orderData = $query->paginate($perPage)->toArray();
-            $year = date('Y');
-            $orderData['base_pdf_url'] = url("storage/ordersPdf/{$year}/");
+            $orderData['base_pdf_url'] = url('storage/ordersPdf/');
 
             return Utility::apiSuccess('list_order', $orderData, 200);
         } catch (Exception $ex) {

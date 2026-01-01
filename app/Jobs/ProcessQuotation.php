@@ -41,8 +41,7 @@ class ProcessQuotation implements ShouldQueue
 
             $fileName = $this->data['pdf_name'];
             $oldFileName = $this->data['old_pdf_name'];
-            $year = now()->year;
-            $directory = "quotationsPdf/{$year}";
+            $directory = "quotationsPdf";
             $path = "{$directory}/{$fileName}";
             $disk = Storage::disk('public');
 
@@ -67,7 +66,7 @@ class ProcessQuotation implements ShouldQueue
             }
 
             if (! empty($oldFileName)) {
-                $oldFile = "quotationsPdf/{$year}/{$oldFileName}";
+                $oldFile = "quotationsPdf/{$oldFileName}";
                 if (! $disk->exists($oldFile)) {
                     $possibleFiles = $disk->allFiles('quotationsPdf');
                     foreach ($possibleFiles as $file) {

@@ -38,8 +38,7 @@ class ProcessOrder implements ShouldQueue
 
             $fileName = $this->data['pdf_name'];
             $oldFileName = $this->data['old_pdf_name'];
-            $year = now()->year;
-            $directory = "ordersPdf/{$year}";
+            $directory = "ordersPdf";
             $path = "{$directory}/{$fileName}";
             $disk = Storage::disk('public');
 
@@ -71,7 +70,7 @@ class ProcessOrder implements ShouldQueue
             }
 
             if (! empty($oldFileName)) {
-                $oldFile = "ordersPdf/{$year}/{$oldFileName}";
+                $oldFile = "ordersPdf/{$oldFileName}";
                 if (! $disk->exists($oldFile)) {
                     $possibleFiles = $disk->allFiles('ordersPdf');
                     foreach ($possibleFiles as $file) {
