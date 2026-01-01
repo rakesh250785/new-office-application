@@ -13,12 +13,12 @@ use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderDetails;
-use App\Models\PaymentDayAdvance;
 use App\Models\PendingQuotation;
 use App\Models\QuatationAdd;
 use App\Models\Quotation;
 use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
+use App\Models\QuotationType;
 use App\Models\States;
 use Carbon\Carbon;
 use Config;
@@ -79,7 +79,16 @@ class FullOrderController extends Controller
                 'overdue_no',
                 'courier_id',
                 'submit_type',
+                'state',
+                'country',
+                'quotation_type',
+                'company_details',
+                'delivery_term_data',
+                'delivery_date_custom',
+                'courier_name',
             ]);
+
+            // return $data;
 
             // Validation rule
             $validator = Validator::make($data, [
@@ -167,8 +176,6 @@ class FullOrderController extends Controller
             // PDF path
             $pdfFilePath = 'order_'.time().'_'.date('dmy').'.pdf';
 
-            $OrderDate = Carbon::now()->format('Y-m-d 00:00:00');
-
             // Prepare order data
             $orderData = [
                 'unique_quotation_no' => $data['unique_quotation_no'],
@@ -196,7 +203,7 @@ class FullOrderController extends Controller
                 'owner_id' => $data['owner_id'] ?? null,
                 'quotation_type_id' => $data['quotation_type_id'] ?? null,
                 'payment_term_condition' => $data['payment_term_condition'] ?? null,
-                'date' => $OrderDate ?? null,
+                'date' => $data['date'] ?? null,
                 'enq_ref' => $data['enq_ref'] ?? null,
                 'prepard_by' => $data['prepard_by'] ?? null,
                 'branch_id' => $branchId ?? null,
@@ -211,7 +218,6 @@ class FullOrderController extends Controller
                 'is_order_closed' => '0',
                 'courier_id' => $data['courier_id'] ?? null,
                 'is_shipment_pending' => 1,
-
             ];
 
             // Update customer info
@@ -281,7 +287,14 @@ class FullOrderController extends Controller
                     'product_id' => $item['product_id'] ?? 0,
                     'principal_id' => $item['principal_id'] ?? null,
                     'part_no' => $item['part_no'] ?? '',
-                    'description' => $item['description'] ?? '',
+
+                    'description' => $item['description'] ?? '', // Editable
+                    'principal' => $item['principal']['type'] ?? $item['principal'] ?? null, // Editable
+                    'heading' => $item['heading'] ?? '', // Editable
+                    'specification' => $item['specification'] ?? '', // Editable
+                    'notes' => $item['notes'] ?? null, // Editable
+                    'product_specification' => $item['product_specification'] ?? null, // Editable
+
                     'hsn_code' => $item['hsn_code'] ?? '',
                     'in_stock' => $item['in_stock'] ?? 0,
                     'price' => $price,
@@ -294,8 +307,6 @@ class FullOrderController extends Controller
                     'total' => $totalAmount,
                     'status' => 0,
                     'partial_order_status' => 0,
-                    'notes' => $item['notes'] ?? null,
-                    'product_specification' => $item['product_specification'] ?? null,
                     'delivery_date_id' => $item['delivery_date_id'] ?? 0,
                     'deleted_at' => null,
                     'created_at' => now(),
@@ -334,7 +345,11 @@ class FullOrderController extends Controller
             ];
 
             // Update quotation status
-            $updateQuotationStatus = Quotation::where($quotationFilter)->update(['is_order_pending' => '0']);
+            $updateQuotationStatus = Quotation::where($quotationFilter)->first();
+            if ($updateQuotationStatus) {
+                $updateQuotationStatus->is_order_pending = '0';
+                $updateQuotationStatus->save();
+            }
 
             // Return if fail
             if (! $updateQuotationStatus) {
@@ -351,12 +366,37 @@ class FullOrderController extends Controller
                 return Utility::apiError('Fail to update pending quotation', [], 221);
             }
 
-            // // Get pdf info
+            // Get pdf info
             $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
-            $deliveryPeriod = PaymentDayAdvance::where('id', $data['delivery_date_id'])->first();
-
+            $quotationType = QuotationType::where('id', $data['quotation_type_id'])->first();
             $pdfRec = [
+                'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
+                'pdf_name' => $pdfFilePath,
+                'old_pdf_name' => $checkExistingQuotationInfo?->pdf_name,
+                'prepared_by' => $data['prepard_by'],
+                'delivery_term_data' => $data['delivery_term_data'] ?? $data['delivery_date_custom'] ?? null,
+                'courier_name' => $data['courier_name'],
+                'quotationInfo' => [
+                    'id' => $data['quotation_id'],
+                    'unique_quotation_no' => $data['unique_quotation_no'],
+                    'date' => $updateQuotationStatus->date,
+                    'user_id' => $adminId,
+                    'branch_id' => $branchId,
+                    'quotation_type' => $quotationType?->type,
+                ],
+                'orderInfo' => [
+                    'id' => $orderId,
+                    'user_id' => $adminId,
+                    'branch_id' => $branchId,
+                    'customer_order_no' => $data['customer_order_no'],
+                    'unique_order_no' => $orderNumber,
+                    'unique_quotation_no' => $data['unique_quotation_no'],
+                    'order_date' => $data['date'],
+                    'date' => Carbon::now()->format('d-m-Y'),
+                    'ref' => $data['enq_ref'],
+                ],
+
                 'company' => [
                     'name' => 'Chromatography World',
                     'address_line1' => '217, 2nd Floor, Champaklal Industrial Estate, Sion East, Mumbai - 400022. India',
@@ -371,67 +411,37 @@ class FullOrderController extends Controller
                     'branch_name' => 'Matunga ',
                     'logo' => url('appLogo/logo.png'),
                 ],
-                'order_no' => $orderNumber,
-                'extra_notes' => $customerInfo->extra_notes,
-                'quotation_type' => $data['quotation_type'] ?? null,
-                'currency' => $currencyInfo->name,
-                'overdue_no' => $data['overdue_number'] ?? null,
-                'overdue_name' => $data['overdue_value'] ?? null,
-                'customer_order' => $data['customer_order_no'],
-                'order_date' => $data['order_date'] ?? null,
-                'unique_quotation_no' => $data['unique_quotation_no'],
-                'order_prepared_by' => $data['order_prepared_by'] ?? null,
-                'update_company_name' => $data['updated_company_name'] ?? null,
-                'quotation_created_date' => $data['quotation_created_date'] ?? null,
-                'order_ref' => $data['enq_ref'],
-                'date' => now()->format('Y-m-d'),
-                'terms' => $data['payment_term_condition'],
-                'credit_term' => $deliveryPeriod->date_type ?? null,
-                'courier' => $courier->name ?? null,
-                'user_id' => $adminId,
-                'branch_id' => $branchId,
-                'order_id' => $orderId,
-                'auth_email' => Auth::user()->email,
 
                 'billing' => [
-                    'billing_name' => $customerInfo->company_name,
-                    'contact_person' => $data['contact_person'],
-                    'billing_address' => $customerInfo->address,
+                    'company' => $customerInfo->company_name,
+                    'address' => $data['billing_address'],
+                    'email' => $data['billing_email'],
+                    'landline' => $data['billing_landline'],
+                    'mobile' => $data['billing_mobile'],
                     'gstn' => $customerInfo->gst_number,
-                    'city' => $customerInfo->city,
-                    'pincode' => $customerInfo->pin_code,
-                    'state' => $states[$customerInfo->state_id] ?? $customerInfo->other_state ?? null,
-                    'country' => $country->name ?? null,
-                    'landline' => $customerInfo->landline_no,
-                    'mobile' => $customerInfo->mobile_no,
-                    'email' => $customerInfo->email_id,
+                    'city' => $data['billing_city'],
+                    'pincode' => $data['billing_pin_code'],
+                    'state' => $states->name ?? $customerInfo->other_state ?? null,
+                    'contact_person' => $data['contact_person'],
+                    'country' => $data['company_details']['country']['name'] ?? null,
                 ],
 
                 'shipping' => [
-                    'shipping_name' => $customerInfo->company_name,
-                    'contact_person' => $data['contact_person'],
+                    'company' => $customerInfo->company_name,
                     'address' => $data['shipping_address'],
-                    'city' => $data['shipping_city'] ?? null,
-                    'pin_code' => $data['shipping_pin_code'] ?? null,
-                    'mobile' => $data['shipping_mobile'] ?? null,
-                    'email' => $data['shipping_email'] ?? null,
-                    'landline' => $data['shipping_landline'] ?? null,
+                    'email' => $data['shipping_email'],
+                    'landline' => $data['shipping_landline'],
+                    'mobile' => $data['shipping_mobile'],
                     'gstn' => $customerInfo->gst_number,
-                    'state' => $states[$data['shipping_state_id']] ?? null,
-                    'country' => $country->name ?? null,
+                    'city' => $data['shipping_city'],
+                    'pincode' => $data['shipping_pin_code'],
+                    'state' => $states->name ?? $customerInfo->other_state ?? null,
+                    'contact_person' => $data['contact_person'],
+                    'country' => $data['company_details']['country']['name'] ?? null,
                 ],
-
-                'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
-
-                'pdf_name' => $pdfFilePath,
-                'old_pdf_name' => $checkExistingQuotationInfo?->pdf_name,
-                'prepared_by' => $data['prepard_by'],
-                'orderInfo' => [
-                    'id' => $orderId,
-                    'user_id' => $adminId,
-                    'branch_id' => $branchId,
-                    'unique_quotation_no' => $data['unique_quotation_no'],
-                ],
+                'items' => $productList,
+                'branch_address' => $branchAddress,
+                'currency' => $currencyInfo,
                 'totals' => [
                     'sub_unit_total' => $subUnitTotal,
                     'sub_net_total' => $subNetTotal,
@@ -439,8 +449,8 @@ class FullOrderController extends Controller
                     'grand_total' => $grandTotal,
                     'in_words' => Utility::numberToWords($grandTotal, $currencyInfo->name),
                 ],
-                'items' => $productList,
-                'branch_address' => $branchAddress,
+                'terms' => $data['payment_term_condition'],
+                'product_description' => $data['product_description'],
             ];
 
             ProcessOrder::dispatch($pdfRec)
@@ -676,124 +686,6 @@ class FullOrderController extends Controller
             Log::error($ex);
 
             return Utility::apiError('Failed generating order info', ['exception' => $ex->getMessage()]);
-        }
-    }
-
-    public function orderPreview(Request $request)
-    {
-        try {
-            // Preview Order
-            $pdf = \App::make('dompdf.wrapper');
-            $sel_prods_details = $request->sel_prods_details;
-            if (! empty($sel_prods_details)) {
-                $validator = Validator::make($sel_prods_details[0], [
-                    'in_cust_id',
-                ]);
-            }
-            $msg1 = $validator->getMessageBag()->toArray();
-            $quotation_info = $request->quotation_info;
-            if (! empty($quotation_info)) {
-                $val = [
-                    'st_shiping_add',
-                    'st_shiping_city',
-                    'st_shiping_state',
-                    'st_shiping_pincode',
-                    'st_shipping_email',
-                    'st_shipping_phone',
-                    'st_enq_ref_number',
-                    'shipping_lanline',
-                    'st_landline',
-                    'product_search',
-                    'prod_qty',
-                ];
-                if (isset($quotation_info['in_quot_id']) && ! empty($quotation_info['in_quot_id'])) {
-                    unset($val['product_search']);
-                }
-                $validator1 = Validator::make($quotation_info, $val);
-
-            }
-            $msg2 = $validator1->getMessageBag()->toArray();
-            $customer_info = $request->customer_info;
-            if (! empty($customer_info)) {
-                $validator2 = Validator::make($customer_info, [
-                    'st_com_name',
-                    'order_no',
-                    'order_date',
-                    'auto_pop_cust_name',
-                    'st_cust_mobile',
-                    'auto_pop_state',
-                    'preparing_by',
-                    'lead_from',
-                    'auto_pop_addr',
-                    'auto_pop_state',
-                    'auto_pop_city',
-                    'auto_pop_pincod',
-                    'auto_pop_phone',
-                    'auto_pop_email',
-                    'auto_pop_landline',
-                ]);
-            }
-            $msg3 = $validator2->getMessageBag()->toArray();
-            if ($validator1->fails() || $validator2->fails()) {
-                $msg = $msg2 + $msg3;
-
-                return Response::json([
-                    'success' => false,
-                    'errors' => $msg,
-                ], 400);
-            }
-
-            $indian_all_states = Config::get('constant.indian_all_states');
-            if ($customer_info['country_code'] == 'IN') {
-                $customer_info['auto_pop_state'] = $indian_all_states[$customer_info['auto_pop_state']];
-                $quotation_info['st_shiping_state'] = $indian_all_states[$quotation_info['st_shiping_state']];
-            }
-            // if(Auth::user()->hasPermission('branch_all')){
-            $result = [];
-            $billing_address = $request->quotation_info;
-            $format = $billing_address['bill_add_id'];
-            // }
-            $courier = Courier::get();
-            if (count($courier) > 0) {
-                $courier = $courier->pluck('st_courier_name', 'in_courier_id')->toArray();
-            } else {
-                $courier = [];
-            }
-            if (! empty($customer_info['country_code'])) {
-                $country = Config::get('constant.countries');
-                $customer_info['country'] = $country[$customer_info['country_code']];
-            }
-            $customer_info['courier'] = $courier[$customer_info['courier']];
-            $customer_info['ext_note'] = $customer_info['ext_note'];
-            $customer_info['quotation_created_date'] = $customer_info['quotation_created_date'];
-            $result['order_details'] = $request->sel_prods_details;
-            $result['customer_info'] = $customer_info;
-            $result['order_info'] = $quotation_info;
-            $result['BillAddress'] = $this->get_PDF_BillAddress();
-            $cur = Config::get('constant.currency');
-            $currencyCodes = Config::get('constant.currencyCodes');
-            $qt_info = $request->quotation_info;
-            $c_format = $quotation_info['currency'];
-            $result['currency'] = ! empty($currencyCodes[$cur[$c_format]]) ? $currencyCodes[$cur[$c_format]] : '';
-            $quotation_type = $request->quotation_info['quotation_type'];
-            if ($quotation_type == 'GW Quotation' || $quotation_type == 'Project Quotation') {
-                $data['order_data'] = View::make('office.order.preview_prj_order', compact('result'))->render();
-            } else {
-                $data['order_data'] = View::make('office.order.preview_order', compact('result'))->render();
-            }
-
-            return json_encode($data);
-        } catch (Exception $ex) {
-            // Log the full error
-            Log::error('Quotation Preview Error: '.$ex->getMessage());
-            Log::error('Error Trace: '.$ex->getTraceAsString());
-
-            // Return a consistent error response
-            return response()->json([
-                'success' => false,
-                'message' => $ex->getMessage(),
-                'error_details' => $ex->getTraceAsString(),
-            ], 500);
         }
     }
 

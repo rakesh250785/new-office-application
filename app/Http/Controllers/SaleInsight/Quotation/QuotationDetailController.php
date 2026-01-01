@@ -13,6 +13,7 @@ use App\Models\PendingQuotation;
 use App\Models\Quotation as QuotationAdd;
 use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
+use App\Models\QuotationType;
 use App\Models\ReasonType;
 use App\Models\States;
 use Carbon\Carbon;
@@ -72,7 +73,6 @@ class QuotationDetailController extends Controller
                 'country',
                 'quotation_type',
                 'company_details',
-
             ]);
 
             // Validation rule
@@ -123,6 +123,8 @@ class QuotationDetailController extends Controller
                 'product_list.*.total' => 'required|numeric|min:0',
                 'product_list.*.notes' => 'nullable|string|max:1000',
                 'product_list.*.product_specification' => 'nullable|string',
+                'product_list.*.specification' => 'nullable|string',
+                'product_list.*.principal.type' => 'required|string',
                 'total_amount' => 'required|numeric|min:0',
             ]);
 
@@ -182,7 +184,7 @@ class QuotationDetailController extends Controller
                 'owner_id' => $data['owner_id'] ?? null,
                 'quotation_type_id' => $data['quotation_type_id'] ?? null,
                 'payment_term_condition' => $data['payment_term_condition'] ?? null,
-                'date' => $quotationDate ?? null,
+                'date' => $data['date'] ?? null,
                 'enq_ref' => $data['enq_ref'] ?? null,
                 'prepard_by' => $data['prepard_by'] ?? null,
                 'branch_id' => $branchId ?? null,
@@ -309,8 +311,9 @@ class QuotationDetailController extends Controller
 
             // Get pdf info
             $states = States::where('id', $data['billing_state_id'])->first() ?? null;
-
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('branch_address');
+            $quotationType = QuotationType::where('id', $data['quotation_type_id'])->first();
+
             $pdfRec = [
                 'term_conditon_bg_img' => url('appLogo/bannerImg2.png'),
                 'pdf_name' => $pdfFilePath,
@@ -340,7 +343,7 @@ class QuotationDetailController extends Controller
                     'no' => $quotationNumber,
                     'date' => $quotationDate,
                     'ref' => $data['enq_ref'],
-                    'quotation_type' => $data['quotation_type'],
+                    'quotation_type' => $quotationType?->type,
                 ],
                 'shipping' => [
                     'company' => $customerInfo->company_name,

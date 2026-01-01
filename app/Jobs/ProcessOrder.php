@@ -29,8 +29,6 @@ class ProcessOrder implements ShouldQueue
     public function handle(): void
     {
         try {
-            Log::info('Starting order PDF generation job');
-
             $pdf = Pdf::setOptions([
                 'isHtml5ParserEnabled' => true,
                 'isRemoteEnabled' => true,
@@ -57,10 +55,15 @@ class ProcessOrder implements ShouldQueue
                 return;
             }
 
-            $orderInfo = Order::where($criteria)->first();
+            $whereCon = [
+                'id' => $criteria['id'],
+                'unique_order_no' => $criteria['unique_order_no'],
+                'unique_quotation_no' => $criteria['unique_quotation_no'],
+            ];
+
+
+            $orderInfo = Order::where($whereCon)->first();
             
-
-
             if (! $orderInfo) {
                 Log::error('No order found for criteria: '.json_encode($criteria));
 

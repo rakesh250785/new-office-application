@@ -52,6 +52,7 @@ class Quotation extends Model
         'user_id',
         'status',
     ];
+    
 
     protected $casts = [
         'created_at' => 'datetime',
