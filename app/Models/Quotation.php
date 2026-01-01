@@ -10,6 +10,7 @@ class Quotation extends Model
     protected $table = 'quotations';
 
     protected $primaryKey = 'id';
+    protected $appends = ['base_pdf_url'];
 
     protected $fillable = [
         'unique_quotation_no',
@@ -107,5 +108,10 @@ class Quotation extends Model
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function getBasePdfUrlAttribute(): string
+    {
+        return url('storage/quotationsPdf/');
     }
 }

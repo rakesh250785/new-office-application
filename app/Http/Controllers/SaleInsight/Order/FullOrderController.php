@@ -622,8 +622,7 @@ class FullOrderController extends Controller
 
             $query->orderByDesc('id');
 
-            $orderData = $query->paginate($perPage)->toArray();
-            $orderData['base_pdf_url'] = url('storage/ordersPdf/');
+            $orderData = $query->paginate($perPage);
 
             return Utility::apiSuccess('list_order', $orderData, 200);
         } catch (Exception $ex) {

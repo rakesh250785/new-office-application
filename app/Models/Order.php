@@ -55,6 +55,9 @@ class Order extends Model
         'balance_quantity',
         'partial_order_status',
     ];
+
+    protected $appends = ['base_pdf_url'];
+
     public function partialOrders()
     {
         return $this->hasMany(PartialOrder::class, 'partial_order_id', 'id');
@@ -125,5 +128,10 @@ class Order extends Model
     public function details()
     {
         return $this->hasMany(OrderDetails::class);
+    }
+
+    public function getBasePdfUrlAttribute(): string
+    {
+        return url('storage/ordersPdf/');
     }
 }

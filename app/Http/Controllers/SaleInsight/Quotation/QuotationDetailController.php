@@ -112,7 +112,7 @@ class QuotationDetailController extends Controller
                 'quotation_id' => 'nullable|integer|exists:quotations,id',
                 'product_list' => 'required|array|min:1',
                 'product_list.*.part_no' => 'required|string|max:255',
-                'product_list.*.description' => 'required|string|max:1000',
+                'product_list.*.description' => 'required|string|max:1000', 
                 'product_list.*.hsn_code' => 'required|string|max:50',
                 'product_list.*.quantity' => 'required|numeric|min:1',
                 'product_list.*.in_stock' => 'nullable|numeric|max:255',
@@ -466,12 +466,11 @@ class QuotationDetailController extends Controller
                                     ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"));
                             });
                     });
-                })
+                })  
                 ->orderByDesc('id');
 
-            $quotationData = $query->paginate($perPage)->toArray();
-            $quotationData['base_pdf_url'] = url('storage/quotationsPdf/');
-
+            $quotationData = $query->paginate($perPage);
+        
             return Utility::apiSuccess('list_quotation', $quotationData, 200);
 
         } catch (Exception $ex) {
