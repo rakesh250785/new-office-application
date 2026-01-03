@@ -26,7 +26,6 @@ class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkRe
     public function query()
     {
         $query = Courier::query()->whereNull('deleted_at');
-
         if (!empty($this->filters['branch_list'])) {
             $query->whereIn('branch_id', $this->filters['branch_list']);
         }
@@ -45,18 +44,16 @@ class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkRe
         return $query->select(array_keys($this->columns));
     }
 
+   public function map($row): array
+    {
+        return collect(array_keys($this->columns))
+            ->map(fn($key) => data_get($row, $key, ''))
+            ->toArray();
+    }
+
     public function headings(): array
     {
         return array_values($this->columns);
-    }
-
-    public function map($row): array
-    {
-        $mapped = [];
-        foreach (array_keys($this->columns) as $key) {
-            $mapped[] = $row->{$key} ?? '';
-        }
-        return $mapped;
     }
 
     public function chunkSize(): int

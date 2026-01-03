@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\ClientUser\User;
 
-use App\Exports\Export;
+use App\Exports\UserExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessUser;
@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Log;
-use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -138,6 +137,28 @@ class UserController extends Controller
             // Get specific fields
             $data = $request->only(['search', 'per_page', 'branch_list', 'download', 'start_date', 'end_date']);
 
+            // Export logic
+            if (! empty($data['download'])) {
+                $columns = [
+                    'name' => 'First Name',
+                    'last_name' => 'Last Name',
+                    'user_name' => 'User Name',
+                    'email' => 'Email Id',
+                    'cc_email' => 'CC Email',
+                    'branch.name' => 'Branch Name',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'user_'.now()->format('Ymd_His').'.xlsx';
+
+                (new UserExport($data, $columns, User::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
             // Base query with branch relation
             $query = User::with('branch:id,name');
 
@@ -167,23 +188,6 @@ class UserController extends Controller
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
-            }
-
-            // Export logic
-            if (! empty($data['download'])) {
-                $columns = [
-                    'name' => 'First Name',
-                    'last_name' => 'Last Name',
-                    'user_name' => 'User Name',
-                    'email' => 'Email Id',
-                    'cc_email' => 'CC Email',
-                    'branch.name' => 'Branch Name',
-                    'created_at' => 'Date',
-                ];
-
-                $filename = 'user'.now()->format('Ymd_His').'.xlsx';
-
-                return Excel::download(new Export($query, $columns), $filename);
             }
 
             // Get paginated result

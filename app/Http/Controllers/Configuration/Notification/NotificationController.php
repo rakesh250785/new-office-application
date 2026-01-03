@@ -2,37 +2,35 @@
 
 namespace App\Http\Controllers\Configuration\Notification;
 
+use App\Exports\Export;
 use App\Exports\NotificationExport;
-use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\NotificationEmail;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use App\Exports\Export;
-use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class NotificationController extends Controller
 {
-
     public function addUpdateNotification(Request $request)
     {
         try {
-            # Extract and validate input
+            // Extract and validate input
             $data = $request->only([
                 'name',
                 'email',
                 'email_list',
                 'branch_id',
                 'notification_id',
-                'update_status'
+                'update_status',
             ]);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'name' => 'required|string|max:255',
                 'email' => [
@@ -44,12 +42,12 @@ class NotificationController extends Controller
                 'branch_id' => 'required|integer|exists:branches,id',
             ]);
 
-            # Return validation error 
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Map validated data
+            // Map validated data
             $payload = [
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -58,24 +56,25 @@ class NotificationController extends Controller
                 'user_id' => Auth::id(),
             ];
 
-            # Create or update record
+            // Create or update record
             $notification = NotificationEmail::updateOrCreate(
                 ['id' => $data['notification_id'] ?? null],
                 $payload
             );
 
-            # Return if fail
-            if (!$notification) {
+            // Return if fail
+            if (! $notification) {
                 return Utility::apiError('Failed to save notification', [], 221);
             }
 
-            # Prepare message
+            // Prepare message
             $message = isset($data['notification_id']) ? 'Updated successfully' : 'Created successfully';
 
-            # Return response
+            // Return response
             return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()]);
         }
     }
@@ -83,7 +82,7 @@ class NotificationController extends Controller
     public function getNotification(Request $request)
     {
         try {
-            # Extract request data
+            // Extract request data
             $data = $request->only([
                 'page',
                 'per_page',
@@ -94,8 +93,8 @@ class NotificationController extends Controller
                 'search',
             ]);
 
-            # Export handling
-            if (!empty($data['download'])) {
+            // Export handling
+            if (! empty($data['download'])) {
                 $columns = [
                     'name' => 'Name',
                     'email' => 'Email',
@@ -104,7 +103,7 @@ class NotificationController extends Controller
                     'created_at' => 'Date',
                 ];
 
-                $filename = 'notification_' . now()->format('Ymd_His') . '.xlsx';
+                $filename = 'notification_'.now()->format('Ymd_His').'.xlsx';
 
                 (new NotificationExport($data, $columns, NotificationEmail::class))
                     ->queue("exports/{$filename}", 'public');
@@ -115,12 +114,12 @@ class NotificationController extends Controller
                 ]);
             }
 
-            # Base query with branch relationship
+            // Base query with branch relationship
             $query = NotificationEmail::with('branch:id,name')
                 ->whereNull('deleted_at');
 
-            # Free-text search
-            if (!empty($data['search'])) {
+            // Free-text search
+            if (! empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
@@ -132,65 +131,66 @@ class NotificationController extends Controller
                 });
             }
 
-            # Branch filter
-            if (!empty($data['branch_list'])) {
+            // Branch filter
+            if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', (array) $data['branch_list']);
             }
 
-            # Date filter
-            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            // Date filter
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
-            # Paginate response
+            // Paginate response
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
             return Utility::apiSuccess('Notification list fetched successfully', $notificationData, 200);
 
         } catch (Exception $ex) {
-            Log::error('Notification fetch error: ' . $ex->getMessage(), [
-                'trace' => $ex->getTraceAsString()
+            Log::error('Notification fetch error: '.$ex->getMessage(), [
+                'trace' => $ex->getTraceAsString(),
             ]);
+
             return Utility::apiError('Failed to fetch notifications', [
-                'exception' => $ex->getMessage()
+                'exception' => $ex->getMessage(),
             ]);
         }
     }
-
 
     public function deleteNotification(Request $request)
     {
         try {
 
-            # Request id
+            // Request id
             $data = $request->only(['id']);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:notifications,id',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Soft delete record
+            // Soft delete record
             $deleted = NotificationEmail::where('id', $data['id'])->delete();
 
-            # Retunr if fail
-            if (!$deleted) {
+            // Retunr if fail
+            if (! $deleted) {
                 return Utility::apiError('Failed to delete notification', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Deleted successfully', [], 200);
         } catch (Exception $ex) {
-            Log::error('Notification delete error: ' . $ex->getMessage());
+            Log::error('Notification delete error: '.$ex->getMessage());
+
             return Utility::apiError('Something went wrong while deleting notification.', ['exception' => $ex->getMessage()], 500);
         }
     }
