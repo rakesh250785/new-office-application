@@ -112,7 +112,7 @@ class QuotationDetailController extends Controller
                 'quotation_id' => 'nullable|integer|exists:quotations,id',
                 'product_list' => 'required|array|min:1',
                 'product_list.*.part_no' => 'required|string|max:255',
-                'product_list.*.description' => 'required|string|max:1000', 
+                'product_list.*.description' => 'required|string|max:1000',
                 'product_list.*.hsn_code' => 'required|string|max:50',
                 'product_list.*.quantity' => 'required|numeric|min:1',
                 'product_list.*.in_stock' => 'nullable|numeric|max:255',
@@ -408,17 +408,30 @@ class QuotationDetailController extends Controller
 
             if (! empty($data['download'])) {
                 $columns = [
-                    'unique_quotation_no' => 'Quotation No',
+                    'branch_name' => 'Branch',
                     'date' => 'Date',
-                    'branch' => 'Branch',
-                    'owner' => 'Owner',
-                    'currency' => 'Currency',
-                    'company' => 'Company',
-                    'total_amount' => 'Total Amount',
+                    'unique_quotation_no' => 'Quotation No',
+                    'company' => 'Company Name',
+                    'customer_name' => 'Customer Name',
+                    'owner' => 'Owner Name',
+                    'mobile' => 'Contact Number',
+                    'landline' => 'Landline',
+                    'email' => 'Contact Email',
+                    'part_no' => 'Part No.',
+                    'description' => 'Description',
+                    'principal' => 'Principal',
+                    'price' => 'Price',
+                    'quantity' => 'Quantity',
+                    'discount' => 'Discount',
+                    'net_price' => 'Net Price',
+                    'total_amount' => 'Totalo Amount',
+                    'notes' => 'Delivery Status',
+                    'lead_from' => 'Lead From',
                     'is_order_pending' => 'Status',
+                    'reason' => 'Reason',
                 ];
 
-                $filename = 'quotation_'.now()->format('Ymd_His').'.xlsx';
+                $filename = 'quotation_report_'.now()->format('Ymd_His').'.xlsx';
 
                 (new QuotationExport($data, $columns))->queue("exports/{$filename}", 'public');
 
@@ -466,11 +479,11 @@ class QuotationDetailController extends Controller
                                     ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"));
                             });
                     });
-                })  
+                })
                 ->orderByDesc('id');
 
             $quotationData = $query->paginate($perPage);
-        
+
             return Utility::apiSuccess('list_quotation', $quotationData, 200);
 
         } catch (Exception $ex) {

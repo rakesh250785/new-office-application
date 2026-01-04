@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Quotation;
+use App\Models\QuotationDetail;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -25,131 +25,149 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
         $this->columns = $columns;
     }
 
+    /**
+     * STREAMED QUERY — ZERO MEMORY SPIKES
+     */
     public function query()
     {
-        $select = [
-            'id',
-            'unique_quotation_no',
-            'lead_from',
-            'branch_id',
-            'owner_id',
-            'currency_id',
-            'company_id',
-            'total_amount',
-            'created_at',
-            'date',
-            'is_order_pending',
-        ];
-
-        $q = Quotation::query()
-            ->whereNull('deleted_at')
-            ->select($select)
+        $q = QuotationDetail::query()
             ->with([
-                'branchDetails:id,name',
-                'ownerDetails:id,name',
-                'currencyDetails:id,code',
-                'companyDetails:id,company_name',
-            ]);
+                'principal:id,type',
+                'quotation:id,unique_quotation_no,date,created_at,branch_id,owner_id,currency_id,company_id,is_order_pending,total_amount,product_description,lead_from',
+                'quotation.branchDetails:id,name',
+                'quotation.ownerDetails:id,name',
+                'quotation.currencyDetails:id,code',
+                'quotation.companyDetails:id,company_name,customer_name,mobile_no,landline_no,email_id',
+                'quotation.pendingQuotationDetails',
+            ])
+            ->whereHas('quotation', fn ($q) => $q->whereNull('deleted_at'));
+
+        /* ---------------- FILTERS ---------------- */
 
         if (! empty($this->filters['branch_list'])) {
-            $q->whereIn('branch_id', (array) $this->filters['branch_list']);
+            $q->whereHas('quotation', fn ($s) => $s->whereIn('branch_id', (array) $this->filters['branch_list'])
+            );
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->whereIn('owner_id', (array) $this->filters['owner_list']);
+            $q->whereHas('quotation', fn ($s) => $s->whereIn('owner_id', (array) $this->filters['owner_list'])
+            );
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->whereIn('currency_id', (array) $this->filters['currency_list']);
+            $q->whereHas('quotation', fn ($s) => $s->whereIn('currency_id', (array) $this->filters['currency_list'])
+            );
         }
 
         if (! empty($this->filters['status_list'])) {
-            $q->whereIn('is_order_pending', (array) $this->filters['status_list']);
+            $q->whereHas('quotation', fn ($s) => $s->whereIn('is_order_pending', (array) $this->filters['status_list'])
+            );
         }
 
         if (! empty($this->filters['principal_list'])) {
-            $q->whereHas('quotationDetails', fn ($d) => $d->whereIn('principal_id', (array) $this->filters['principal_list']));
+            $q->whereIn('principal_id', (array) $this->filters['principal_list']);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
-            $q->whereBetween('created_at', [
+            $q->whereHas('quotation', fn ($s) => $s->whereBetween('created_at', [
                 Carbon::parse($this->filters['start_date'])->startOfDay(),
                 Carbon::parse($this->filters['end_date'])->endOfDay(),
-            ]);
+            ])
+            );
         }
 
         if (! empty($this->filters['search'])) {
             $term = $this->filters['search'];
-            $q->where(function ($sub) use ($term) {
-                $sub->where('unique_quotation_no', 'like', "%{$term}%")
-                    ->orWhere('lead_from', 'like', "%{$term}%")
-                    ->orWhere('total_amount', 'like', "%{$term}%")
-                    ->orWhereHas('ownerDetails', fn ($o) => $o->where('name', 'like', "%{$term}%"))
-                    ->orWhereHas('currencyDetails', fn ($c) => $c->where('code', 'like', "%{$term}%"))
-                    ->orWhereHas('companyDetails', fn ($c) => $c->where('company_name', 'like', "%{$term}%"))
-                    ->orWhereHas('quotationDetails', function ($d) use ($term) {
-                        $d->where('part_no', 'like', "%{$term}%")
-                            ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"));
-                    });
+            $q->where(function ($s) use ($term) {
+                $s->where('part_no', 'like', "%{$term}%")
+                    ->orWhere('description', 'like', "%{$term}%")
+                    ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%")
+                    )
+                    ->orWhereHas('quotation', fn ($q) => $q->where('unique_quotation_no', 'like', "%{$term}%")
+                    );
             });
         }
 
-        return $q->orderByDesc('id');
+        return $q->orderBy('quotation_details.id');
+    }
+
+    /**
+     * MAP = PURE ARRAY, NO LOGIC
+     */
+    public function map($d): array
+    {
+        $q = $d->quotation;
+
+        return [
+            // Branch
+            $q->branchDetails->name ?? '',
+
+            // Date
+            $q->date
+                ? Carbon::parse($q->date)->format('d-m-Y')
+                : optional($q->created_at)->format('d-m-Y'),
+
+            // Quotation
+            $q->unique_quotation_no ?? '',
+
+            // Company
+            $q->companyDetails->company_name ?? '',
+            $q->companyDetails->customer_name ?? '',
+
+            // Owner & contacts
+            $q->ownerDetails->name ?? '',
+            $q->companyDetails->mobile_no ?? '',
+            $q->companyDetails->landline_no ?? '',
+            $q->companyDetails->email_id ?? '',
+
+            // Line item
+            $d->part_no ?? '',
+            $d->description ?? '',
+            $q->principal->type ?? '',
+            $d->price ?? 0,
+            $d->quantity ?? 0,
+            $d->discount ?? 0,
+            $d->net_price ?? 0,
+
+            // Totals & meta
+            $q->total_amount ?? 0,
+            $d->notes ?? '',
+
+            $q->lead_from ?? '',
+
+            // Status
+            $q->is_order_pending ? 'Pending' : 'Closed',
+
+            // Reason
+            $q->pendingQuotationDetails->status_code ?? '',
+        ];
     }
 
     public function headings(): array
     {
-        return array_values($this->columns);
-    }
-
-    public function map($quotation): array
-    {
-        $mapped = [];
-
-        foreach (array_keys($this->columns) as $key) {
-            switch ($key) {
-                case 'unique_quotation_no':
-                    $mapped[] = $quotation->unique_quotation_no;
-                    break;
-                case 'date':
-                    $mapped[] = $quotation->date ? Carbon::parse($quotation->date)->format('Y-m-d') : optional($quotation->created_at)->format('Y-m-d');
-                    break;
-                case 'created_at':
-                    $mapped[] = optional($quotation->created_at)->format('Y-m-d H:i:s');
-                    break;
-                case 'lead_from':
-                    $mapped[] = $quotation->lead_from;
-                    break;
-                case 'branch':
-                case 'branch_name':
-                    $mapped[] = $quotation->branchDetails->name ?? '';
-                    break;
-                case 'owner':
-                case 'owner_name':
-                    $mapped[] = $quotation->ownerDetails->name ?? '';
-                    break;
-                case 'currency':
-                case 'currency_code':
-                    $mapped[] = $quotation->currencyDetails->code ?? '';
-                    break;
-                case 'company':
-                case 'company_name':
-                    $mapped[] = $quotation->companyDetails->company_name ?? '';
-                    break;
-                case 'total_amount':
-                    $mapped[] = $quotation->total_amount;
-                    break;
-                case 'status':
-                case 'is_order_pending':
-                    $mapped[] = $quotation->is_order_pending ? 'Pending' : 'Closed';
-                    break;
-                default:
-                    $mapped[] = data_get($quotation, $key, '');
-                    break;
-            }
-        }
-
-        return $mapped;
+        return [
+            'Branch',
+            'Date',
+            'Quotation No',
+            'Company Name',
+            'Customer Name',
+            'Owner Name',
+            'Contact Number',
+            'Landline',
+            'Contact Email',
+            'Part No.',
+            'Description',
+            'Principal',
+            'Price',
+            'Quantity',
+            'Discount',
+            'Net Price',
+            'Total Amount',
+            'Delivery Status',
+            'Lead From',
+            'Status',
+            'Reason',
+        ];
     }
 
     public function chunkSize(): int

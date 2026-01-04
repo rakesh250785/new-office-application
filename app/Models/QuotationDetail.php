@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class QuotationDetail extends Model
-{   
-    protected $table = "quotation_details";
+{
+    protected $table = 'quotation_details';
+
     protected $primaryKey = 'id';
+
     protected $fillable = [
-        'order_id', 
-        'order_type', 
+        'order_id',
+        'order_type',
         'quotation_id',
         'unique_quotation_no',
         'unique_order_no',
@@ -44,9 +46,14 @@ class QuotationDetail extends Model
     {
         return $this->belongsTo(Principal::class, 'principal_id');
     }
+
     public function uom()
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
+
+    public function quotation()
+    {
+        return $this->belongsTo(Quotation::class, 'quotation_id');
+    }
 }
-          
