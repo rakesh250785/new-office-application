@@ -155,9 +155,7 @@ class SupplierController extends Controller
                 ->whereNull('suppliers.deleted_at');
 
             // Apply filters
-            if ($filters['owner']) {
-                $query->whereIn('suppliers.user_id', $filters['owner']);
-            }
+                    
             if ($filters['branch']) {
                 $query->whereIn('suppliers.branch_id', $filters['branch']);
             }

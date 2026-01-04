@@ -70,7 +70,7 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
                     ->orWhere('quantity', 'like', "%{$s}%")
                     ->orWhere('price_updated_at', 'like', "%{$s}%")
                     ->orWhere('quantity_updated_at', 'like', "%{$s}%")
-                    ->orWhereHas('principal', fn($b) => $b->where('type', 'like', "%{$s}%")->orWhere('name', 'like', "%{$s}%"))
+                    ->orWhereHas('principal', fn($b) => $b->where('type', 'like', "%{$s}%"))
                     ->orWhereHas('category', fn($b) => $b->where('name', 'like', "%{$s}%"))
                     ->orWhereHas('brand', fn($b) => $b->where('name', 'like', "%{$s}%"))
                     ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%{$s}%"));

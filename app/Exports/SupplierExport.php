@@ -6,16 +6,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class SupplierExport implements FromCollection, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
     use Exportable;
 
     protected array $filters;
+
     protected array $columns;
+
     protected string $modelClass;
 
     public function __construct(array $filters, array $columns, string $modelClass)
@@ -28,32 +30,37 @@ class SupplierExport implements FromCollection, WithMapping, WithHeadings, WithC
     public function collection(): Collection
     {
         $query = ($this->modelClass)::query()
-            ->with(['product', 'principal', 'source', 'currency', 'branch'])
+            ->with([
+                'product:id,part_no,description',
+                'principal:id,type',
+                'source:id,name',
+                'currency:id,name',
+                'branch:id,name',
+            ])
             ->whereNull('suppliers.deleted_at');
-
-        # Apply same filters as controller
-        if (!empty($this->filters['owner'])) {
+        // Apply same filters as controller
+        if (! empty($this->filters['owner'])) {
             $query->whereIn('suppliers.user_id', $this->filters['owner']);
         }
-        if (!empty($this->filters['branch'])) {
+        if (! empty($this->filters['branch'])) {
             $query->whereIn('suppliers.branch_id', $this->filters['branch']);
         }
-        if (!empty($this->filters['principal'])) {
+        if (! empty($this->filters['principal'])) {
             $query->whereIn('suppliers.principal_id', $this->filters['principal']);
         }
-        if (!empty($this->filters['product'])) {
+        if (! empty($this->filters['product'])) {
             $query->whereIn('suppliers.product_id', $this->filters['product']);
         }
-        if (!empty($this->filters['source'])) {
+        if (! empty($this->filters['source'])) {
             $query->whereIn('suppliers.source_id', $this->filters['source']);
         }
-        if (!empty($this->filters['currency'])) {
+        if (! empty($this->filters['currency'])) {
             $query->whereIn('suppliers.currency_id', $this->filters['currency']);
         }
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('suppliers.date', [$this->filters['start_date'], $this->filters['end_date']]);
         }
-        if (!empty($this->filters['search'])) {
+        if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->whereHas('product', function ($q2) use ($search) {
@@ -66,10 +73,10 @@ class SupplierExport implements FromCollection, WithMapping, WithHeadings, WithC
                     ->orWhere('suppliers.discount', 'like', "%$search%")
                     ->orWhere('suppliers.net_price', 'like', "%$search%")
                     ->orWhere('suppliers.custom_price', 'like', "%$search%")
-                    ->orWhereHas('principal', fn($q2) => $q2->where('type', 'like', "%$search%"))
-                    ->orWhereHas('source', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                    ->orWhereHas('currency', fn($q2) => $q2->where('name', 'like', "%$search%"))
-                    ->orWhereHas('branch', fn($q2) => $q2->where('name', 'like', "%$search%"));
+                    ->orWhereHas('principal', fn ($q2) => $q2->where('type', 'like', "%$search%"))
+                    ->orWhereHas('source', fn ($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('currency', fn ($q2) => $q2->where('name', 'like', "%$search%"))
+                    ->orWhereHas('branch', fn ($q2) => $q2->where('name', 'like', "%$search%"));
             });
         }
 
@@ -86,7 +93,7 @@ class SupplierExport implements FromCollection, WithMapping, WithHeadings, WithC
     public function map($row): array
     {
         return collect(array_keys($this->columns))
-            ->map(fn($key) => data_get($row, $key, ''))
+            ->map(fn ($key) => data_get($row, $key, ''))
             ->toArray();
     }
 

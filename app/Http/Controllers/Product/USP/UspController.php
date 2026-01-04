@@ -108,8 +108,8 @@ class UspController extends Controller
                     'packing_details' => 'Packing Details',
                     'usp_brand' => 'USP Brand',
                     'principal.type' => 'Principal',
-                    'categoryType.type' => 'Category',
-                    'branch.name' => 'Branch',
+                    'category.name' => 'Category',
+                    'branch.name' => 'Branch',  
                     'created_at' => 'Date',
                 ];
 
@@ -141,7 +141,7 @@ class UspController extends Controller
                         ->orWhere('usp_brand', 'like', "%$search%")
                         ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%$search%"))
                         ->orWhereHas('principal', fn ($b) => $b->where('type', 'like', "%$search%"))
-                        ->orWhereHas('category', fn ($b) => $b->where('type', 'like', "%$search%"));
+                        ->orWhereHas('category', fn ($b) => $b->where('name', 'like', "%$search%"));
                 });
             }
 

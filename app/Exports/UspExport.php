@@ -31,7 +31,7 @@ class UspExport implements FromCollection, WithMapping, WithHeadings, WithChunkR
     public function collection(): Collection
     {
         $query = ($this->modelClass)::query()
-            ->with(['branch:id,name', 'principal:id,type', 'categoryType:id,type'])
+            ->with(['branch:id,name', 'principal:id,type', 'category:id,name'])
             ->whereNull('deleted_at');
 
         # Apply search
@@ -43,7 +43,7 @@ class UspExport implements FromCollection, WithMapping, WithHeadings, WithChunkR
                     ->orWhere('usp_brand', 'like', "%$search%")
                     ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"))
                     ->orWhereHas('principal', fn($b) => $b->where('type', 'like', "%$search%"))
-                    ->orWhereHas('categoryType', fn($b) => $b->where('type', 'like', "%$search%"));
+                    ->orWhereHas('categoryType', fn($b) => $b->where('name', 'like', "%$search%"));
             });
         }
 
