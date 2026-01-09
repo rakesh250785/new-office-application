@@ -10,8 +10,9 @@
         table,
         th,
         td {
-            font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
-            font-size: 12.2px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
+            font-size: 11.2px;
+            /* content size */
             line-height: 1.5;
             font-weight: 400;
             color: #1f1f1f;
@@ -58,6 +59,7 @@
             word-break: break-word;
             overflow-wrap: anywhere;
             box-sizing: border-box;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
 
             /* draw ONLY from right + bottom */
             border: 0.4px solid #c8c8c8;
@@ -87,6 +89,7 @@
             padding: 0 !important;
             border: none !important;
             border-collapse: collapse;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Remove all borders */
@@ -94,6 +97,7 @@
         .hdr tr,
         .hdr td {
             border: none !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Force table row to hug content */
@@ -150,10 +154,12 @@
             color: #006c95;
             font-weight: 600;
             letter-spacing: 0.2px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .meta-label.alert {
             color: #b30f16;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .meta-link {
@@ -166,9 +172,11 @@
             background: #2b2b2b;
             color: #f5f2e8;
             text-align: center;
-            font-size: 11px;
-            line-height: 1;
+            font-size: 12px;
+            line-height:1.35;
             letter-spacing: 0.25px;
+            padding: 2px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .authorised td {
@@ -186,6 +194,7 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: auto;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Reset inherited borders */
@@ -196,6 +205,7 @@
             word-break: break-word;
             text-align: left;
             font-size: 11px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Draw ONLY horizontal row lines */
@@ -228,9 +238,11 @@
 
         /* Header cells */
         .ship th {
-            color: #004f6e;
+            color: #006c95;
+            font-size: 13px;
             font-weight: 600;
             white-space: nowrap;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Value cells */
@@ -241,18 +253,22 @@
             vertical-align: middle;
             word-break: break-word;
             text-align: left;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* ================= ITEMS ================= */
         .items {
             margin-bottom: 7px;
-        }
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
+        }   
 
         .items th {
             background: #eef6f9;
             color: #004f6e;
             font-weight: 600;
             text-align: left;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
+            font-size: 13px;
         }
 
         /* Row colors */
@@ -260,6 +276,7 @@
         th {
             background: #eef6f9;
             font-size: 11px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* ODD rows */
@@ -315,23 +332,28 @@
             font-weight: 700;
             font-size: 13.2px;
             letter-spacing: 0.2px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .html-content ul,
         .html-content ol {
             padding-left: 18px;
             margin: 6px 0;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .html-content li {
             margin-bottom: 6px;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .terms,
         .terms * {
-            font-size: 10.6px;
-            line-height: 1.25 !important;
+            font-size: 12px;
+            line-height: 1.35 !important;
             color: #2b2b2b;
+            font-weight: 600;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .terms p,
@@ -358,6 +380,7 @@
         .items td.heading,
         .items td.html-content {
             line-height: 1.2 !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td p,
@@ -368,6 +391,7 @@
         .items td.html-content p {
             margin: 0 !important;
             padding: 0 !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td p:empty,
@@ -397,6 +421,7 @@
             margin: 0 !important;
             padding: 0 !important;
             line-height: 1.2 !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td ul,
@@ -407,6 +432,7 @@
         .comment-row td ol {
             margin: 0 !important;
             padding-left: 14px !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td li,
@@ -415,6 +441,7 @@
             margin: 0 !important;
             padding: 0 !important;
             line-height: 1 !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td,
@@ -422,14 +449,27 @@
         .comment-row td {
             padding-top: 2px !important;
             padding-bottom: 2px !important;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .items thead {
             display: table-row-group;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
+        }
+
+        /* ===== MONEY COLUMNS — NEVER WRAP ===== */
+        .items th.money,
+        .items td.money,
+        .items .total-row td {
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            overflow-wrap: normal !important;
+            text-align: left;
+            padding: 2px !important;
+            font-variant-numeric: tabular-nums;
+            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
     </style>
-
-
 </head>
 
 <body>
@@ -464,6 +504,8 @@
     border-collapse:collapse;
     width:100%;
     background:#cfeef9;
+    font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+    
 ">
             <tr>
                 <!-- LEFT : LOGO + ISO -->
@@ -472,77 +514,104 @@
             text-align:center;
             vertical-align:top;
             padding:6px 4px;
+            font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
               
         ">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}"
-                            style="max-width:150px; height:auto; display:block; margin:0 auto;margin-top: -8px">
+                            style="max-width:200px; height:auto; display:block; margin:0 auto;margin-top: -12px">
                     @else
                         <div style="font-weight:700; font-size:14px;">QUOTATION</div>
                     @endif
 
                     <div style="
-                margin-top: 0px;
-                font-size:11.5px;
-                font-weight:600;
-                color:#111;
-            ">
+                        margin-top: -5px;
+                        font-size:12px;
+                        font-weight:600;
+                        color:#111;
+                        font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                    ">
                         ISO 9001-2015
                     </div>
                 </td>
 
                 <!-- RIGHT : DETAILS -->
-                <td style="
-            vertical-align:top;
-            padding:6px 8px;
-            font-size:12px;
-            line-height:1.5;
-            color:#111;
-        ">
-                    <b style="color:#006c95">Address :</b>
-                    217, 2nd Floor, Champaklal Industrial Estate, Sion East,
-                    Mumbai – 400022, India&nbsp;&nbsp;
-                    <b style="color:#006c95">Call :</b> 91-022-43159100&nbsp;&nbsp;
-                    <b style="color:#006c95">IFSC :</b> KKBK0000644&nbsp;&nbsp;
-                    <b style="color:#006c95">A/C :</b> 4611234274
-                    <br>
-
-                    <b style="color:#006c95">Email :</b>
-                    sales@chromatographyworld.com,
-                    speed@chromatographyworld.com,
-                    gm-support@chromatographyworld.com&nbsp;
-                    <b style="color:#006c95">Bank :</b> Kotak Mahindra Bank&nbsp;&nbsp;
-
-                    <br>
-
-                    <b style="color:#800000">GSTN :</b> 27AAGFC1217K1ZM&nbsp;&nbsp;
-                    <b style="color:#800000">Udyam / MSME :</b> UDYAM-MH-19-0078510&nbsp;&nbsp;
-                    <b style="color:#006c95">Web :</b>
-                    <span style="color:#0b57d0;">www.chromatographyworld.com</span>&nbsp;&nbsp;
-                    <b style="color:#006c95">Branch :</b> Matunga&nbsp;&nbsp;
-
-                </td>
+                <td
+                style="
+                  vertical-align: top;
+                  padding: 6px 8px;
+                  font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                  font-size: 12px;          /* content size */
+                 line-height: 1.30;
+                  color: #111;
+                "
+              >
+                <!-- 1️⃣ FIRST LINE : ADDRESS -->
+                <b style="font-size:11px;color:#006c95;">Address :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
+                Mumbai – 400022, India  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:11px;color:#006c95;">Call :</b>
+                &nbsp;&nbsp; 91-022-43159100
+                <br>
+              
+                <!-- 2️⃣ SECOND LINE : EMAILS + CALL -->
+                <b style="font-size:11px;color:#006c95;">Email :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sales@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
+                speed@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
+                gm-support@chromatographyworld.com
+                &nbsp;&nbsp;
+               
+                <br>
+              
+                <!-- 3️⃣ THIRD LINE : GST + MSME + WEBSITE -->
+                <b style="font-size:11px;color:#800000;">GSTN :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27AAGFC1217K1ZM
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:11px;color:#800000;">Udyam / MSME :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UDYAM-MH-19-0078510
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:11px;color:#006c95;">Web :</b>
+                <span style="color:#0b57d0;">&nbsp;&nbsp;&nbsp;&nbsp; www.chromatographyworld.com</span>
+                <br>
+              
+                <!-- 4️⃣ FOURTH LINE : BANK DETAILS -->
+                <b style="font-size:11px;color:#006c95;">Bank :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kotak Mahindra Bank
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:11px;color:#006c95;">Branch :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Matunga
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:11px;color:#006c95;">IFSC :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KKBK0000644
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:11px;color:#006c95;">A/C :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp; 4611234274
+              </td>
             </tr>
         </table>
 
 
         {{-- AUTHORISED --}}
         <div class="authorised">
-            <b>Authorised For :</b>
+            <b style="font-size:12px;line-height:1.35;">Authorised For :</b>
             Qualisil, Qaliseal, Gas World, Macherey Nagel,
-            G.L.Science (GC Columns), S.A.S.Corporation,
+            G.L. Science (GC Columns), S.A.S. Corporation,
             Nomura Chemicals (Develosil), Sielc (Primesep),
-            Sciencix, Poly LC, MZAnalysentechnik, Sepax, Frontier Lab.
-            Click <b style="
-            color:#fff2cc;
-            font-weight:600;
-            text-decoration:none;
-            font-size: 14px;
-        ">
-                www.chromatographyworld.com
+            Sciencix, Poly LC, MZ Analysentechnik, Sepax, Frontier Lab.
+            Click
+            <b
+              style="
+                font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                color: #fff2cc;
+                text-decoration: underline;
+                font-size: 14px;
+              "
+            >
+              www.chromatographyworld.com
             </b>
             for more details.
-        </div>
+          </div>
+          
 
         <h4 style="
         text-align:center;
@@ -552,6 +621,7 @@
         margin:2px 0;
         vertical-align: middle;
         letter-spacing:0.3px;
+        font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
     ">
             Quotation
         </h4>
@@ -561,32 +631,29 @@
         <table class="ship">
             <tr>
                 <th>Company</th>
-                <td>{{ $shipping['company'] }}</td>
-                <th>Contact Person</th>
-                <td>{{ $shipping['contact_person'] }}</td>
+                <td colSpan="6">{{ $shipping['company'] }}</td>
                 <th>GSTN</th>
-                <td>{{ $shipping['gstn'] }}</td>
+                <td  colSpan="3">{{ $shipping['gstn'] }}</td>
             </tr>
 
             <tr>
                 <th>Address</th>
-                <td colspan="3">{{ $shipping['address'] }}</td>
-                <th>Enq. Ref.</th>
-                <td>{{ $quotation['ref'] }}</td>
-            </tr>
-
-            <tr>
-                <th>City</th>
-                <td>{{ $shipping['city'] }}</td>
+                <td colspan="2">{{ $shipping['address'] }}</td>
                 <th>Pin Code</th>
                 <td>{{ $shipping['pincode'] }}</td>
+                <th>City</th>
+                <td>{{ $shipping['city'] }}</td>
                 <th>State</th>
                 <td>{{ $shipping['state'] }}</td>
-            </tr>
-
-            <tr>
                 <th>Country</th>
                 <td>{{ $shipping['country'] }}</td>
+
+            </tr>
+            <tr>
+                <th>Contact Person</th>
+                <td colSpan="3">{{ $shipping['contact_person'] }}</td>
+                <th>Email</th>
+                <td colSpan="2">{{ $shipping['email'] }}</td>
                 <th>Landline</th>
                 <td>{{ $shipping['landline'] }}</td>
                 <th>Mobile</th>
@@ -594,14 +661,13 @@
             </tr>
 
             <tr>
-                <th>Email</th>
-                <td>{{ $shipping['email'] }}</td>
                 <th>Quotation No.</th>
-                <td>{{ $quotation['no'] }}</td>
+                <td colSpan="2">{{ $quotation['no'] }}</td>
                 <th>Quotation Date</th>
-                <td>{{ $quotation['date'] }}</td>
+                <td colSpan="2">{{ $quotation['date'] }}</td>
+                <th>Enq. Ref.</th>
+                <td colSpan="4">{{ $quotation['ref'] }}</td>
             </tr>
-
         </table>
 
         {{-- ================= ITEMS ================= --}}
@@ -617,9 +683,9 @@
                         <th>UOM</th>
                     @endif
 
-                    <th>HSN</th>
+                    <th class="money">HSN</th>
                     <th>Qty</th>
-                    <th>Unit Price ({{ $currency }})</th>
+                    <th class="money">Unit Price ({{ $currency }})</th>
                     <th>Disc %</th>
                     <th>Net Price ({{ $currency }})</th>
 
@@ -661,23 +727,23 @@
                             <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
                         @endif
 
-                        <td>{{ $it['hsn_code'] }}</td>
+                        <td class="money">{{ $it['hsn_code'] }}</td>
                         <td>{{ $it['quantity'] }}</td>
-                        <td>{{ number_format($it['price'], 2) }}</td>
+                        <td class="money">{{ number_format($it['price'], 2) }}</td>
                         <td>{{ $it['discount'] }}</td>
                         <td>{{ number_format($net, 2) }}</td>
 
                         @if($isMH)
                             <td>{{ number_format($half, 2) }}</td>
-                            <td>{{ number_format($halfAmt, 2) }}</td>
+                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
                             <td>{{ number_format($half, 2) }}</td>
-                            <td>{{ number_format($halfAmt, 2) }}</td>
+                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
                         @else
                             <td>{{ number_format($igst, 2) }}</td>
-                            <td>{{ number_format($igstAmt, 2) }}</td>
+                            <td class="money">{{ number_format($igstAmt, 2) }}</td>
                         @endif
 
-                        <td>{{ number_format($rowTotal, 2) }}</td>
+                        <td class="money">{{ number_format($rowTotal, 2) }}</td>
                         <td class="notes">{!! $it['notes'] ?? '' !!}</td>
                     </tr>
 
@@ -695,18 +761,20 @@
                             <td colspan="{{ $noteColspan }}" style="padding:4px 6px;">
 
                                 <table width="100%" cellpadding="0" cellspacing="0" style="
-                                                                                                    border:0;
-                                                                                                    border-collapse:collapse;
-                                                                                                ">
+                                                                                                                            border:0;
+                                                                                                                            border-collapse:collapse;
+                                                                                                                        ">
                                     <tr>
                                         {{-- LEFT : HEADING (60%) --}}
-                                        <td width="60%" valign="top" style="
-                                                                                                            border:0;
-                                                                                                            padding-right:8px;
-                                                                                                            font-size:8.5px;
-                                                                                                            line-height:1.35;
-                                                                                                            word-break:break-word;
-                                                                                                        ">
+                                        <td width="60%" valign="top"
+                                            style="
+                                                                                                                                    border:0;
+                                                                                                                                    padding-right:8px;
+                                                                                                                                    font-size:8.5px;
+                                                                                                                                    line-height:1.35;
+                                                                                                                                    word-break:break-word;
+                                                                                                                                      font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                                                                                                                                ">
                                             @if(!empty($it['heading']))
                                                 <b style="color:#6b4f1d;">HEADING:</b><br>
                                                 {!! $it['heading'] !!}
@@ -714,12 +782,14 @@
                                         </td>
 
                                         {{-- RIGHT : COMMENTS (40%) --}}
-                                        <td width="40%" valign="top" style="
-                                                                                                            border:0;
-                                                                                                            font-size:8.5px;
-                                                                                                            line-height:1.35;
-                                                                                                            word-break:break-word;
-                                                                                                        ">
+                                        <td width="40%" valign="top"
+                                            style="
+                                                                                                                                    border:0;
+                                                                                                                                    font-size:8.5px;
+                                                                                                                                    line-height:1.35;
+                                                                                                                                    word-break:break-word;
+                                                                                                                                      font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                                                                                                                                ">
                                             @if(!empty($it['product_specification']))
                                                 <b style="color:#6b4f1d;">COMMENTS:</b><br>
                                                 {!! $it['product_specification'] !!}
@@ -737,23 +807,25 @@
 
                 {{-- TOTAL --}}
                 <tr class="total-row">
-                    <td colspan="{{ $isGW ? 9 : 7 }}" class="label">
+                    <td colspan="{{ $isGW ? 9 : 7 }}" class="label money">
                         Grand Total ({{ $currency }})
-                    </td>
+                    </td>                   
 
-                    <td>{{ number_format($totals['sub_net_total'], 2) }}</td>
+                    <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
                     @if($isMH)
                         <td></td>
-                        <td>{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}</td>
+                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
                         <td></td>
-                        <td>{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}</td>
+                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
                     @else
                         <td></td>
-                        <td>{{ number_format($totals['total_igst_total'], 2) }}</td>
+                        <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
                     @endif
 
-                    <td>{{ number_format($totals['grand_total'], 2) }}</td>
+                    <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
                     <td></td>
                 </tr>
 
@@ -774,7 +846,7 @@
             outline:0;
             box-shadow:none;
 
-            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+            font-family: Calibri, DejaVu Sans, Arial, Helvetica, sans-serif;
             font-size:10px;
             margin-top:6px;
 
@@ -782,6 +854,7 @@
             background-repeat: no-repeat;
             background-position: center;
             background-size: 100% 100%;
+              font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
         ">
 
             <!-- TERMS + SIGNATORY -->
@@ -792,12 +865,14 @@
             line-height:1.25;
             background: transparent;
             border:0;
+              font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
         ">
 
                     <div style="
                 font-weight:700;
                 color:#006c95;
                 margin-bottom:3px;
+                  font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
             ">
                         Terms & Conditions:
                     </div>
@@ -816,6 +891,7 @@
             line-height:1.25;
             background: transparent;
             border:0;
+              font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
         ">
                     <div style="font-weight:700; color:#006c95;">
                         For Chromatography World
@@ -840,7 +916,7 @@
         outline:0;
         box-shadow:none;
     
-        font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+        font-family: Calibri, DejaVu Sans, Arial, Helvetica, sans-serif;
         font-size:10px;
         margin-top:6px;
     
@@ -867,6 +943,7 @@
                     color:maroon;
                     font-size:13px;
                     font-weight:700;
+                      font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
                 ">
                         We Look Forward To Your Valuable Order! &nbsp; Thank You!
                     </div>
