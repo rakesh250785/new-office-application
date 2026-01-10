@@ -1,20 +1,48 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 
 <head>
     <meta charset="utf-8">
     <title>Quotation</title>
     <style>
+
+        /* ================= FONT EMBED (PDF SAFE) ================= */
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: normal;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: bold;
+            font-style: italic;
+        }
+
         /* ================= BASE ================= */
         body,
         table,
         th,
         td {
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
-            font-size: 11.2px;
-            /* content size */
+            font-family: "Calibri", "Arial", Arial, Helvetica, sans-serif;
+            font-size: 11px;
             line-height: 1.5;
-            font-weight: 400;
             color: #1f1f1f;
             font-variant-numeric: tabular-nums;
         }
@@ -59,8 +87,6 @@
             word-break: break-word;
             overflow-wrap: anywhere;
             box-sizing: border-box;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
-
             /* draw ONLY from right + bottom */
             border: 0.4px solid #c8c8c8;
         }
@@ -89,7 +115,6 @@
             padding: 0 !important;
             border: none !important;
             border-collapse: collapse;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Remove all borders */
@@ -97,7 +122,6 @@
         .hdr tr,
         .hdr td {
             border: none !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Force table row to hug content */
@@ -110,7 +134,7 @@
             /* padding: 3px 8px 2px 8px; */
             /*  tiny bottom padding like old */
             vertical-align: top;
-            font-weight: 500;
+           
             line-height: 1.2;
             /*  tighter like old */
             color: #333;
@@ -129,7 +153,7 @@
         .hdr .iso,
         .hdr-iso {
             font-size: 11px;
-            font-weight: 600;
+            
             line-height: 1.2;
             margin-top: 2px;
         }
@@ -151,15 +175,13 @@
 
         /* ================= META ================= */
         .meta-label {
-            color: #006c95;
-            font-weight: 600;
+            color: #004f6e;
+            
             letter-spacing: 0.2px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .meta-label.alert {
             color: #b30f16;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .meta-link {
@@ -176,7 +198,7 @@
             line-height:1.35;
             letter-spacing: 0.25px;
             padding: 2px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
+            font-weight: 700;
         }
 
         .authorised td {
@@ -184,7 +206,7 @@
         }
 
         .authorised b {
-            font-weight: 600;
+            
         }
 
         /* ================= SHIPPING TABLE — CLEAN GRID ================= */
@@ -194,7 +216,6 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: auto;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Reset inherited borders */
@@ -205,7 +226,6 @@
             word-break: break-word;
             text-align: left;
             font-size: 11px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Draw ONLY horizontal row lines */
@@ -238,37 +258,30 @@
 
         /* Header cells */
         .ship th {
-            color: #006c95;
-            font-size: 13px;
-            font-weight: 600;
+            color: #004f6e;
+            font-size: 12px;
             white-space: nowrap;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* Value cells */
         .ship td {
             color: #222;
-            font-weight: 240;
             padding: 0px 4px;
             vertical-align: middle;
             word-break: break-word;
             text-align: left;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* ================= ITEMS ================= */
         .items {
             margin-bottom: 7px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }   
 
         .items th {
             background: #eef6f9;
             color: #004f6e;
-            font-weight: 600;
             text-align: left;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         /* Row colors */
@@ -276,7 +289,6 @@
         th {
             background: #eef6f9;
             font-size: 11px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* ODD rows */
@@ -297,9 +309,9 @@
         .items tbody tr.total-row td {
             background: #333 !important;
             color: #f5f2e8;
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 14px;
             letter-spacing: 0.3px;
+            font-weight: 700;
         }
 
         /* Remove all inner borders first */
@@ -324,27 +336,24 @@
 
         .total-row .label {
             text-align: center;
+            color: #f5f2e8;
         }
 
         /* ================= FOOTER / TERMS ================= */
         .footer-title {
-            color: #006c95;
-            font-weight: 700;
+            color: #004f6e;
             font-size: 13.2px;
             letter-spacing: 0.2px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .html-content ul,
         .html-content ol {
             padding-left: 18px;
             margin: 6px 0;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .html-content li {
             margin-bottom: 6px;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .terms,
@@ -352,8 +361,7 @@
             font-size: 12px;
             line-height: 1.35 !important;
             color: #2b2b2b;
-            font-weight: 600;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
+            font-weight: 700;
         }
 
         .terms p,
@@ -380,7 +388,6 @@
         .items td.heading,
         .items td.html-content {
             line-height: 1.2 !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td p,
@@ -391,7 +398,6 @@
         .items td.html-content p {
             margin: 0 !important;
             padding: 0 !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td p:empty,
@@ -421,7 +427,6 @@
             margin: 0 !important;
             padding: 0 !important;
             line-height: 1.2 !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td ul,
@@ -432,7 +437,6 @@
         .comment-row td ol {
             margin: 0 !important;
             padding-left: 14px !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td li,
@@ -441,7 +445,6 @@
             margin: 0 !important;
             padding: 0 !important;
             line-height: 1 !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .spec-row td,
@@ -449,12 +452,10 @@
         .comment-row td {
             padding-top: 2px !important;
             padding-bottom: 2px !important;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         .items thead {
             display: table-row-group;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
 
         /* ===== MONEY COLUMNS — NEVER WRAP ===== */
@@ -467,7 +468,6 @@
             text-align: left;
             padding: 2px !important;
             font-variant-numeric: tabular-nums;
-            font-family: "Calibri", "DejaVu Sans", Arial, Helvetica, sans-serif;
         }
     </style>
 </head>
@@ -478,7 +478,6 @@
         $currency = $currency->name ?? '';
         $isMH = ($shipping['state'] ?? '') === 'Maharashtra';
         $isGW = ($quotation['quotation_type'] ?? '') === 'GW';
-
     @endphp
 
     @php
@@ -504,7 +503,6 @@
     border-collapse:collapse;
     width:100%;
     background:#cfeef9;
-    font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
     
 ">
             <tr>
@@ -514,22 +512,20 @@
             text-align:center;
             vertical-align:top;
             padding:6px 4px;
-            font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
               
         ">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}"
                             style="max-width:200px; height:auto; display:block; margin:0 auto;margin-top: -12px">
                     @else
-                        <div style="font-weight:700; font-size:14px;">QUOTATION</div>
+                        <div style=" font-size:14px;">QUOTATION</div>
                     @endif
 
                     <div style="
                         margin-top: -5px;
                         font-size:12px;
-                        font-weight:600;
                         color:#111;
-                        font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                        font-weight: 700;
                     ">
                         ISO 9001-2015
                     </div>
@@ -538,24 +534,25 @@
                 <!-- RIGHT : DETAILS -->
                 <td
                 style="
-                  vertical-align: top;
-                  padding: 6px 8px;
-                  font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
-                  font-size: 12px;          /* content size */
-                 line-height: 1.30;
-                  color: #111;
+                    vertical-align: top;
+                    padding: 6px 8px;
+                    font-size: 12px;          /* content size */
+                    line-height: 1.5;
+                    line-spacing: 1.5;
+                    color: #111;
+                    font-weight: 700;
                 "
               >
                 <!-- 1️⃣ FIRST LINE : ADDRESS -->
-                <b style="font-size:11px;color:#006c95;">Address :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
+                <b style="font-size:12px;color:#004f6e;">Address :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
                 Mumbai – 400022, India  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#006c95;">Call :</b>
+                <b style="font-size:11px;color:#004f6e;">Call :</b>
                 &nbsp;&nbsp; 91-022-43159100
                 <br>
               
                 <!-- 2️⃣ SECOND LINE : EMAILS + CALL -->
-                <b style="font-size:11px;color:#006c95;">Email :</b>
+                <b style="font-size:12px;color:#004f6e;">Email :</b>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sales@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
                 speed@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
                 gm-support@chromatographyworld.com
@@ -564,27 +561,27 @@
                 <br>
               
                 <!-- 3️⃣ THIRD LINE : GST + MSME + WEBSITE -->
-                <b style="font-size:11px;color:#800000;">GSTN :</b>
+                <b style="font-size:12px;color:#800000;">GSTN :</b>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27AAGFC1217K1ZM
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#800000;">Udyam / MSME :</b>
+                <b style="font-size:12px;color:#800000;">Udyam / MSME :</b>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UDYAM-MH-19-0078510
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#006c95;">Web :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:12px;color:#004f6e;">Web :</b>
                 <span style="color:#0b57d0;">&nbsp;&nbsp;&nbsp;&nbsp; www.chromatographyworld.com</span>
                 <br>
               
                 <!-- 4️⃣ FOURTH LINE : BANK DETAILS -->
-                <b style="font-size:11px;color:#006c95;">Bank :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kotak Mahindra Bank
+                <b style="font-size:12px;color:#004f6e;">Bank :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kotak Mahindra Bank
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#006c95;">Branch :</b>
+                <b style="font-size:12px;color:#004f6e;">Branch :</b>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Matunga
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#006c95;">IFSC :</b>
+                <b style="font-size:12px;color:#004f6e;">IFSC :</b>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KKBK0000644
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#006c95;">A/C :</b>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <b style="font-size:12px;color:#004f6e;">A/C :</b>
                 &nbsp;&nbsp;&nbsp;&nbsp; 4611234274
               </td>
             </tr>
@@ -601,7 +598,6 @@
             Click
             <b
               style="
-                font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
                 color: #fff2cc;
                 text-decoration: underline;
                 font-size: 14px;
@@ -617,11 +613,9 @@
         text-align:center;
         color:#800000;
         font-size:18px;
-        font-weight:600;
         margin:2px 0;
         vertical-align: middle;
         letter-spacing:0.3px;
-        font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
     ">
             Quotation
         </h4>
@@ -651,13 +645,13 @@
             </tr>
             <tr>
                 <th>Contact Person</th>
-                <td colSpan="3">{{ $shipping['contact_person'] }}</td>
+                <td>{{ $shipping['contact_person'] }}</td>
                 <th>Email</th>
                 <td colSpan="2">{{ $shipping['email'] }}</td>
                 <th>Landline</th>
-                <td>{{ $shipping['landline'] }}</td>
+                <td colSpan="2">{{ $shipping['landline'] }}</td>
                 <th>Mobile</th>
-                <td>{{ $shipping['mobile'] }}</td>
+                <td colSpan="2">{{ $shipping['mobile'] }}</td>
             </tr>
 
             <tr>
@@ -674,7 +668,7 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th>Sr.</th>
+                    <th>#</th>
                     <th>Part No.</th>
                     <th>Description</th>
 
@@ -750,7 +744,7 @@
                     @if($isGW && !empty($it['specification']))
                         <tr class="spec-row {{ $rowClass }}">
                             <td colspan="{{ $noteColspan}}">
-                                <b style="color:#6b4f1d; font-size: 8px;">SPECIFICATION :</b>
+                                <b style="color:#004f6e; font-size: 8px;">SPECIFICATION :</b>
                                 {!! $it['specification'] !!}
                             </td>
                         </tr>
@@ -773,7 +767,6 @@
                                                                                                                                     font-size:8.5px;
                                                                                                                                     line-height:1.35;
                                                                                                                                     word-break:break-word;
-                                                                                                                                      font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
                                                                                                                                 ">
                                             @if(!empty($it['heading']))
                                                 <b style="color:#6b4f1d;">HEADING:</b><br>
@@ -788,7 +781,6 @@
                                                                                                                                     font-size:8.5px;
                                                                                                                                     line-height:1.35;
                                                                                                                                     word-break:break-word;
-                                                                                                                                      font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
                                                                                                                                 ">
                                             @if(!empty($it['product_specification']))
                                                 <b style="color:#6b4f1d;">COMMENTS:</b><br>
@@ -845,16 +837,13 @@
             border:0;
             outline:0;
             box-shadow:none;
-
-            font-family: Calibri, DejaVu Sans, Arial, Helvetica, sans-serif;
-            font-size:10px;
+            font-size:12px;
             margin-top:6px;
 
             background-image: url('{{ $term_conditon_bg_img }}');
             background-repeat: no-repeat;
             background-position: center;
             background-size: 100% 100%;
-              font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
         ">
 
             <!-- TERMS + SIGNATORY -->
@@ -865,14 +854,14 @@
             line-height:1.25;
             background: transparent;
             border:0;
-              font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
         ">
 
                     <div style="
-                font-weight:700;
-                color:#006c95;
+                
+                color:#004f6e;
                 margin-bottom:3px;
-                  font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                font-weight: 700;
+                 font-size:12px;
             ">
                         Terms & Conditions:
                     </div>
@@ -891,17 +880,18 @@
             line-height:1.25;
             background: transparent;
             border:0;
-              font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+            font-weight: 700;
+             font-size:12px;
         ">
-                    <div style="font-weight:700; color:#006c95;">
+                    <div style=" color:#004f6e;">
                         For Chromatography World
                     </div>
 
-                    <div style="font-weight:700; color:#006c95; margin-top:4px;">
+                    <div style=" color:#004f6e; margin-top:4px;">
                         Authorized Signatory
                     </div>
 
-                    <div style="margin-top:6px; font-weight:600;">
+                    <div style="margin-top:6px;">
                         {{ $prepared_by }}
                     </div>
                 </td>
@@ -915,11 +905,8 @@
         border:0;
         outline:0;
         box-shadow:none;
-    
-        font-family: Calibri, DejaVu Sans, Arial, Helvetica, sans-serif;
         font-size:10px;
         margin-top:6px;
-    
         background-repeat: no-repeat;
         background-position: center;
         background-size: 100% 100%;
@@ -932,7 +919,6 @@
                 text-align:center;
                 padding:6px 8px;
                 font-size:13px;
-                font-weight:500;
                 border:0;
             ">
                     <div style="margin-bottom:2px;">
@@ -942,8 +928,7 @@
                     <div style="
                     color:maroon;
                     font-size:13px;
-                    font-weight:700;
-                      font-family: Calibri, 'DejaVu Sans', Arial, Helvetica, sans-serif;
+                    font-weight: 700;
                 ">
                         We Look Forward To Your Valuable Order! &nbsp; Thank You!
                     </div>
@@ -952,30 +937,30 @@
         </table>
 
     </div>
+
+
     <script type="text/php">
-        if (isset($pdf)) {
-    
-            $pdf->page_script('
-                $font = $fontMetrics->get_font("Inter", "bold");
-                if (!$font) {
-                    $font = $fontMetrics->get_font("DejaVu Sans", "bold");
-                }
-    
-                /* slightly larger & clean */
+        if (isset($pdf) && isset($fontMetrics)) {
+        
+            /* Resolve font ONCE */
+            $pageFont = $fontMetrics->get_font("Calibri", "bold")
+                        ?: $fontMetrics->get_font("DejaVu Sans", "bold");
+        
+            $pdf->page_script(function ($pageNum, $pageCount, $canvas, $fontMetrics) use ($pageFont) {
+        
                 $size = 11;
-    
-                $text = "Page $PAGE_NUM of $PAGE_COUNT";
-    
-                $width = $fontMetrics->get_text_width($text, $font, $size);
-    
-                /* bottom-right with safe margin */
-                $x = $pdf->get_width() - $width - 18;
-                $y = $pdf->get_height() - 18;
-    
-                $pdf->text($x, $y, $text, $font, $size);
-            ');
+                $text = "Page $pageNum of $pageCount";
+        
+                $width = $fontMetrics->get_text_width($text, $pageFont, $size);
+        
+                $x = $canvas->get_width() - $width - 18;
+                $y = $canvas->get_height() - 18;
+        
+                $canvas->text($x, $y, $text, $pageFont, $size);
+            });
         }
     </script>
+            
 
 </body>
 

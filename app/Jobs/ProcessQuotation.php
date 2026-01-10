@@ -37,6 +37,7 @@ class ProcessQuotation implements ShouldQueue
                 'isRemoteEnabled' => true,
                 'isFontSubsettingEnabled' => true,
                 'isPhpEnabled' => true,
+                'defaultFont' => 'Calibri',
             ])->loadView('quotation.quotationPdf', $this->data)->setPaper('A4', 'landscape');
 
             $fileName = $this->data['pdf_name'];
