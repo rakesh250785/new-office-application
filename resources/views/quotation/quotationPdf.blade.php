@@ -465,7 +465,7 @@
             white-space: nowrap !important;
             word-break: keep-all !important;
             overflow-wrap: normal !important;
-            text-align: left;
+            text-align: center;
             padding: 2px !important;
             font-variant-numeric: tabular-nums;
         }
@@ -516,13 +516,13 @@
         ">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}"
-                            style="max-width:200px; height:auto; display:block; margin:0 auto;margin-top: -12px">
+                            style="max-width:200px; height:auto; display:block; margin:0 auto;margin-top: -17px">
                     @else
                         <div style=" font-size:14px;">QUOTATION</div>
                     @endif
 
                     <div style="
-                        margin-top: -5px;
+                        margin-top: 0px;
                         font-size:12px;
                         color:#111;
                         font-weight: 700;
@@ -545,8 +545,8 @@
               >
                 <!-- 1️⃣ FIRST LINE : ADDRESS -->
                 <b style="font-size:12px;color:#004f6e;">Address :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
-                Mumbai – 400022, India  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
+                Mumbai – 400022, India  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 <b style="font-size:11px;color:#004f6e;">Call :</b>
                 &nbsp;&nbsp; 91-022-43159100
                 <br>
@@ -668,13 +668,13 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>Sr</th>
                     <th>Part No.</th>
                     <th>Description</th>
 
                     @if($isGW)
                         <th>Maker</th>
-                        <th>UOM</th>
+                        <th>UOM</th>    
                     @endif
 
                     <th class="money">HSN</th>
@@ -685,12 +685,12 @@
 
                     @if($isMH)
                         <th>SGST %</th>
-                        <th>SGST Amt</th>
+                        <th>SGST AMT</th>
                         <th>CGST %</th>
-                        <th>CGST Amt</th>
+                        <th>CGST AMT</th>
                     @else
                         <th>IGST %</th>
-                        <th>IGST Amt</th>
+                        <th>IGST AMT</th>
                     @endif
 
                     <th>Total ({{ $currency }})</th>
@@ -799,9 +799,9 @@
 
                 {{-- TOTAL --}}
                 <tr class="total-row">
-                    <td colspan="{{ $isGW ? 9 : 7 }}" class="label money">
+                    <td colspan="{{ $isGW ? 9 : 7 }}" class="label">
                         Grand Total ({{ $currency }})
-                    </td>                   
+                    </td>                  
 
                     <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
@@ -861,7 +861,7 @@
                 color:#004f6e;
                 margin-bottom:3px;
                 font-weight: 700;
-                 font-size:12px;
+                font-size:12px;
             ">
                         Terms & Conditions:
                     </div>
@@ -875,14 +875,14 @@
 
                 <!-- RIGHT : SIGNATORY -->
                 <td width="28%" valign="top" style="
-            padding:5px 7px;
-            text-align:right;
-            line-height:1.25;
-            background: transparent;
-            border:0;
-            font-weight: 700;
-             font-size:12px;
-        ">
+                    padding:5px 7px;
+                    text-align:right;
+                    line-height:1.25;
+                    background: transparent;
+                    border:0;
+                    font-weight: 700;
+                    font-size:12px;
+                ">
                     <div style=" color:#004f6e;">
                         For Chromatography World
                     </div>

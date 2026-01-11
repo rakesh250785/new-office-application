@@ -5,15 +5,43 @@
     <meta charset="utf-8">
     <title>Order</title>
     <style>
+        /* ================= FONT EMBED (PDF SAFE) ================= */
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Calibri'; 
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: normal;
+            font-style: italic;
+        }
+
+        @font-face {
+            font-family: 'Calibri';
+            src: url("/fonts/calibri.ttf") format("truetype");
+            font-weight: 700;
+            font-style: italic;
+        }
+
         /* ================= BASE ================= */
         body,
         table,
         th,
         td {
-            font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
-            font-size: 12.2px;
+            font-family: "Calibri", "Arial", Arial, Helvetica, sans-serif;
+            font-size: 11px;
             line-height: 1.5;
-            font-weight: 400;
             color: #1f1f1f;
             font-variant-numeric: tabular-nums;
         }
@@ -43,43 +71,33 @@
             table-layout: auto;
         }
 
-        /* =================================================
-           UNIFORM BORDER SYSTEM (PDF SAFE)
-           ONE-DIRECTION DRAWING ONLY
-           ================================================= */
-
-        /* Reset all borders */
+        /* ================= UNIFORM BORDER SYSTEM ================= */
         th,
         td {
-            border: none;
             padding: 2px;
             vertical-align: top;
             white-space: normal;
             word-break: break-word;
             overflow-wrap: anywhere;
             box-sizing: border-box;
-
-            /* draw ONLY from right + bottom */
-            border: 0.4px solid #99a3a7;
+            border: 0.4px solid #c8c8c8;
         }
 
-        /* Close LEFT edge */
         table tr th:first-child,
         table tr td:first-child {
-            border-left: 0.4px solid #99a3a7;
+            border-left: 0.4px solid #c8c8c8;
         }
 
-        /* Close TOP edge */
         table thead tr:first-child th,
         table tbody tr:first-child td {
-            border-top: 0.4px solid #99a3a7;
+            border-top: 0.4px solid #c8c8c8;
         }
 
         tr {
             page-break-inside: avoid;
         }
 
-        /* ================= HEADER (OLD-STYLE FLUSH) ================= */
+        /* ================= HEADER ================= */
         .hdr {
             background: #bcecfa;
             width: 100%;
@@ -89,48 +107,32 @@
             border-collapse: collapse;
         }
 
-        /* Remove all borders */
         .hdr,
         .hdr tr,
         .hdr td {
             border: none !important;
         }
 
-        /* Force table row to hug content */
-        .hdr tr {
-            height: auto;
-        }
-
-        /* Cells */
         .hdr td {
-            /* padding: 3px 8px 2px 8px; */
-            /*  tiny bottom padding like old */
             vertical-align: top;
-            font-weight: 500;
             line-height: 1.2;
-            /*  tighter like old */
             color: #333;
         }
 
-        /* Logo — critical */
         .hdr img {
             display: block;
-            /* removes image baseline gap */
             height: 60px;
             margin: 0;
             padding: 0;
         }
 
-        /* ISO text */
         .hdr .iso,
         .hdr-iso {
             font-size: 11px;
-            font-weight: 600;
             line-height: 1.2;
             margin-top: 2px;
         }
 
-        /* Kill hidden spacing from inner elements */
         .hdr p,
         .hdr div,
         .hdr span {
@@ -139,16 +141,13 @@
             line-height: 1.2;
         }
 
-        /* No gap below header */
         .hdr+* {
             margin-top: 0 !important;
         }
 
-
         /* ================= META ================= */
         .meta-label {
-            color: #006c95;
-            font-weight: 600;
+            color: #004f6e;
             letter-spacing: 0.2px;
         }
 
@@ -166,168 +165,130 @@
             background: #2b2b2b;
             color: #f5f2e8;
             text-align: center;
-            font-size: 11px;
-            line-height: 1;
+            font-size: 12px;
+            line-height: 1.35;
             letter-spacing: 0.25px;
+            padding: 2px;
+            font-weight: 700;
         }
 
         .authorised td {
             border: none !important;
         }
 
-        .authorised b {
-            font-weight: 600;
-        }
 
-        /* ================= SHIPPING TABLE — CLEAN GRID ================= */
+        /* ================= BASE TABLE ================= */
         .ship {
-            width: 100%;
             background: #f2f8f9;
+            width: 100%;
+            margin-bottom: 0;
             border-collapse: collapse;
-            table-layout: fixed;          /* 🔒 critical */
-            margin-bottom: 7px;
+            table-layout: auto;
         }
 
         .ship th,
         .ship td {
-            border: 0.4px solid #99a3a7;
-            padding: 2px 4px;
-            font-size: 11px;
-            line-height: 1.35;
+            padding: 0 4px;
+            vertical-align: middle;
             text-align: left;
-            vertical-align: top;          /* 🔒 stops “row overlap” illusion */
-            word-break: break-word;
-            overflow-wrap: anywhere;
+            border: 1px solid #99a3a7;   /* ← real pixel */
         }
 
         .ship th {
-            font-weight: 600;
+            font-size: 12px;
             color: #004f6e;
-            white-space: nowrap;
         }
 
-        /* Billing tone */
-        .ship .billing th,
-        .ship .billing td {
-            background: #99CCFF;
-            color: rgb(179,15,22);
-            border: 0.4px solid #99a3a7;
+        .ship td {
+            font-size: 11px;
         }
 
-        /* Shipping tone */
-        .ship .shipping th,
-        .ship .shipping td {
-            background: #CCECFF;
-            color: #111;
+        /* BILLING */
+        .ship tr.billing th,
+        .ship tr.billing td {
+            background-color: #CCECFF;
         }
 
+        .ship tr.billing th {
+            color: #B30F16;
+            font-weight: 700;
+        }
+
+        /* SHIPPING */
+        .ship tr.shipping th,
+        .ship tr.shipping td {
+            background-color: #99CCFF;
+        }
+
+        .ship tr.shipping th {
+            font-weight: 700;
+        }
+
+        .ship tr.topinfo:last-of-type th,
+        .ship tr.topinfo:last-of-type td {
+            border-bottom: none;
+        }
+
+
+        .ship tr.billing:last-of-type th,
+        .ship tr.billing:last-of-type td {
+            border-bottom: none;
+        }
 
         /* ================= ITEMS ================= */
         .items {
             margin-bottom: 7px;
+            margin-top: 6px;
         }
 
         .items th {
             background: #eef6f9;
             color: #004f6e;
-            font-weight: 600;
+            font-size: 12px;
             text-align: left;
         }
 
-        /* Row colors */
         .items tbody tr td,
         th {
             background: #eef6f9;
             font-size: 11px;
         }
 
-        /* ODD rows */
         .items tbody tr.item-row.odd td,
         .items tbody tr.spec-row.odd td,
         .items tbody tr.comment-row.odd td {
-            background: #C1D9BF;
+            background: #fdecec;
         }
 
-        /* EVEN rows */
         .items tbody tr.item-row.even td,
         .items tbody tr.spec-row.even td,
         .items tbody tr.comment-row.even td {
-            background: #D9E9D6;
+            background: #f6d6d6;
         }
 
         /* ================= TOTAL ROW ================= */
         .items tbody tr.total-row td {
             background: #333 !important;
             color: #f5f2e8;
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 14px;
             letter-spacing: 0.3px;
-        }
-
-        /* Remove all inner borders first */
-        .items tbody tr.total-row td {
+            font-weight: 700;
             border: none !important;
+            border-bottom: 0.5px solid #cfcfcf !important;
         }
 
-        /* Left edge */
         .items tbody tr.total-row td:first-child {
-            border-left: 0.4px solid #99a3a7 !important;
+            border-left: 0.5px solid #cfcfcf !important;
         }
 
-        /* Right edge */
         .items tbody tr.total-row td:last-child {
-            border-right: 0.4px solid #99a3a7 !important;
-        }
-
-        /* Bottom edge (entire row) */
-        .items tbody tr.total-row td {
-            border-bottom: 0.4px solid #99a3a7 !important;
+            border-right: 0.5px solid #cfcfcf !important;
         }
 
         .total-row .label {
             text-align: center;
         }
 
-        /* ================= FOOTER / TERMS ================= */
-        .footer-title {
-            color: #006c95;
-            font-weight: 700;
-            font-size: 13.2px;
-            letter-spacing: 0.2px;
-        }
-
-        .html-content ul,
-        .html-content ol {
-            padding-left: 18px;
-            margin: 6px 0;
-        }
-
-        .html-content li {
-            margin-bottom: 6px;
-        }
-
-        .terms,
-        .terms * {
-            font-size: 10.6px;
-            line-height: 1.25 !important;
-            color: #2b2b2b;
-        }
-
-        .terms p,
-        .terms li {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .terms ul,
-        .terms ol {
-            margin: 0 !important;
-            padding-left: 14px !important;
-        }
-
-        .terms br {
-            display: none;
-        }
 
         /* ================= HTML EDITOR HARD RESET ================= */
         .spec-row td,
@@ -406,8 +367,63 @@
         .items thead {
             display: table-row-group;
         }
-    </style>
 
+        /* ===== MONEY COLUMNS — NEVER WRAP ===== */
+        .items th.money,
+        .items td.money,
+        .items .total-row td {
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            overflow-wrap: normal !important;
+            text-align: center;
+            padding: 2px !important;
+            font-variant-numeric: tabular-nums;
+        }
+
+
+        /* ================= FOOTER / TERMS ================= */
+        .footer-title {
+            color: #004f6e;
+            font-size: 13.2px;
+            letter-spacing: 0.2px;
+        }
+
+        .terms,
+        .terms * {
+            font-size: 12px;
+            line-height: 1.35 !important;
+            color: #2b2b2b;
+            font-weight: 700;
+        }
+
+        .terms p,
+        .terms li {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .terms ul,
+        .terms ol {
+            margin: 0 !important;
+            padding-left: 14px !important;
+        }
+
+        .terms br {
+            display: none;
+        }
+
+        /* ===== MONEY COLUMNS — NEVER WRAP ===== */
+        .items th.money,
+        .items td.money,
+        .items .total-row td {
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            overflow-wrap: normal !important;
+            text-align: center;
+            padding: 2px !important;
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
 
 </head>
 
@@ -455,51 +471,73 @@
         ">
                     @if(!empty($company['logo']))
                         <img src="{{ $company['logo'] }}"
-                            style="max-width:150px; height:auto; display:block; margin:0 auto;margin-top: -8px">
+                            style="max-width:200px; height:auto; display:block; margin:0 auto;margin-top: -17px">
                     @else
                         <div style="font-weight:700; font-size:14px;">Order</div>
                     @endif
 
                     <div style="
-                margin-top: 0px;
-                font-size:11.5px;
-                font-weight:600;
-                color:#111;
-            ">
+                        margin-top: 0px;
+                        font-size:12px;
+                        font-weight:700;
+                        color:#111;
+                    ">
                         ISO 9001-2015
                     </div>
                 </td>
 
                 <!-- RIGHT : DETAILS -->
                 <td style="
-            vertical-align:top;
-            padding:6px 8px;
-            font-size:12px;
-            line-height:1.5;
-            color:#111;
-        ">
-                    <b style="color:#006c95">Address :</b>
-                    217, 2nd Floor, Champaklal Industrial Estate, Sion East,
-                    Mumbai – 400022, India&nbsp;&nbsp;
-                    <b style="color:#006c95">Call :</b> 91-022-43159100&nbsp;&nbsp;
-                    <b style="color:#006c95">IFSC :</b> KKBK0000644&nbsp;&nbsp;
-                    <b style="color:#006c95">A/C :</b> 4611234274
+                    vertical-align: top;
+                    padding: 6px 8px;
+                    font-size: 12px;          /* content size */
+                    line-height: 1.5;
+                    line-spacing: 1.5;
+                    color: #111;
+                    font-weight: 700;
+                ">
+                    <!-- 1️⃣ FIRST LINE : ADDRESS -->
+                    <b style="font-size:12px;color:#004f6e;">Address :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
+                    Mumbai – 400022, India
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:11px;color:#004f6e;">Call :</b>
+                    &nbsp;&nbsp; 91-022-43159100
                     <br>
 
-                    <b style="color:#006c95">Email :</b>
-                    sales@chromatographyworld.com,
-                    speed@chromatographyworld.com,
-                    gm-support@chromatographyworld.com&nbsp;
-                    <b style="color:#006c95">Bank :</b> Kotak Mahindra Bank&nbsp;&nbsp;
+                    <!-- 2️⃣ SECOND LINE : EMAILS + CALL -->
+                    <b style="font-size:12px;color:#004f6e;">Email :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    sales@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
+                    speed@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
+                    gm-support@chromatographyworld.com
+                    &nbsp;&nbsp;
 
                     <br>
 
-                    <b style="color:#800000">GSTN :</b> 27AAGFC1217K1ZM&nbsp;&nbsp;
-                    <b style="color:#800000">Udyam / MSME :</b> UDYAM-MH-19-0078510&nbsp;&nbsp;
-                    <b style="color:#006c95">Web :</b>
-                    <span style="color:#0b57d0;">www.chromatographyworld.com</span>&nbsp;&nbsp;
-                    <b style="color:#006c95">Branch :</b> Matunga&nbsp;&nbsp;
+                    <!-- 3️⃣ THIRD LINE : GST + MSME + WEBSITE -->
+                    <b style="font-size:12px;color:#800000;">GSTN :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27AAGFC1217K1ZM
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#800000;">Udyam / MSME :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UDYAM-MH-19-0078510
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">Web :</b>
+                    <span style="color:#0b57d0;">&nbsp;&nbsp;&nbsp;&nbsp; www.chromatographyworld.com</span>
+                    <br>
 
+                    <!-- 4️⃣ FOURTH LINE : BANK DETAILS -->
+                    <b style="font-size:12px;color:#004f6e;">Bank :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kotak Mahindra Bank
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">Branch :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Matunga
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">IFSC :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KKBK0000644
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">A/C :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp; 4611234274
                 </td>
             </tr>
         </table>
@@ -513,137 +551,143 @@
             Nomura Chemicals (Develosil), Sielc (Primesep),
             Sciencix, Poly LC, MZAnalysentechnik, Sepax, Frontier Lab.
             Click <b style="
-            color:#fff2cc;
-            font-weight:600;
-            text-decoration:none;
-            font-size: 14px;
-        ">
+              color: #fff2cc;
+              text-decoration: underline;
+              font-size: 14px;
+            ">
                 www.chromatographyworld.com
             </b>
             for more details.
         </div>
 
         <h4 style="
-        text-align:center;
-        color:#800000;
-        font-size:18px;
-        font-weight:600;
-        margin:2px 0;
-        vertical-align: middle;
-        letter-spacing:0.3px;
-    ">
+            text-align:center;
+            color:#800000;
+            font-size:18px;
+            font-weight:700;
+            margin:2px 0;
+            vertical-align: middle;
+            letter-spacing:0.3px;
+        ">
             Purchase Order Acknowledgement
         </h4>
 
         <table class="ship">
-            <!-- LOCK THE GRID -->
             <colgroup>
                 <col span="8">
             </colgroup>
-        
             <tbody>
-        
-                <!-- ================= TOP INFO ================= -->
-                <tr>
+                <tr class="topinfo">
                     <th>Customer Order</th>
                     <td>{{ $orderInfo['customer_order_no'] }}</td>
         
                     <th>Order Date</th>
-                    <td>{{ $orderInfo['order_date'] }}</td>
+                    <td colspan="2">{{ $orderInfo['order_date'] }}</td>
         
                     <th>Quotation No.</th>
-                    <td>{{ $quotationInfo['unique_quotation_no'] }}</td>
+                    <td colspan="2">{{ $quotationInfo['unique_quotation_no'] }}</td>
         
                     <th>Quotation Date</th>
-                    <td>{{ $quotationInfo['date'] }}</td>
+                    <td colspan="2">{{ $quotationInfo['date'] }}</td>
                 </tr>
         
-                <tr>
-                    <th>Enq Ref.</th>
+                <tr class="topinfo">
+                    <th>Order Ref.</th>
                     <td>{{ $orderInfo['ref'] }}</td>
         
                     <th>Date</th>
                     <td>{{ $orderInfo['date'] }}</td>
         
                     <th>Credit Terms</th>
-                    <td>{{ $delivery_term_data }}</td>
+                    <td colspan="3">{{ $delivery_term_data }}</td>
         
                     <th>Preferred Courier</th>
-                    <td>{{ $courier_name }}</td>
+                    <td colspan="2">{{ $courier_name }}</td>
                 </tr>
-        
-                <!-- ================= BILLING ================= -->
+            </tbody>
+        </table>
+
+        <table class="ship">
+            <colgroup>
+                <col span="8">
+            </colgroup>
+            <tbody>
                 <tr class="billing">
                     <th>Billing Name</th>
-                    <td colspan="3">{{ $billing['company'] }}</td>
-        
-                    <th>Contact Person</th>
-                    <td colspan="3">{{ $billing['contact_person'] }}</td>
+                    <td colspan="6">{{ $billing['company'] }}</td>
+                    <th>GSTN</th>
+                    <td colspan="3">{{ $billing['gstn'] }}</td>
                 </tr>
         
                 <tr class="billing">
                     <th>Billing Address</th>
-                    <td colspan="5">{{ $billing['address'] }}</td>
-        
-                    <th>GSTN</th>
-                    <td colspan="1">{{ $billing['gstn'] }}</td>
+                    <td colspan="2">{{ $billing['address'] }}</td>
+                    <th>Pin Code</th>
+                    <td>{{ $billing['pincode'] }}</td>
+                    <th>City</th>
+                    <td>{{ $billing['city'] }}</td>
+                    <th>State</th>
+                    <td>{{ $billing['state'] }}</td>
+                    <th>Country</th>
+                    <td>{{ $billing['country'] }}</td>
                 </tr>
         
                 <tr class="billing">
-                    <th>City</th><td>{{ $billing['city'] }}</td>
-                    <th>Pin Code</th><td>{{ $billing['pincode'] }}</td>
-                    <th>State</th><td>{{ $billing['state'] }}</td>
-                    <th>Country</th><td>{{ $billing['country'] }}</td>
-                </tr>
-        
-                <tr class="billing">
-                    <th>Phone</th><td>{{ $billing['landline'] }}</td>
-                    <th>Mobile</th><td>{{ $billing['mobile'] }}</td>
+                    <th>Contact Person</th>
+                    <td>{{ $billing['contact_person'] }}</td>
                     <th>Email</th>
-                    <td colspan="3">{{ $billing['email'] }}</td>
+                    <td colspan="2">{{ $billing['email'] }}</td>
+                    <th>Phone</th>
+                    <td colspan="2">{{ $billing['landline'] }}</td>
+                    <th>Mobile</th>
+                    <td colspan="2">{{ $billing['mobile'] }}</td>
                 </tr>
-        
-                <!-- ================= SHIPPING ================= -->
+            </tbody>
+        </table>
+
+        <table class="ship">
+            <colgroup>
+                <col span="8">
+            </colgroup>
+            <tbody>
                 <tr class="shipping">
                     <th>Shipping Name</th>
-                    <td colspan="3">{{ $shipping['company'] }}</td>
-        
-                    <th>Contact Person</th>
-                    <td colspan="3">{{ $shipping['contact_person'] }}</td>
+                    <td colspan="6">{{ $shipping['company'] }}</td>
+                    <th>GSTN</th>
+                    <td colspan="3">{{ $shipping['gstn'] }}</td>
                 </tr>
         
                 <tr class="shipping">
                     <th>Shipping Address</th>
-                    <td colspan="5">{{ $shipping['address'] }}</td>
-        
-                    <th>GSTN</th>
-                    <td colspan="1">{{ $shipping['gstn'] }}</td>
+                    <td colspan="2">{{ $shipping['address'] }}</td>
+                    <th>Pin Code</th>
+                    <td>{{ $shipping['pincode'] }}</td>
+                    <th>City</th>
+                    <td>{{ $shipping['city'] }}</td>
+                    <th>State</th>
+                    <td>{{ $shipping['state'] }}</td>
+                    <th>Country</th>
+                    <td>{{ $shipping['country'] }}</td>
                 </tr>
         
                 <tr class="shipping">
-                    <th>City</th><td>{{ $shipping['city'] }}</td>
-                    <th>Pin Code</th><td>{{ $shipping['pincode'] }}</td>
-                    <th>State</th><td>{{ $shipping['state'] }}</td>
-                    <th>Country</th><td>{{ $shipping['country'] }}</td>
-                </tr>
-        
-                <tr class="shipping">
-                    <th>Phone</th><td>{{ $shipping['landline'] }}</td>
-                    <th>Mobile</th><td>{{ $shipping['mobile'] }}</td>
+                    <th>Contact Person</th>
+                    <td>{{ $shipping['contact_person'] }}</td>
                     <th>Email</th>
-                    <td colspan="3">{{ $shipping['email'] }}</td>
+                    <td colspan="2">{{ $shipping['email'] }}</td>
+                    <th>Phone</th>
+                    <td colspan="2">{{ $shipping['landline'] }}</td>
+                    <th>Mobile</th>
+                    <td colspan="2">{{ $shipping['mobile'] }}</td>
                 </tr>
-        
             </tbody>
         </table>
         
-        
-
         {{-- ================= ITEMS ================= --}}
         <table class="items">
             <thead>
                 <tr>
-                    <th>Sr.</th>
+                    <th>Sr</th>
                     <th>Part No.</th>
                     <th>Description</th>
 
@@ -660,12 +704,12 @@
 
                     @if($isMH)
                         <th>SGST %</th>
-                        <th>SGST Amt</th>
+                        <th>SGST AMT</th>
                         <th>CGST %</th>
-                        <th>CGST Amt</th>
+                        <th>CGST AMT</th>
                     @else
                         <th>IGST %</th>
-                        <th>IGST Amt</th>
+                        <th>IGST AMT</th>
                     @endif
 
                     <th>Total ({{ $currency }})</th>
@@ -719,7 +763,7 @@
                     @if($isGW && !empty($it['specification']))
                         <tr class="spec-row {{ $rowClass }}">
                             <td colspan="{{ $noteColspan}}">
-                                <b style="color:#6b4f1d; font-size: 8px;">SPECIFICATION :</b>
+                                <b style="color:#004f6e; font-size: 8px;">SPECIFICATION :</b>
                                 {!! $it['specification'] !!}
                             </td>
                         </tr>
@@ -729,19 +773,21 @@
                         <tr class="comment-row {{ $rowClass }}">
                             <td colspan="{{ $noteColspan }}" style="padding:4px 6px;">
 
-                                <table width="100%" cellpadding="0" cellspacing="0" style="
-                                                                                                    border:0;
-                                                                                                    border-collapse:collapse;
-                                                                                                ">
+                                <table width="100%" cellpadding="0" cellspacing="0"
+                                    style="
+                                                                                                                                                                    border:0;
+                                                                                                                                                                    border-collapse:collapse;
+                                                                                                                                                                ">
                                     <tr>
                                         {{-- LEFT : HEADING (60%) --}}
-                                        <td width="60%" valign="top" style="
-                                                                                                            border:0;
-                                                                                                            padding-right:8px;
-                                                                                                            font-size:8.5px;
-                                                                                                            line-height:1.35;
-                                                                                                            word-break:break-word;
-                                                                                                        ">
+                                        <td width="60%" valign="top"
+                                            style="
+                                                                                                                                                                            border:0;
+                                                                                                                                                                            padding-right:8px;
+                                                                                                                                                                            font-size:8.5px;
+                                                                                                                                                                            line-height:1.35;
+                                                                                                                                                                            word-break:break-word;
+                                                                                                                                                                        ">
                                             @if(!empty($it['heading']))
                                                 <b style="color:#6b4f1d;">HEADING:</b><br>
                                                 {!! $it['heading'] !!}
@@ -749,12 +795,13 @@
                                         </td>
 
                                         {{-- RIGHT : COMMENTS (40%) --}}
-                                        <td width="40%" valign="top" style="
-                                                                                                            border:0;
-                                                                                                            font-size:8.5px;
-                                                                                                            line-height:1.35;
-                                                                                                            word-break:break-word;
-                                                                                                        ">
+                                        <td width="40%" valign="top"
+                                            style="
+                                                                                                                                                                            border:0;
+                                                                                                                                                                            font-size:8.5px;
+                                                                                                                                                                            line-height:1.35;
+                                                                                                                                                                            word-break:break-word;
+                                                                                                                                                                        ">
                                             @if(!empty($it['product_specification']))
                                                 <b style="color:#6b4f1d;">COMMENTS:</b><br>
                                                 {!! $it['product_specification'] !!}
@@ -776,19 +823,21 @@
                         Grand Total ({{ $currency }})
                     </td>
 
-                    <td>{{ number_format($totals['sub_net_total'], 2) }}</td>
+                    <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
                     @if($isMH)
                         <td></td>
-                        <td>{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}</td>
+                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
                         <td></td>
-                        <td>{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}</td>
+                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
                     @else
                         <td></td>
-                        <td>{{ number_format($totals['total_igst_total'], 2) }}</td>
+                        <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
                     @endif
 
-                    <td>{{ number_format($totals['grand_total'], 2) }}</td>
+                    <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
                     <td></td>
                 </tr>
 
@@ -808,8 +857,6 @@
             border:0;
             outline:0;
             box-shadow:none;
-
-            font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
             font-size:10px;
             margin-top:6px;
 
@@ -823,17 +870,18 @@
             <tr style="border:0;">
                 <!-- LEFT : TERMS -->
                 <td width="72%" valign="top" style="
-            padding:5px 7px;
-            line-height:1.25;
-            background: transparent;
-            border:0;
-        ">
+                        padding:5px 7px;
+                        line-height:1.25;
+                        background: transparent;
+                        border:0;
+                        ">
 
                     <div style="
-                font-weight:700;
-                color:#006c95;
-                margin-bottom:3px;
-            ">
+                        font-weight:700;
+                        color:#006c95;
+                        margin-bottom:3px;
+                        font-size:12px;
+                    ">
                         Terms & Conditions:
                     </div>
 
@@ -846,12 +894,14 @@
 
                 <!-- RIGHT : SIGNATORY -->
                 <td width="28%" valign="top" style="
-            padding:5px 7px;
-            text-align:right;
-            line-height:1.25;
-            background: transparent;
-            border:0;
-        ">
+                    padding:5px 7px;
+                    text-align:right;
+                    line-height:1.25;
+                    background: transparent;
+                    border:0;
+                    font-weight: 700;
+                    font-size:12px;
+                    ">
                     <div style="font-weight:700; color:#006c95;">
                         For Chromatography World
                     </div>
@@ -891,7 +941,7 @@
                 text-align:center;
                 padding:6px 8px;
                 font-size:13px;
-                font-weight:500;
+                font-weight:700;
                 border:0;
             ">
                     <div style="margin-bottom:2px;">

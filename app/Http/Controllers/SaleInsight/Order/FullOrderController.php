@@ -96,7 +96,7 @@ class FullOrderController extends Controller
                 'overdue_no' => 'required|string',
                 'unique_quotation_no' => 'required|string',
                 'product_id' => 'nullable|integer|exists:products,id',
-                'product_description' => 'required|string',
+                'product_description' => 'sometimes|nullable',
                 'principal_type' => 'nullable|string',
                 'payment_term_condition' => 'required|string',
                 'lead_from' => 'required|string|max:255',
@@ -110,7 +110,7 @@ class FullOrderController extends Controller
                 'contact_person' => 'required|string|max:255',
                 'shipping_address' => 'required|string|max:500',
                 'shipping_city' => 'required|string|max:255',
-                'shipping_state_id' => 'required|integer|exists:states,id',
+                'shipping_state_id' => 'required|integer|exists:states,id',                                 
                 'shipping_pin_code' => 'required|string|max:10',
                 'shipping_mobile' => 'required|string|max:15',
                 'shipping_email' => 'required|email|max:255',
@@ -121,17 +121,17 @@ class FullOrderController extends Controller
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
-                'date' => 'required|date|after_or_equal:today',
+                'date' => 'required|date',
                 'enq_ref' => 'required|string|max:255',
                 'prepard_by' => 'required|string|max:255',
                 'update_status' => 'required|boolean',
                 'quotation_id' => 'nullable|integer|exists:quotations,id',
                 'product_list' => 'required|array|min:1',
-                'product_list.*.part_no' => 'required|string|max:255',
+                'product_list.*.part_no' => 'required|string',
                 'product_list.*.description' => 'required|string|max:1000',
-                'product_list.*.hsn_code' => 'required|string|max:50',
+                'product_list.*.hsn_code' => 'required|string',
                 'product_list.*.quantity' => 'required|numeric|min:1',
-                'product_list.*.in_stock' => 'nullable|numeric|max:255',
+                'product_list.*.in_stock' => 'nullable|numeric',
                 'product_list.*.price' => 'required|numeric|min:0',
                 'product_list.*.discount' => 'nullable|numeric|min:0|max:100',
                 'product_list.*.net_price' => 'required|numeric|min:0',
@@ -365,7 +365,8 @@ class FullOrderController extends Controller
             }
 
             // Get pdf info
-            $states = $customerInfo->state_id ? States::where('id', $customerInfo->state_id)->first() : null;
+            $customerInfo = $customerInfo?->toArray();
+            $states = States::where('id', $customerInfo['state_id'] ?? null)->first();
             $branchAddress = QuotationFormat::where('branch_id', $branchId)->whereNull('deleted_at')->value('billing_address');
             $quotationType = QuotationType::where('id', $data['quotation_type_id'])->first();
             $pdfRec = [
@@ -411,29 +412,29 @@ class FullOrderController extends Controller
                 ],
 
                 'billing' => [
-                    'company' => $customerInfo->company_name,
+                    'company' => $customerInfo['company_name'] ?? null,
                     'address' => $data['billing_address'],
                     'email' => $data['billing_email'],
                     'landline' => $data['billing_landline'],
                     'mobile' => $data['billing_mobile'],
-                    'gstn' => $customerInfo->gst_number,
+                    'gstn' => $customerInfo['gst_number'] ?? null,
                     'city' => $data['billing_city'],
                     'pincode' => $data['billing_pin_code'],
-                    'state' => $states->name ?? $customerInfo->other_state ?? null,
+                    'state' => $states->name ?? $customerInfo['other_state'] ?? null,
                     'contact_person' => $data['contact_person'],
                     'country' => $data['company_details']['country']['name'] ?? null,
                 ],
 
                 'shipping' => [
-                    'company' => $customerInfo->company_name,
+                    'company' => $customerInfo['company_name'] ?? null,
                     'address' => $data['shipping_address'],
                     'email' => $data['shipping_email'],
                     'landline' => $data['shipping_landline'],
                     'mobile' => $data['shipping_mobile'],
-                    'gstn' => $customerInfo->gst_number,
+                    'gstn' => $customerInfo['gst_number'] ?? null,
                     'city' => $data['shipping_city'],
                     'pincode' => $data['shipping_pin_code'],
-                    'state' => $states->name ?? $customerInfo->other_state ?? null,
+                    'state' => $states->name ?? $customerInfo['other_state'] ?? null,
                     'contact_person' => $data['contact_person'],
                     'country' => $data['company_details']['country']['name'] ?? null,
                 ],
