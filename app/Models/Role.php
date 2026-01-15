@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-
     public function getCreatedAtAttribute($value)
     {
         return Carbon::parse($value)->format('d-m-Y');
@@ -22,6 +21,6 @@ class Role extends Model
 
     public function permissions()
     {
-        return $this->belongsToMany(Permission::class, 'role_permissions');
+        return $this->belongsToMany(Permission::class, 'role_has_permissions')->select('id', 'name', 'module_name');
     }
 }

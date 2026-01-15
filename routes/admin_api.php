@@ -63,7 +63,7 @@ Route::prefix('admin')->group(function () {
 });
 
 // Aiuth route
-Route::prefix('admin')->middleware('auth:api')->group(function () {
+Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(function () {
     Route::post('/logout', [AuthenticationController::class, 'apiLogout']);
 
     // Vendor Inside
@@ -191,6 +191,7 @@ Route::prefix('admin')->middleware('auth:api')->group(function () {
     Route::post('listPermissions', [RolePermissionController::class, 'listPermissions']);
     Route::post('addUpdateRole', [RolePermissionController::class, 'addUpdateRole']);
     Route::post('deleteRole', [RolePermissionController::class, 'deleteRole']);
+    Route::post('rolesPermissionsOverview', [RolePermissionController::class, 'rolesPermissionsOverview']);
 
     Route::post('getInvoice', [InvoiceController::class, 'getInvoice']);
     Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);

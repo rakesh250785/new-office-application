@@ -28,7 +28,8 @@ class User extends Authenticatable implements JWTSubject
         'token',
         'role_id',
         'profile_image',
-        'team_type'
+        'team_type',
+        'active_jwt'
     ];
 
     protected $hidden = [
@@ -70,7 +71,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function role()
     {
-        return $this->belongsTo(Role::class, 'branch_id');
+        return $this->belongsTo(Role::class, 'role_id')->with('permissions');
     }
 
 

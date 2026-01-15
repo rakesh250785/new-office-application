@@ -17,6 +17,7 @@ class RolePermissionSeeder extends Seeder
         # Define modules and permissions
         $modulesPermissions = [
             'expances' => ['view_expanses'],
+            'expances' => ['view_expanses'],
             'order_summary' => ['view_order_summary'],
             'performance_report' => ['view_performance_report'],
             'quotation_summary' => ['view_quotation_summary'],

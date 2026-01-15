@@ -1,52 +1,53 @@
 <?php
+
 namespace App\Http\Controllers\ClientUser\RolePermission;
 
-use App\Http\Controllers\Controller;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use App\Models\User;
 use App\Helpers\Utility;
-use Validator;
-use Exception, Log;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Log;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Validator;
 
 class RolePermissionController extends Controller
 {
-
     public function addUpdateRole(Request $request)
     {
         try {
 
-            # Request specific fields
+            // Request specific fields
             $data = $request->only(['id', 'name', 'permissions']);
 
-            # Ids
+            // Ids
             $id = isset($data['id']) ? trim($data['id']) : null;
 
-            # Define rule
+            // Define rule
             $rules = [
-                'name' => 'required|unique:roles,name' . ($id ? ',' . $id : ''),
+                'name' => 'required|unique:roles,name'.($id ? ','.$id : ''),
                 'permissions' => 'required|array',
             ];
 
-            # Validation rule
+            // Validation rule
             $validate = Validator::make($data, $rules);
 
-            # Return if fails
+            // Return if fails
             if ($validate->fails()) {
                 return Utility::apiError($validate->errors()->first(), 221);
             }
 
-            # Update or create
+            // Update or create
             $role = Role::updateOrCreate(
                 ['id' => $data['id']],
                 ['name' => $data['name'], 'branch_id' => Auth::user()['branch_id']],
 
             );
 
-            # Map permission
+            // Map permission
             $permissionIds = [];
             foreach ($data['permissions'] as $module => $codes) {
                 foreach ($codes as $code) {
@@ -57,13 +58,14 @@ class RolePermissionController extends Controller
                 }
             }
 
-            # Sync permission with role
+            // Sync permission with role
             $role->permissions()->sync($permissionIds);
 
-            # Return response
+            // Return response
             return Utility::apiSuccess($data['id'] ? ' updated successfully' : ' created successfully');
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to storeRole.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -71,16 +73,17 @@ class RolePermissionController extends Controller
     public function listPermissions(Request $request)
     {
         try {
-            # Get permission list
+            // Get permission list
             $permissions = Permission::orderBy('id')->get();
             $grouped = $permissions->groupBy('module_name')->map(function ($perms) {
                 return $perms->pluck('name')->values()->toArray();
             });
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Permissions fetched successfully', $grouped, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to fetch permission list.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -89,7 +92,7 @@ class RolePermissionController extends Controller
     {
         try {
 
-            # Request specific fields
+            // Request specific fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -99,36 +102,36 @@ class RolePermissionController extends Controller
                 'branch_list',
             ]);
 
-            # Config pagination
+            // Config pagination
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $page = $data['page'] ?? 1;
 
-            # Get role with permissions
+            // Get role with permissions
             $query = Role::with('permissions');
 
-            # Optional search by role name
-            if (!empty($data['search'])) {
+            // Optional search by role name
+            if (! empty($data['search'])) {
                 $search = $data['search'];
                 $query->where('name', 'like', "%{$search}%");
             }
 
-            # Filter by date range
-            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            // Filter by date range
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
-            # Filter by branch_id
-            if (!empty($data['branch_list'])) {
+            // Filter by branch_id
+            if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);
             }
 
-            # Get records
+            // Get records
             $roles = $query->orderByDesc('id')->paginate($perPage, ['*'], 'page', $page);
 
-            # Transform to group permissions by module_name
+            // Transform to group permissions by module_name
             $roles->getCollection()->transform(function ($role) {
                 $groupedPermissions = $role->permissions->groupBy('module_name')->map(function ($perms) {
                     return $perms->pluck('name')->values();
@@ -142,10 +145,11 @@ class RolePermissionController extends Controller
                 ];
             });
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Roles list fetched successfully', $roles, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to fetch roles list.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -154,53 +158,56 @@ class RolePermissionController extends Controller
     {
 
         try {
-            # Request specific fields
+            // Request specific fields
             $data = $request->only([
                 'id',
             ]);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'id' => 'required',
 
             ]);
 
-            # Return validation error 
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
-            # Find role
+            // Find role
             $role = Role::find($data['id'])->delete();
 
-            # Return if fail to delete
-            if (!$role) {
+            // Return if fail to delete
+            if (! $role) {
                 return Utility::apiError('Fail to delete', 221);
             }
 
-            # Retunr response
+            // Retunr response
             return Utility::apiSuccess('deleted successfully', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to updateRole.', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 
     public function assignRole(Request $request)
     {
         try {
             $v = Validator::make($request->all(), [
                 'user_id' => 'required|exists:users,id',
-                'role' => 'required|exists:roles,name'
+                'role' => 'required|exists:roles,name',
             ]);
-            if ($v->fails())
+            if ($v->fails()) {
                 return Utility::apiError($v->errors()->first(), 422);
+            }
 
             $user = User::find($request->user_id);
             $user->syncRoles([$request->role]);
+
             return Utility::apiSuccess($user->roles, 'Role assigned');
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to updatePermission.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -210,44 +217,70 @@ class RolePermissionController extends Controller
         try {
             $v = Validator::make($request->all(), [
                 'role_id' => 'required|exists:roles,id',
-                'permissions' => 'required|array'
+                'permissions' => 'required|array',
             ]);
-            if ($v->fails())
+            if ($v->fails()) {
                 return Utility::apiError($v->errors()->first(), 422);
+            }
 
             $role = Role::find($request->role_id);
             $role->syncPermissions($request->permissions);
+
             return Utility::apiSuccess($role->permissions, 'Permissions assigned');
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to updatePermission.', ['exception' => $ex->getMessage()], 500);
         }
     }
 
-    # ---- Overview ----
     public function rolesPermissionsOverview()
     {
         try {
-            $roles = Role::with('permissions')->get();
-            $users = User::with(['roles', 'permissions'])->get();
-            $data = [
-                'roles' => $roles->map(fn($r) => [
-                    'id' => $r->id,
-                    'name' => $r->name,
-                    'permissions' => $r->permissions->pluck('name')
-                ]),
-                'users' => $users->map(fn($u) => [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'email' => $u->email,
-                    'roles' => $u->roles->pluck('name'),
-                    'permissions' => $u->permissions->pluck('name')
-                ])
+            $authUserId = Auth::id();
+
+            $user = User::select(['id', 'role_id', 'name'])
+                ->with(['role.permissions:id,name,module_name'])
+                ->where('id', $authUserId)
+                ->first();
+
+            if (! $user) {
+                return Utility::apiError('User not found', [], 404);
+            }
+
+            $permissions = $user->role->permissions
+                ->groupBy('module_name')
+                ->map(fn ($perms) => $perms->pluck('name', 'name'));
+
+            $response = [
+                'id' => $user->id,
+                'role_id' => $user->role_id,
+                'name' => $user->name,
+                'role' => [
+                    'id' => $user->role->id,
+                    'name' => $user->role->name,
+                    'guard_name' => $user->role->guard_name,
+                    'branch_id' => $user->role->branch_id,
+                    'created_at' => $user->role->created_at,
+                    'updated_at' => $user->role->updated_at,
+                    'permissions' => $permissions,
+                ],
             ];
-            return Utility::apiSuccess($data, 'Overview fetched');
+
+            return Utility::apiSuccess(
+                'User permission list',
+                $response,
+                200
+            );
+
         } catch (Exception $ex) {
             Log::error($ex);
-            return Utility::apiError('Failed to updatePermission.', ['exception' => $ex->getMessage()], 500);
+
+            return Utility::apiError(
+                'Failed to updatePermission.',
+                ['exception' => $ex->getMessage()],
+                500
+            );
         }
     }
 }

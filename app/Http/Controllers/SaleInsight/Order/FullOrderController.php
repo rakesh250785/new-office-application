@@ -110,7 +110,7 @@ class FullOrderController extends Controller
                 'contact_person' => 'required|string|max:255',
                 'shipping_address' => 'required|string|max:500',
                 'shipping_city' => 'required|string|max:255',
-                'shipping_state_id' => 'required|integer|exists:states,id',                                 
+                'shipping_state_id' => 'required|integer|exists:states,id',
                 'shipping_pin_code' => 'required|string|max:10',
                 'shipping_mobile' => 'required|string|max:15',
                 'shipping_email' => 'required|email|max:255',
@@ -279,6 +279,7 @@ class FullOrderController extends Controller
 
                 $productList[] = [
                     'order_id' => $orderId,
+                    'user_id' => $adminId,
                     'quotation_id' => $data['quotation_id'],
                     'unique_order_no' => $orderNumber,
                     'unique_quotation_no' => $data['unique_quotation_no'],
