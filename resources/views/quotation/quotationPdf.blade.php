@@ -103,8 +103,8 @@
             border-top: 0.4px solid #c8c8c8;
         }
 
-        tr {
-            page-break-inside: avoid;
+        .items tr, td {
+            page-break-inside: auto;
         }
 
         /* ================= HEADER (OLD-STYLE FLUSH) ================= */
@@ -468,7 +468,7 @@
         .html-content ol li[data-list="ordered"] {
             list-style-type: decimal !important;
             list-style-position: outside !important;
-            padding-left: 0px !important;  
+            padding-left: 0px !important;   
             margin: 0;
             font-weight: 700;
             margin-left:10px;
@@ -490,7 +490,7 @@
         .label-heading {
             display: flex;
             flex-direction: column;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             line-height: 1;
             color: #006c95;
@@ -756,7 +756,7 @@
                         $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
                         $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
                         $showDetails =
-                            ($isGW && ($hasText($it['heading']) || $hasText($it['specification'])))
+                            ($isGW && ($hasText($it['specification'])))
                             || $hasText($it['product_specification']);
                     @endphp
 
@@ -796,7 +796,7 @@
                             <td></td>
                             <td colspan="{{ $noteColspan-1 }}" style="padding:4px 6px;">
                                 <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
-                                    @if($hasText($it['product_specification']))
+                                    @if($hasText($it['product_specification'] ?? null))
                                         <span class="detail-text  html-content">
                                             <b class="label-heading">
                                                 Comments:
@@ -804,7 +804,7 @@
                                             <span>{!! $it['product_specification'] !!}</span>
                                         </span>
                                     @endif
-                                    @if($isGW && $hasText($it['specification']))
+                                    @if($isGW && $hasText($it['specification'] ?? null))
                                         <span class="detail-text  html-content">
                                             <b class="label-heading">
                                                 Specification with Heading:
@@ -813,7 +813,7 @@
                                 
                                         </span>
                                     @endif
-                                    </span>
+                                </span>
                             </td>
                         </tr>
                     @endif
