@@ -16,7 +16,7 @@ return new class extends Migration
             $table->longText('heading')->nullable()->change();
         });
     }
-
+    
     public function down(): void
     {
         Schema::table('order_details', function (Blueprint $table) {

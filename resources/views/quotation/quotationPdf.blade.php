@@ -348,12 +348,7 @@
 
         .html-content ul,
         .html-content ol {
-            padding-left: 18px;
-            margin: 6px 0;
-        }
-
-        .html-content li {
-            margin-bottom: 6px;
+            padding-left: 10px;
         }
 
         .terms,
@@ -387,7 +382,7 @@
         .items td.description,
         .items td.heading,
         .items td.html-content {
-            line-height: 1.2 !important;
+            line-height: 1 !important;
         }
 
         .spec-row td p,
@@ -469,6 +464,53 @@
             padding: 2px !important;
             font-variant-numeric: tabular-nums;
         }
+
+        .html-content ol li[data-list="ordered"] {
+            list-style-type: decimal !important;
+            list-style-position: outside !important;
+            padding-left: 0px !important;  
+            margin: 0;
+            font-weight: 700;
+            margin-left:10px;
+        }
+
+        .html-content ol li[data-list="bullet"] {
+            list-style-type: disc !important;
+            list-style-position: outside !important;
+            padding-left: 0px !important;  
+            margin: 0;
+            font-weight: 700;
+            margin-left:10px;
+        }
+
+        .html-content li {
+            margin-bottom: 2px;
+        }
+
+        .label-heading {
+            display: flex;
+            flex-direction: column;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            color: #006c95;
+            margin-bottom: -15px;
+        }
+
+        .detail-text {
+            font-size: 10px;
+            line-height: 1;
+            margin: 0;
+            padding: 0;
+            white-space: normal;
+        }
+
+        .ql-container,
+        .ql-editor {
+            background: #ffffff !important;
+            color: #000;
+        }
+
     </style>
 </head>
 
@@ -699,6 +741,11 @@
             </thead>
 
             <tbody>
+                @php
+                    $hasText = function ($v) {
+                        return !empty(trim(preg_replace('/<[^>]*>|&nbsp;/', '', $v ?? '')));
+                    };
+                @endphp
                 @foreach($items as $i => $it)
                     @php
                         $net = (float) $it['net_price'];
@@ -708,6 +755,9 @@
                         $halfAmt = $net * $half / 100;
                         $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
                         $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
+                        $showDetails =
+                            ($isGW && ($hasText($it['heading']) || $hasText($it['specification'])))
+                            || $hasText($it['product_specification']);
                     @endphp
 
 
@@ -741,60 +791,32 @@
                         <td class="notes">{!! $it['notes'] ?? '' !!}</td>
                     </tr>
 
-                    @if($isGW && !empty($it['specification']))
-                        <tr class="spec-row {{ $rowClass }}">
-                            <td colspan="{{ $noteColspan}}">
-                                <b style="color:#004f6e; font-size: 8px;">SPECIFICATION :</b>
-                                {!! $it['specification'] !!}
+                    @if($showDetails)
+                        <tr class="item-row {{ $rowClass }}">
+                            <td></td>
+                            <td colspan="{{ $noteColspan-1 }}" style="padding:4px 6px;">
+                                <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
+                                    @if($hasText($it['product_specification']))
+                                        <span class="detail-text  html-content">
+                                            <b class="label-heading">
+                                                Comments:
+                                            </b>&nbsp;
+                                            <span>{!! $it['product_specification'] !!}</span>
+                                        </span>
+                                    @endif
+                                    @if($isGW && $hasText($it['specification']))
+                                        <span class="detail-text  html-content">
+                                            <b class="label-heading">
+                                                Specification with Heading:
+                                            </b>&nbsp;
+                                            <span>{!! $it['specification'] !!}</span>
+                                
+                                        </span>
+                                    @endif
+                                    </span>
                             </td>
                         </tr>
                     @endif
-
-                    @if(!empty($it['heading']) || !empty($it['product_specification']))
-                        <tr class="comment-row {{ $rowClass }}">
-                            <td colspan="{{ $noteColspan }}" style="padding:4px 6px;">
-
-                                <table width="100%" cellpadding="0" cellspacing="0" style="
-                                                                                                                            border:0;
-                                                                                                                            border-collapse:collapse;
-                                                                                                                        ">
-                                    <tr>
-                                        {{-- LEFT : HEADING (60%) --}}
-                                        <td width="60%" valign="top"
-                                            style="
-                                                                                                                                    border:0;
-                                                                                                                                    padding-right:8px;
-                                                                                                                                    font-size:8.5px;
-                                                                                                                                    line-height:1.35;
-                                                                                                                                    word-break:break-word;
-                                                                                                                                ">
-                                            @if(!empty($it['heading']))
-                                                <b style="color:#6b4f1d;">HEADING:</b><br>
-                                                {!! $it['heading'] !!}
-                                            @endif
-                                        </td>
-
-                                        {{-- RIGHT : COMMENTS (40%) --}}
-                                        <td width="40%" valign="top"
-                                            style="
-                                                                                                                                    border:0;
-                                                                                                                                    font-size:8.5px;
-                                                                                                                                    line-height:1.35;
-                                                                                                                                    word-break:break-word;
-                                                                                                                                ">
-                                            @if(!empty($it['product_specification']))
-                                                <b style="color:#6b4f1d;">COMMENTS:</b><br>
-                                                {!! $it['product_specification'] !!}
-                                            @endif
-                                        </td>
-                                    </tr>
-                                </table>
-
-                            </td>
-                        </tr>
-                    @endif
-
-
                 @endforeach
 
                 {{-- TOTAL --}}
