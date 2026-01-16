@@ -309,9 +309,7 @@
             color: #f5f2e8;
             font-size: 14px;
             letter-spacing: 0.3px;
-            font-weight: 700;
         }
-
         /* Remove all inner borders first */
         .items tbody tr.total-row td {
             border: none !important;
@@ -468,7 +466,6 @@
             list-style-position: outside !important;
             padding-left: 0px !important;
             margin: 0;
-            font-weight: 700;
             margin-left: 10px;
         }
 
@@ -477,7 +474,6 @@
             list-style-position: outside !important;
             padding-left: 0px !important;
             margin: 0;
-            font-weight: 700;
             margin-left: 10px;
         }
 
@@ -485,14 +481,38 @@
             margin-bottom: 2px;
         }
 
+        /* ===== FIX 2: remove negative margin ===== */
         .label-heading {
             display: flex;
             flex-direction: column;
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 10px;
             line-height: 1;
+            margin-bottom: -5px;
             color: #006c95;
-            margin-bottom: -15px;
+        }
+
+        .detail-text {
+            font-size: 10px;
+            line-height: 1.2;
+        }
+
+        /* ===== FIX 3: DomPDF-safe spec block ===== */
+        .spec-block {
+            border-left: 0.4px solid #c8c8c8;
+            border-right: 0.4px solid #c8c8c8;
+            border-bottom: 0.4px solid #c8c8c8;
+            padding: 4px 6px;
+            font-size: 10px;
+            line-height: 1.25;
+            page-break-inside: auto;
+        }
+
+        .spec-block.odd {
+            background: #fdecec;
+        }
+
+        .spec-block.even {
+            background: #f6d6d6;
         }
 
         .detail-text {
@@ -702,6 +722,7 @@
         </table>
 
         {{-- ================= ITEMS ================= --}}
+
         <table class="items">
             <thead>
                 <tr>
@@ -734,117 +755,102 @@
                     <th>Delivery</th>
                 </tr>
             </thead>
-
             <tbody>
+
                 @php
                     $hasText = function ($v) {
                         return !empty(trim(preg_replace('/<[^>]*>|&nbsp;/', '', $v ?? '')));
                     };
                 @endphp
+
                 @foreach($items as $i => $it)
-                    @php
-                        $net = (float) $it['net_price'];
-                        $igst = (float) $it['igst'];
-                        $half = $igst / 2;
-                        $igstAmt = $net * $igst / 100;
-                        $halfAmt = $net * $half / 100;
-                        $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
-                        $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
-                        $showDetails =
-                            ($isGW && ($hasText($it['specification'] ?? null)))
-                            || $hasText($it['product_specification'] ?? null);
-                    @endphp
+                            @php
+                                $net = (float) $it['net_price'];
+                                $igst = (float) $it['igst'];
+                                $half = $igst / 2;
+                                $igstAmt = $net * $igst / 100;
+                                $halfAmt = $net * $half / 100;
+                                $rowTotal = $isMH ? $net + $halfAmt * 2 : $net + $igstAmt;
+                                $rowClass = $i % 2 === 0 ? 'odd' : 'even';
+                                $showDetails =
+                                    ($isGW && $hasText($it['specification'] ?? null))
+                                    || $hasText($it['product_specification'] ?? null);
+                            @endphp
 
-
-                    <tr class="item-row {{ $rowClass }}">
-                        <td>{{ $i + 1 }}</td>
-                        <td>{{ $it['part_no'] }}</td>
-                        <td>{!! $it['description'] !!}</td>
-
-                        @if($isGW)
-                            <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
-                            <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
-                        @endif
-
-                        <td class="money">{{ $it['hsn_code'] }}</td>
-                        <td>{{ $it['quantity'] }}</td>
-                        <td class="money">{{ number_format($it['price'], 2) }}</td>
-                        <td>{{ $it['discount'] }}</td>
-                        <td>{{ number_format($net, 2) }}</td>
-
-                        @if($isMH)
-                            <td>{{ number_format($half, 2) }}</td>
-                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
-                            <td>{{ number_format($half, 2) }}</td>
-                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
-                        @else
-                            <td>{{ number_format($igst, 2) }}</td>
-                            <td class="money">{{ number_format($igstAmt, 2) }}</td>
-                        @endif
-
-                        <td class="money">{{ number_format($rowTotal, 2) }}</td>
-                        <td class="notes">{!! $it['notes'] ?? '' !!}</td>
-                    </tr>
+                            <tr class="item-row {{ $rowClass }}">
+                                <td>{{ $i + 1 }}</td>
+                                <td>{{ $it['part_no'] }}</td>
+                                <td>{!! $it['description'] !!}</td>
+                                @if($isGW)
+                                    <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
+                                    <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
+                                @endif
+                                <td>{{ $it['hsn_code'] }}</td>
+                                <td>{{ $it['quantity'] }}</td>
+                                <td>{{ number_format($it['price'], 2) }}</td>
+                                <td>{{ $it['discount'] }}</td>
+                                <td>{{ number_format($net, 2) }}</td>
+                                @if($isMH)
+                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td>{{ number_format($halfAmt, 2) }}</td>
+                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td>{{ number_format($halfAmt, 2) }}</td>
+                                @else
+                                    <td>{{ number_format($igst, 2) }}</td>
+                                    <td>{{ number_format($igstAmt, 2) }}</td>
+                                @endif
+                                <td>{{ number_format($rowTotal, 2) }}</td>
+                                <td>{!! $it['notes'] ?? '' !!}</td>
+                            </tr>
+                    </table>
 
                     @if($showDetails)
-                        <tr class="item-row {{ $rowClass }}">
-                            <td></td>
-                            <td colspan="{{ $noteColspan - 1 }}" style="padding:4px 6px;">
-                                <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
-                                    @if($hasText($it['product_specification'] ?? null))
-                                        <span class="detail-text  html-content">
-                                            <b class="label-heading">
-                                                Comments:
-                                            </b>&nbsp;
-                                            <span>{!! $it['product_specification'] !!}</span>
-                                        </span>
-                                    @endif
-                                    @if($isGW && $hasText($it['specification'] ?? null))
-                                        <span class="detail-text  html-content">
-                                            <b class="label-heading">
-                                                Specification with Heading:
-                                            </b>&nbsp;
-                                            <span>{!! $it['specification'] !!}</span>
-
-                                        </span>
-                                    @endif
-                                </span>
-                            </td>
-                        </tr>
+                        <div class="spec-block {{ $rowClass }}">
+                            @if($hasText($it['product_specification'] ?? null))
+                                <b class="label-heading">Comments :</b>
+                                <div class="detail-text html-content">{!! $it['product_specification'] !!}</div>
+                            @endif
+                            @if($isGW && $hasText($it['specification'] ?? null))
+                                <b class="label-heading">Specification with Heading :</b>
+                                <div class="detail-text html-content">{!! $it['specification'] !!}</div>
+                            @endif
+                        </div>
                     @endif
+
+                    <table class="items">
                 @endforeach
 
-                {{-- TOTAL --}}
-                <tr class="total-row">
-                    <td colspan="{{ $isGW ? 9 : 7 }}" class="label">
-                        Grand Total ({{ $currency }})
-                    </td>
+            {{-- TOTAL --}}
+            <tr class="total-row">
+                <td colspan="{{ $isGW ? 9 : 7 }}" class="label">
+                    Grand Total ({{ $currency }})
+                </td>
 
-                    <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
+                <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
-                    @if($isMH)
-                        <td></td>
-                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
-                        </td>
-                        <td></td>
-                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
-                        </td>
-                    @else
-                        <td></td>
-                        <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
-                    @endif
-
-                    <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
+                @if($isMH)
                     <td></td>
-                </tr>
-
-                @if(!empty($product_description))
-                    <tr>
-                        <td colspan="{{ $noteColspan }}" style="border:none; padding:6px 4px;">
-                            <b>NOTES :</b> {!! $product_description!!}
-                        </td>
-                    </tr>
+                    <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                    </td>
+                    <td></td>
+                    <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                    </td>
+                @else
+                    <td></td>
+                    <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
                 @endif
+
+                <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
+                <td></td>
+            </tr>
+
+            @if(!empty($product_description))
+                <tr>
+                    <td colspan="{{ $noteColspan }}" style="border:none; padding:6px 4px;">
+                        <b>NOTES :</b> {!! $product_description!!}
+                    </td>
+                </tr>
+            @endif
             </tbody>
         </table>
 
