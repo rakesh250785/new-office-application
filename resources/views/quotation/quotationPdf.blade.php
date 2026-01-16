@@ -271,9 +271,6 @@
         }
 
         /* ================= ITEMS ================= */
-        .items {
-            margin-bottom: 7px;
-        }
 
         .items th {
             background: #eef6f9;
@@ -310,6 +307,7 @@
             font-size: 14px;
             letter-spacing: 0.3px;
         }
+
         /* Remove all inner borders first */
         .items tbody tr.total-row td {
             border: none !important;
@@ -333,6 +331,7 @@
         .total-row .label {
             text-align: center;
             color: #f5f2e8;
+            font-weight: 700;
         }
 
         /* ================= FOOTER / TERMS ================= */
@@ -461,6 +460,16 @@
             font-variant-numeric: tabular-nums;
         }
 
+        .items .total-row td {
+            white-space: nowrap !important;
+            word-break: keep-all !important;
+            overflow-wrap: normal !important;
+            text-align: left;
+            padding: 2px !important;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
         .html-content ol li[data-list="ordered"] {
             list-style-type: decimal !important;
             list-style-position: outside !important;
@@ -481,10 +490,14 @@
             margin-bottom: 2px;
         }
 
+        .html-content li {
+            margin: 0px;
+        }
+
         /* ===== FIX 2: remove negative margin ===== */
         .label-heading {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             font-size: 10px;
             line-height: 1;
             margin-bottom: -5px;
@@ -494,6 +507,7 @@
         .detail-text {
             font-size: 10px;
             line-height: 1.2;
+            text-align: justify;
         }
 
         /* ===== FIX 3: DomPDF-safe spec block ===== */
@@ -501,10 +515,11 @@
             border-left: 0.4px solid #c8c8c8;
             border-right: 0.4px solid #c8c8c8;
             border-bottom: 0.4px solid #c8c8c8;
-            padding: 4px 6px;
+            padding: 5px;
             font-size: 10px;
             line-height: 1.25;
             page-break-inside: auto;
+
         }
 
         .spec-block.odd {
@@ -517,7 +532,7 @@
 
         .detail-text {
             font-size: 10px;
-            line-height: 1;
+            line-height: 1.5;
             margin: 0;
             padding: 0;
             white-space: normal;
@@ -527,6 +542,17 @@
         .ql-editor {
             background: #ffffff !important;
             color: #000;
+        }
+
+        .one-line,
+        .one-line * {
+            white-space: nowrap !important;
+        }
+
+        .one-line {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* optional */
         }
     </style>
 </head>
@@ -735,9 +761,9 @@
                         <th>UOM</th>
                     @endif
 
-                    <th class="money">HSN</th>
+                    <th>HSN</th>
                     <th>Qty</th>
-                    <th class="money">Unit Price ({{ $currency }})</th>
+                    <th>Unit Price ({{ $currency }})</th>
                     <th>Disc %</th>
                     <th>Net Price ({{ $currency }})</th>
 
@@ -780,26 +806,26 @@
                             <tr class="item-row {{ $rowClass }}">
                                 <td>{{ $i + 1 }}</td>
                                 <td>{{ $it['part_no'] }}</td>
-                                <td>{!! $it['description'] !!}</td>
+                                <td>{{$it['description']}}</td>
                                 @if($isGW)
                                     <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
                                     <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
                                 @endif
-                                <td>{{ $it['hsn_code'] }}</td>
+                                <td class="money">{{ $it['hsn_code'] }}</td>
                                 <td>{{ $it['quantity'] }}</td>
-                                <td>{{ number_format($it['price'], 2) }}</td>
-                                <td>{{ $it['discount'] }}</td>
-                                <td>{{ number_format($net, 2) }}</td>
+                                <td class="money">{{ number_format($it['price'], 2) }}</td>
+                                <td class="disc">{{ $it['discount'] }}</td>
+                                <td class="money">{{ number_format($net, 2) }}</td>
                                 @if($isMH)
                                     <td>{{ number_format($half, 2) }}</td>
-                                    <td>{{ number_format($halfAmt, 2) }}</td>
+                                    <td class="money">{{ number_format($halfAmt, 2) }}</td>
                                     <td>{{ number_format($half, 2) }}</td>
-                                    <td>{{ number_format($halfAmt, 2) }}</td>
+                                    <td class="money">{{ number_format($halfAmt, 2) }}</td>
                                 @else
                                     <td>{{ number_format($igst, 2) }}</td>
-                                    <td>{{ number_format($igstAmt, 2) }}</td>
+                                    <td class="money">{{ number_format($igstAmt, 2) }}</td>
                                 @endif
-                                <td>{{ number_format($rowTotal, 2) }}</td>
+                                <td class="money">{{ number_format($rowTotal, 2) }}</td>
                                 <td>{!! $it['notes'] ?? '' !!}</td>
                             </tr>
                     </table>
@@ -807,9 +833,10 @@
                     @if($showDetails)
                         <div class="spec-block {{ $rowClass }}">
                             @if($hasText($it['product_specification'] ?? null))
-                                <b class="label-heading">Comments :</b>
-                                <div class="detail-text html-content">{!! $it['product_specification'] !!}</div>
-                            @endif
+                                <div class="detail-text html-content">
+                                    <b class="label-heading">Comments :</b>
+                                    {!! $it['product_specification'] !!}
+                            </div> @endif
                             @if($isGW && $hasText($it['specification'] ?? null))
                                 <b class="label-heading">Specification with Heading :</b>
                                 <div class="detail-text html-content">{!! $it['specification'] !!}</div>
