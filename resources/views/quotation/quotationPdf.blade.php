@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <title>Quotation</title>
     <style>
-
         /* ================= FONT EMBED (PDF SAFE) ================= */
         @font-face {
             font-family: 'Calibri';
@@ -103,7 +102,8 @@
             border-top: 0.4px solid #c8c8c8;
         }
 
-        .items tr, td {
+        .items tr,
+        td {
             page-break-inside: auto;
         }
 
@@ -134,7 +134,7 @@
             /* padding: 3px 8px 2px 8px; */
             /*  tiny bottom padding like old */
             vertical-align: top;
-           
+
             line-height: 1.2;
             /*  tighter like old */
             color: #333;
@@ -153,7 +153,7 @@
         .hdr .iso,
         .hdr-iso {
             font-size: 11px;
-            
+
             line-height: 1.2;
             margin-top: 2px;
         }
@@ -176,7 +176,7 @@
         /* ================= META ================= */
         .meta-label {
             color: #004f6e;
-            
+
             letter-spacing: 0.2px;
         }
 
@@ -195,7 +195,7 @@
             color: #f5f2e8;
             text-align: center;
             font-size: 12px;
-            line-height:1.35;
+            line-height: 1.35;
             letter-spacing: 0.25px;
             padding: 2px;
             font-weight: 700;
@@ -205,9 +205,7 @@
             border: none !important;
         }
 
-        .authorised b {
-            
-        }
+        .authorised b {}
 
         /* ================= SHIPPING TABLE — CLEAN GRID ================= */
         .ship {
@@ -275,7 +273,7 @@
         /* ================= ITEMS ================= */
         .items {
             margin-bottom: 7px;
-        }   
+        }
 
         .items th {
             background: #eef6f9;
@@ -460,7 +458,7 @@
             white-space: nowrap !important;
             word-break: keep-all !important;
             overflow-wrap: normal !important;
-            text-align: center;
+            text-align: left;
             padding: 2px !important;
             font-variant-numeric: tabular-nums;
         }
@@ -468,19 +466,19 @@
         .html-content ol li[data-list="ordered"] {
             list-style-type: decimal !important;
             list-style-position: outside !important;
-            padding-left: 0px !important;   
+            padding-left: 0px !important;
             margin: 0;
             font-weight: 700;
-            margin-left:10px;
+            margin-left: 10px;
         }
 
         .html-content ol li[data-list="bullet"] {
             list-style-type: disc !important;
             list-style-position: outside !important;
-            padding-left: 0px !important;  
+            padding-left: 0px !important;
             margin: 0;
             font-weight: 700;
-            margin-left:10px;
+            margin-left: 10px;
         }
 
         .html-content li {
@@ -510,7 +508,6 @@
             background: #ffffff !important;
             color: #000;
         }
-
     </style>
 </head>
 
@@ -574,8 +571,7 @@
                 </td>
 
                 <!-- RIGHT : DETAILS -->
-                <td
-                style="
+                <td style="
                     vertical-align: top;
                     padding: 6px 8px;
                     font-size: 12px;          /* content size */
@@ -583,49 +579,50 @@
                     line-spacing: 1.5;
                     color: #111;
                     font-weight: 700;
-                "
-              >
-                <!-- 1️⃣ FIRST LINE : ADDRESS -->
-                <b style="font-size:12px;color:#004f6e;">Address :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
-                Mumbai – 400022, India  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:11px;color:#004f6e;">Call :</b>
-                &nbsp;&nbsp; 91-022-43159100
-                <br>
-              
-                <!-- 2️⃣ SECOND LINE : EMAILS + CALL -->
-                <b style="font-size:12px;color:#004f6e;">Email :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sales@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
-                speed@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
-                gm-support@chromatographyworld.com
-                &nbsp;&nbsp;
-               
-                <br>
-              
-                <!-- 3️⃣ THIRD LINE : GST + MSME + WEBSITE -->
-                <b style="font-size:12px;color:#800000;">GSTN :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27AAGFC1217K1ZM
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:12px;color:#800000;">Udyam / MSME :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UDYAM-MH-19-0078510
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:12px;color:#004f6e;">Web :</b>
-                <span style="color:#0b57d0;">&nbsp;&nbsp;&nbsp;&nbsp; www.chromatographyworld.com</span>
-                <br>
-              
-                <!-- 4️⃣ FOURTH LINE : BANK DETAILS -->
-                <b style="font-size:12px;color:#004f6e;">Bank :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kotak Mahindra Bank
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:12px;color:#004f6e;">Branch :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Matunga
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:12px;color:#004f6e;">IFSC :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KKBK0000644
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <b style="font-size:12px;color:#004f6e;">A/C :</b>
-                &nbsp;&nbsp;&nbsp;&nbsp; 4611234274
-              </td>
+                ">
+                    <!-- 1️⃣ FIRST LINE : ADDRESS -->
+                    <b style="font-size:12px;color:#004f6e;">Address :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 217, 2nd Floor, Champaklal Industrial Estate, Sion East,
+                    Mumbai – 400022, India
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:11px;color:#004f6e;">Call :</b>
+                    &nbsp;&nbsp; 91-022-43159100
+                    <br>
+
+                    <!-- 2️⃣ SECOND LINE : EMAILS + CALL -->
+                    <b style="font-size:12px;color:#004f6e;">Email :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    sales@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
+                    speed@chromatographyworld.com,&nbsp;&nbsp;&nbsp;&nbsp;
+                    gm-support@chromatographyworld.com
+                    &nbsp;&nbsp;
+
+                    <br>
+
+                    <!-- 3️⃣ THIRD LINE : GST + MSME + WEBSITE -->
+                    <b style="font-size:12px;color:#800000;">GSTN :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 27AAGFC1217K1ZM
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#800000;">Udyam / MSME :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UDYAM-MH-19-0078510
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">Web :</b>
+                    <span style="color:#0b57d0;">&nbsp;&nbsp;&nbsp;&nbsp; www.chromatographyworld.com</span>
+                    <br>
+
+                    <!-- 4️⃣ FOURTH LINE : BANK DETAILS -->
+                    <b style="font-size:12px;color:#004f6e;">Bank :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Kotak Mahindra Bank
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">Branch :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Matunga
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">IFSC :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KKBK0000644
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <b style="font-size:12px;color:#004f6e;">A/C :</b>
+                    &nbsp;&nbsp;&nbsp;&nbsp; 4611234274
+                </td>
             </tr>
         </table>
 
@@ -638,18 +635,16 @@
             Nomura Chemicals (Develosil), Sielc (Primesep),
             Sciencix, Poly LC, MZ Analysentechnik, Sepax, Frontier Lab.
             Click
-            <b
-              style="
+            <b style="
                 color: #fff2cc;
                 text-decoration: underline;
                 font-size: 14px;
-              "
-            >
-              www.chromatographyworld.com
+              ">
+                www.chromatographyworld.com
             </b>
             for more details.
-          </div>
-          
+        </div>
+
 
         <h4 style="
         text-align:center;
@@ -669,7 +664,7 @@
                 <th>Company</th>
                 <td colSpan="6">{{ $shipping['company'] }}</td>
                 <th>GSTN</th>
-                <td  colSpan="3">{{ $shipping['gstn'] }}</td>
+                <td colSpan="3">{{ $shipping['gstn'] }}</td>
             </tr>
 
             <tr>
@@ -716,7 +711,7 @@
 
                     @if($isGW)
                         <th>Maker</th>
-                        <th>UOM</th>    
+                        <th>UOM</th>
                     @endif
 
                     <th class="money">HSN</th>
@@ -794,7 +789,7 @@
                     @if($showDetails)
                         <tr class="item-row {{ $rowClass }}">
                             <td></td>
-                            <td colspan="{{ $noteColspan-1 }}" style="padding:4px 6px;">
+                            <td colspan="{{ $noteColspan - 1 }}" style="padding:4px 6px;">
                                 <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
                                     @if($hasText($it['product_specification'] ?? null))
                                         <span class="detail-text  html-content">
@@ -810,7 +805,7 @@
                                                 Specification with Heading:
                                             </b>&nbsp;
                                             <span>{!! $it['specification'] !!}</span>
-                                
+
                                         </span>
                                     @endif
                                 </span>
@@ -823,7 +818,7 @@
                 <tr class="total-row">
                     <td colspan="{{ $isGW ? 9 : 7 }}" class="label">
                         Grand Total ({{ $currency }})
-                    </td>                  
+                    </td>
 
                     <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
@@ -982,7 +977,7 @@
             });
         }
     </script>
-            
+
 
 </body>
 
