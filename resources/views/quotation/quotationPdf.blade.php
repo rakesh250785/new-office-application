@@ -756,8 +756,8 @@
                         $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
                         $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
                         $showDetails =
-                            ($isGW && ($hasText($it['specification'])))
-                            || $hasText($it['product_specification']);
+                            ($isGW && ($hasText($it['specification'] ?? null)))
+                            || $hasText($it['product_specification'] ?? null);
                     @endphp
 
 
