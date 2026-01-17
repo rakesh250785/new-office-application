@@ -687,7 +687,7 @@
             border:0;
         ">
 
-                    <div style="
+        <div style="
                 
                 color:#004f6e;
                 margin-bottom:3px;
