@@ -10,20 +10,17 @@
             font-family: 'Calibri';
             src: url("/fonts/calibri.ttf") format("truetype");
             font-weight: normal;
-            font-style: normal;
         }
 
         @font-face {
             font-family: 'Calibri';
             src: url("/fonts/calibri.ttf") format("truetype");
             font-weight: bold;
-            font-style: normal;
         }
 
         @font-face {
             font-family: 'Calibri';
             src: url("/fonts/calibri.ttf") format("truetype");
-            font-weight: normal;
             font-style: italic;
         }
 
@@ -32,6 +29,13 @@
             src: url("/fonts/calibri.ttf") format("truetype");
             font-weight: bold;
             font-style: italic;
+        }
+
+        /* ================= GLOBAL BORDER CONTROL ================= */
+        :root {
+            --border-color: #c8c8c8;
+            --border-thin: 0.4px;
+            --border-light: 0.2px;
         }
 
         /* ================= BASE ================= */
@@ -39,12 +43,11 @@
         table,
         th,
         td {
-            font-family: "Calibri", "Arial", Arial, Helvetica, sans-serif;
+            font-family: "Calibri", Arial, Helvetica, sans-serif;
             font-size: 11px;
             line-height: 1.5;
             color: #1f1f1f;
             font-variant-numeric: tabular-nums;
-            border: 0.25pt solid #bfbfbf;
         }
 
         html,
@@ -56,12 +59,11 @@
 
         /* ================= PAGE ================= */
         @page {
-            margin: 15mm;
+            margin: 5mm;
         }
 
         .paper {
             box-sizing: border-box;
-            padding: 6mm;
         }
 
         /* ================= TABLE CORE ================= */
@@ -72,81 +74,43 @@
             table-layout: auto;
         }
 
-        /* =================================================
-           UNIFORM BORDER SYSTEM (PDF SAFE)
-           ONE-DIRECTION DRAWING ONLY
-           ================================================= */
-
-        /* Reset all borders */
+        /* ================= UNIFORM BORDER SYSTEM ================= */
         th,
         td {
-            border: none;
+            border: var(--border-thin) solid var(--border-color);
             padding: 2px;
             vertical-align: top;
-            white-space: normal;
             word-break: break-word;
             overflow-wrap: anywhere;
             box-sizing: border-box;
-            /* draw ONLY from right + bottom */
-            border: 0.25pt solid #bfbfbf;
         }
 
-        .items tr,
-        td {
-            page-break-inside: auto;
+        /* Close left edge */
+        table tr th:first-child,
+        table tr td:first-child {
+            border-left: var(--border-thin) solid var(--border-color);
         }
 
-        /* ================= HEADER (OLD-STYLE FLUSH) ================= */
-        .hdr {
-            background: #bcecfa;
-            width: 100%;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            border-collapse: collapse;
+        /* Close top edge */
+        table thead tr:first-child th,
+        table tbody tr:first-child td {
+            border-top: var(--border-thin) solid var(--border-color);
         }
 
-        /* Remove all borders */
+        /* ================= HEADER ================= */
         .hdr,
         .hdr tr,
         .hdr td {
             border: none !important;
-        }
-
-        /* Force table row to hug content */
-        .hdr tr {
-            height: auto;
-        }
-
-        /* Cells */
-        .hdr td {
-            /* padding: 3px 8px 2px 8px; */
-            /*  tiny bottom padding like old */
-            vertical-align: top;
-
-            line-height: 1.2;
-            /*  tighter like old */
-            color: #333;
-        }
-
-        /* Logo — critical */
-        .hdr img {
-            display: block;
-            /* removes image baseline gap */
-            height: 60px;
             margin: 0;
             padding: 0;
         }
 
-        /* ISO text */
-        .hdr .iso,
-        .hdr-iso {
-            font-size: 11px;
-            line-height: 1.2;
-            margin-top: 2px;
+        .hdr img {
+            display: block;
+            height: 60px;
         }
 
-        /* Kill hidden spacing from inner elements */
         .hdr p,
         .hdr div,
         .hdr span {
@@ -155,17 +119,9 @@
             line-height: 1.2;
         }
 
-        /* No gap below header */
-        .hdr+* {
-            margin-top: 0 !important;
-        }
-
-
         /* ================= META ================= */
         .meta-label {
             color: #004f6e;
-
-            letter-spacing: 0.2px;
         }
 
         .meta-label.alert {
@@ -175,154 +131,6 @@
         .meta-link {
             color: #0b57d0;
             text-decoration: underline;
-        }
-
-        /* ================= AUTHORISED ================= */
-        .authorised {
-            background: #2b2b2b;
-            color: #f5f2e8;
-            text-align: center;
-            font-size: 12px;
-            line-height: 1.35;
-            letter-spacing: 0.25px;
-            padding: 2px;
-            font-weight: 700;
-        }
-
-        .authorised td {
-            border: none !important;
-        }
-
-        .authorised b {}
-
-        /* ================= SHIPPING TABLE — CLEAN GRID ================= */
-        .ship {
-            background: #f2f8f9;
-            margin-bottom: 7px;
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: auto;
-        }
-
-        /* Reset inherited borders */
-        .ship th,
-        .ship td {
-            padding: 0px 4px;
-            vertical-align: middle;
-            word-break: break-word;
-            text-align: left;
-            font-size: 11px;
-        }
-
-        /* Draw ONLY horizontal row lines */
-        .ship tr {
-            border: 0.25pt solid #bfbfbf;
-
-        }
-        /* Header cells */
-        .ship th {
-            color: #004f6e;
-            font-size: 12px;
-            white-space: nowrap;
-        }
-
-        /* Value cells */
-        .ship td {
-            color: #222;
-            padding: 0px 4px;
-            vertical-align: middle;
-            word-break: break-word;
-            text-align: left;
-        }
-
-        /* ================= ITEMS ================= */
-
-        .items th {
-            background: #eef6f9;
-            color: #004f6e;
-            text-align: left;
-            font-size: 12px;
-        }
-
-        /* Row colors */
-        .items tbody tr td,
-        th {
-            background: #eef6f9;
-            font-size: 11px;
-        }
-
-        /* ODD rows */
-        .items tbody tr.item-row.odd td,
-        .items tbody tr.spec-row.odd td,
-        .items tbody tr.comment-row.odd td {
-            background: #fdecec;
-        }
-
-        /* EVEN rows */
-        .items tbody tr.item-row.even td,
-        .items tbody tr.spec-row.even td,
-        .items tbody tr.comment-row.even td {
-            background: #f6d6d6;
-        }
-
-        /* ================= TOTAL ROW ================= */
-        .items tbody tr.total-row td {
-            background: #333 !important;
-            color: #f5f2e8;
-            font-size: 14px;
-            letter-spacing: 0.3px;
-        }
-
-        /* Remove all inner borders first */
-        .items tbody tr.total-row td {
-            border: none !important;
-        }
-
-        /* Bottom edge (entire row) */
-        .items tbody tr.total-row td {
-            border-bottom: 0.25pt solid #bfbfbf;
-        }
-
-        .total-row .label {
-            text-align: center;
-            color: #f5f2e8;
-            font-weight: 700;
-        }
-
-        /* ================= FOOTER / TERMS ================= */
-        .footer-title {
-            color: #004f6e;
-            font-size: 13.2px;
-            letter-spacing: 0.2px;
-        }
-
-        .html-content ul,
-        .html-content ol {
-            padding-left: 10px;
-        }
-
-        .terms,
-        .terms * {
-            font-size: 12px;
-            line-height: 1.35 !important;
-            color: #2b2b2b;
-            font-weight: 700;
-        }
-
-        .terms p,
-        .terms li {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .terms ul,
-        .terms ol {
-            margin: 0 !important;
-            padding-left: 14px !important;
-        }
-
-        .terms br {
-            display: none;
         }
 
         /* ================= HTML EDITOR HARD RESET ================= */
@@ -399,104 +207,119 @@
             padding-bottom: 2px !important;
         }
 
-        .items thead {
-            display: table-row-group;
-        }
 
-        /* ===== MONEY COLUMNS — NEVER WRAP ===== */
-        .items th.money,
-        .items td.money,
-        .items .total-row td {
-            white-space: nowrap !important;
-            word-break: keep-all !important;
-            overflow-wrap: normal !important;
-            text-align: left;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .items .total-row td {
-            white-space: nowrap !important;
-            word-break: keep-all !important;
-            overflow-wrap: normal !important;
-            text-align: left;
-            font-variant-numeric: tabular-nums;
+        /* ================= AUTHORISED ================= */
+        .authorised {
+            background: #2b2b2b;
+            color: #f5f2e8;
+            text-align: center;
+            font-size: 12px;
             font-weight: 700;
+            padding: 2px;
         }
 
-        .html-content ol li[data-list="ordered"] {
-            list-style-type: decimal !important;
-            list-style-position: outside !important;
-            padding-left: 0px !important;
-            margin: 0;
-            margin-left: 10px;
+        .authorised td {
+            border: none !important;
         }
 
-        .html-content ol li[data-list="bullet"] {
-            list-style-type: disc !important;
-            list-style-position: outside !important;
-            padding-left: 0px !important;
-            margin: 0;
-            margin-left: 10px;
-        }
-
-        .html-content li {
-            margin-bottom: 2px;
-        }
-
-        .html-content li {
-            margin: 0px;
-        }
-
-        /* ===== FIX 2: remove negative margin ===== */
-        .label-heading {
-            display: flex;
-            flex-direction: row;
-            font-size: 10px;
-            line-height: 1;
-            margin-bottom: -5px;
-            color: #006c95;
-        }
-
-        .detail-text {
-            font-size: 10px;
-            line-height: 1.2;
-            text-align: justify;
-        }
-
-        /* ===== FIX 3: DomPDF-safe spec block ===== */
-        .spec-block {
-            border-left: 0.25pt solid #bfbfbf;
-            border-right: 0.25pt solid #bfbfbf;
-            padding: 5px;
-            font-size: 10px;
-            line-height: 1.25;
-            page-break-inside: auto;
+        /* ================= SHIPPING TABLE ================= */
+        .ship {
+            background: #f2f8f9;
             border-collapse: collapse;
-
         }
 
-        .spec-block.odd {
+        .ship th,
+        .ship td {
+            font-size: 11px;
+            padding: 0 4px;
+            vertical-align: middle;
+        }
+
+        .ship tr,
+        .ship th,
+        .ship td {
+            border: var(--border-light) solid var(--border-color);
+        }
+
+        .ship th {
+            color: #004f6e;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        /* ================= ITEMS ================= */
+        .items {
+            margin-top: 7px;
+        }
+
+        .items th {
+            background: #eef6f9;
+            color: #004f6e;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .items tbody td {
+            font-size: 11px;
+        }
+
+        .items tbody tr.odd td {
             background: #fdecec;
         }
 
-        .spec-block.even {
+        .items tbody tr.even td {
             background: #f6d6d6;
+        }
+
+        /* ================= TOTAL ROW ================= */
+        .items tbody tr.total-row td {
+            background: #333 !important;
+            color: #f5f2e8;
+            font-size: 14px;
+            border: none !important;
+            font-weight: 700;
+        }
+
+        /* ================= MONEY ================= */
+        .items th.money,
+        .items td.money {
+            white-space: nowrap;
+            text-align: left;
+            padding: 2px;
+        }
+
+        /* ================= HTML CONTENT RESET ================= */
+        .html-content * {
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.2 !important;
+            text-align: justify;
+        }
+
+        .html-content ul,
+        .html-content ol {
+            padding-left: 14px !important;
+        }
+
+        .html-content li {
+            margin-bottom: 2px !important;
+        }
+
+        /* ================= LABEL BLOCK ================= */
+        .label-heading {
+            font-size: 12px;
+            font-weight: 700;
+            color: #006c95;
+            line-height: 1;
+            margin-bottom: -15px;
         }
 
         .detail-text {
             font-size: 10px;
-            line-height: 1.5;
-            margin: 0;
-            padding: 0;
-            white-space: normal;
-        }
-
-        .ql-container,
-        .ql-editor {
-            background: #ffffff !important;
-            color: #000;
+            line-height: 1;
         }
     </style>
+
 </head>
 
 <body>
@@ -521,41 +344,6 @@
             $noteColspan = 16;
         }
 
-    @endphp
-
-    @php
-        $columns = [];
-
-        // base columns
-        $columns[] = 'sr';
-        $columns[] = 'part';
-        $columns[] = 'desc';
-
-        if ($isGW) {
-            $columns[] = 'maker';
-            $columns[] = 'uom';
-        }
-
-        $columns[] = 'hsn';
-        $columns[] = 'qty';
-        $columns[] = 'price';
-        $columns[] = 'disc';
-        $columns[] = 'net';
-
-        if ($isMH) {
-            $columns[] = 'sgst';
-            $columns[] = 'sgst_amt';
-            $columns[] = 'cgst';
-            $columns[] = 'cgst_amt';
-        } else {
-            $columns[] = 'igst';
-            $columns[] = 'igst_amt';
-        }
-
-        $columns[] = 'total';
-        $columns[] = 'delivery';
-
-        $totalCols = count($columns);
     @endphp
 
     <div class="paper">
@@ -597,7 +385,7 @@
                 <td style="
                     vertical-align: top;
                     padding: 6px 8px;
-                    font-size: 12px;          /* content size */
+                    font-size: 12px;     
                     line-height: 1.5;
                     line-spacing: 1.5;
                     color: #111;
@@ -725,9 +513,9 @@
         </table>
 
         {{-- ================= ITEMS ================= --}}
-
         <table class="items">
-            <thead>
+
+            <tbody>
                 <tr>
                     <th>Sr</th>
                     <th>Part No.</th>
@@ -738,9 +526,9 @@
                         <th>UOM</th>
                     @endif
 
-                    <th>HSN</th>
+                    <th class="money">HSN</th>
                     <th>Qty</th>
-                    <th>Unit Price ({{ $currency }})</th>
+                    <th class="money">Unit Price ({{ $currency }})</th>
                     <th>Disc %</th>
                     <th>Net Price ({{ $currency }})</th>
 
@@ -757,143 +545,120 @@
                     <th>Total ({{ $currency }})</th>
                     <th>Delivery</th>
                 </tr>
-            </thead>
-            <tbody>
+
 
                 @php
                     $hasText = function ($v) {
                         return !empty(trim(preg_replace('/<[^>]*>|&nbsp;/', '', $v ?? '')));
                     };
                 @endphp
-
                 @foreach($items as $i => $it)
-                            @php
-                                $net = (float) $it['net_price'];
-                                $igst = (float) $it['igst'];
-                                $half = $igst / 2;
-                                $igstAmt = $net * $igst / 100;
-                                $halfAmt = $net * $half / 100;
-                                $rowTotal = $isMH ? $net + $halfAmt * 2 : $net + $igstAmt;
-                                $rowClass = $i % 2 === 0 ? 'odd' : 'even';
-                                $showDetails =
-                                    ($isGW && $hasText($it['specification'] ?? null))
-                                    || $hasText($it['product_specification'] ?? null);
-                            @endphp
+                    @php
+                        $net = (float) $it['net_price'];
+                        $igst = (float) $it['igst'];
+                        $half = $igst / 2;
+                        $igstAmt = $net * $igst / 100;
+                        $halfAmt = $net * $half / 100;
+                        $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
+                        $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
+                        $showDetails =
+                            ($isGW && ($hasText($it['specification'] ?? null)))
+                            || $hasText($it['product_specification'] ?? null);
+                    @endphp
 
-                            <tr class="item-row {{ $rowClass }}">
-                                <td>{{ $i + 1 }}</td>
-                                <td>{{ $it['part_no'] }}</td>
-                                <td>{{$it['description']}}</td>
-                                @if($isGW)
-                                    <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
-                                    <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
-                                @endif
-                                <td class="money">{{ $it['hsn_code'] }}</td>
-                                <td>{{ $it['quantity'] }}</td>
-                                <td class="money">{{ number_format($it['price'], 2) }}</td>
-                                <td class="disc">{{ $it['discount'] }}</td>
-                                <td class="money">{{ number_format($net, 2) }}</td>
-                                @if($isMH)
-                                    <td>{{ number_format($half, 2) }}</td>
-                                    <td class="money">{{ number_format($halfAmt, 2) }}</td>
-                                    <td>{{ number_format($half, 2) }}</td>
-                                    <td class="money">{{ number_format($halfAmt, 2) }}</td>
-                                @else
-                                    <td>{{ number_format($igst, 2) }}</td>
-                                    <td class="money">{{ number_format($igstAmt, 2) }}</td>
-                                @endif
-                                <td class="money">{{ number_format($rowTotal, 2) }}</td>
-                                <td>{!! $it['notes'] ?? '' !!}</td>
-                            </tr>
-                    </table>
+
+                    <tr class="item-row {{ $rowClass }}">
+                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $it['part_no'] }}</td>
+                        <td>{!! $it['description'] !!}</td>
+
+                        @if($isGW)
+                            <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
+                            <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
+                        @endif
+
+                        <td class="money">{{ $it['hsn_code'] }}</td>
+                        <td>{{ $it['quantity'] }}</td>
+                        <td class="money">{{ number_format($it['price'], 2) }}</td>
+                        <td>{{ $it['discount'] }}</td>
+                        <td>{{ number_format($net, 2) }}</td>
+
+                        @if($isMH)
+                            <td>{{ number_format($half, 2) }}</td>
+                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
+                            <td>{{ number_format($half, 2) }}</td>
+                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
+                        @else
+                            <td>{{ number_format($igst, 2) }}</td>
+                            <td class="money">{{ number_format($igstAmt, 2) }}</td>
+                        @endif
+
+                        <td class="money">{{ number_format($rowTotal, 2) }}</td>
+                        <td class="notes">{!! $it['notes'] ?? '' !!}</td>
+                    </tr>
 
                     @if($showDetails)
-                        <div class="spec-block {{ $rowClass }}">
-                            @if($hasText($it['product_specification'] ?? null))
-                                <div class="detail-text html-content">
-                                    <b class="label-heading">Comments :</b>
-                                    {!! $it['product_specification'] !!}
-                            </div> @endif
-                            @if($isGW && $hasText($it['specification'] ?? null))
-                                <b class="label-heading">Specification with Heading :</b>
-                                <div class="detail-text html-content">{!! $it['specification'] !!}</div>
-                            @endif
-                        </div>
-                    @endif
+                        <tr class="item-row {{ $rowClass }}">
+                            <td></td>
+                            <td colspan="{{ $noteColspan - 1 }}" style="padding:4px 6px;">
+                                <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
+                                    @if($hasText($it['product_specification'] ?? null))
+                                        <span class="detail-text  html-content">
+                                            <b class="label-heading">
+                                                Comments:
+                                            </b>&nbsp;
+                                            <span>{!! $it['product_specification'] !!}</span>
+                                        </span>
+                                    @endif
+                                    @if($isGW && $hasText($it['specification'] ?? null))
+                                        <span class="detail-text  html-content">
+                                            <b class="label-heading">
+                                                Specification with Heading:
+                                            </b>&nbsp;
+                                            <span>{!! $it['specification'] !!}</span>
 
-                    <table class="items">
+                                        </span>
+                                    @endif
+                                </span>
+                            </td>
+                        </tr>
+                    @endif
                 @endforeach
 
-            {{-- TOTAL --}}
-            <tr class="total-row">
-                @foreach ($columns as $index => $col)
-
-                    {{-- FIRST CELL → LABEL --}}
-                    @if ($index === 8)
-                        <td colspan="{{ $totalCols - 4 }}" class="label">
-                            Grand Total ({{ $currency }})
-                        </td>
-
-                        {{-- skip next cells already consumed by colspan --}}
-                        @php $skip = $totalCols - 4 - 1; @endphp
-                        @continue
-                    @endif
-
-                    {{-- NET TOTAL --}}
-                    @if ($col === 'net')
-                        <td class="money">
-                            {{ number_format($totals['sub_net_total'], 2) }}
-                        </td>
-                        @continue
-                    @endif
-
-                    {{-- TAX TOTALS --}}
-                    @if ($col === 'sgst_amt')
-                        <td class="money">
-                            {{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
-                        </td>
-                        @continue
-                    @endif
-
-                    @if ($col === 'cgst_amt')
-                        <td class="money">
-                            {{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
-                        </td>
-                        @continue
-                    @endif
-
-                    @if ($col === 'igst_amt')
-                        <td class="money">
-                            {{ number_format($totals['total_igst_total'], 2) }}
-                        </td>
-                        @continue
-                    @endif
-
-                    {{-- GRAND TOTAL --}}
-                    @if ($col === 'total')
-                        <td class="money">
-                            {{ number_format($totals['grand_total'], 2) }}
-                        </td>
-                        @continue
-                    @endif
-
-                    {{-- EMPTY CELLS --}}
+                {{-- TOTAL --}}
+                <tr class="total-row">
                     <td></td>
-
-                @endforeach
-            </tr>
-
-
-            @if(!empty($product_description))
-                <tr style="border:none; background-color:#800000;">
-                    <td colspan="{{ $totalCols }}" style="border:none; white-space:nowrap;">
-                        <b>NOTES :</b>
-                        <span>{!! $product_description !!}</span>
+                    <td></td>
+                    <td></td>
+                    <td colspan="{{ $isGW ? 6 : 4 }}" class="label">
+                        Grand Total ({{ $currency }})
                     </td>
-                    <td colspan="{{ $totalCols }}" style="border:none; white-space:nowrap;"></td>
-                </tr>
-            @endif
 
+                    <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
+
+                    @if($isMH)
+                        <td></td>
+                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
+                        <td></td>
+                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
+                    @else
+                        <td></td>
+                        <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
+                    @endif
+
+                    <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
+                    <td></td>
+                </tr>
+
+                @if(!empty($product_description))
+                    <tr style="background-color: #C9F1FF">
+                        <td colspan="{{ $noteColspan }}" style="border:none; padding:6px 4px;">
+                            <b>NOTES :</b> {!! $product_description!!}
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
 

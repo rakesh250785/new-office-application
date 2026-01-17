@@ -3,20 +3,18 @@
 namespace App\Jobs;
 
 use App\Models\Quotation;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Log;
+use Spatie\Browsershot\Browsershot;
 use Throwable;
 
 class ProcessQuotation implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new job instance.
-     */
     public array $data;
 
     public function __construct(array $data)
@@ -24,25 +22,34 @@ class ProcessQuotation implements ShouldQueue
         $this->data = $data;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         try {
-            Log::info('Starting quotation PDF generation job');
+            Log::info('Starting quotation PDF generation job (Browsershot)');
 
-            $pdf = Pdf::setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-                'isFontSubsettingEnabled' => true,
-                'isPhpEnabled' => true,
-                'defaultFont' => 'Calibri',
-            ])->loadView('quotation.quotationPdf', $this->data)->setPaper('A4', 'landscape');
+            /** -------------------------------------------------
+             *  1. Render Blade → HTML
+             * ------------------------------------------------- */
+            $html = View::make('quotation.quotationPdf', $this->data)->render();
 
+            /** -------------------------------------------------
+             *  2. Generate PDF using Chrome
+             * ------------------------------------------------- */
+            $pdf = Browsershot::html($html)
+                ->setChromePath('/usr/bin/google-chrome')
+                ->format('A4')
+                ->landscape()
+                ->margins(10, 10, 10, 10)
+                ->showBackground()
+                ->noSandbox() // required on most servers
+                ->pdf();
+
+            /** -------------------------------------------------
+             *  3. File handling (unchanged logic)
+             * ------------------------------------------------- */
             $fileName = $this->data['pdf_name'];
             $oldFileName = $this->data['old_pdf_name'];
-            $directory = "quotationsPdf";
+            $directory = 'quotationsPdf';
             $path = "{$directory}/{$fileName}";
             $disk = Storage::disk('public');
 
@@ -52,6 +59,7 @@ class ProcessQuotation implements ShouldQueue
             }
 
             $criteria = $this->data['quotationInfo'] ?? [];
+
             if (empty($criteria)) {
                 Log::error('Missing quotation search criteria in job data');
 
@@ -66,11 +74,14 @@ class ProcessQuotation implements ShouldQueue
                 return;
             }
 
+            /** -------------------------------------------------
+             *  4. Delete old PDF if exists
+             * ------------------------------------------------- */
             if (! empty($oldFileName)) {
-                $oldFile = "quotationsPdf/{$oldFileName}";
+                $oldFile = "{$directory}/{$oldFileName}";
+
                 if (! $disk->exists($oldFile)) {
-                    $possibleFiles = $disk->allFiles('quotationsPdf');
-                    foreach ($possibleFiles as $file) {
+                    foreach ($disk->allFiles($directory) as $file) {
                         if (str_ends_with($file, $quotationInfo->pdf_name)) {
                             $oldFile = $file;
                             break;
@@ -83,11 +94,15 @@ class ProcessQuotation implements ShouldQueue
                 }
             }
 
-            $disk->put($path, $pdf->output());
+            /** -------------------------------------------------
+             *  5. Save PDF
+             * ------------------------------------------------- */
+            $disk->put($path, $pdf);
+
             $quotationInfo->pdf_name = $fileName;
             $quotationInfo->save();
 
-            Log::info('Quotation PDF generated successfully');
+            Log::info('Quotation PDF generated successfully (Browsershot)');
 
         } catch (Throwable $e) {
             Log::error('Quotation PDF generation failed', [
