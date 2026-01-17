@@ -39,9 +39,22 @@ class ProcessQuotation implements ShouldQueue
                 ->setChromePath('/usr/bin/google-chrome')
                 ->format('A4')
                 ->landscape()
-                ->margins(10, 10, 10, 10)
+                ->margins(10, 10, 5, 10)
                 ->showBackground()
-                ->noSandbox() // required on most servers
+                ->showBrowserHeaderAndFooter()
+                ->footerHtml('
+                <div style="
+                    width:100%;
+                    font-size:14px;
+                    text-align:right;
+                    padding-right:18px;
+                    color:#222;
+                    font-weight: 700;
+                ">
+                    Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+                </div>
+            ')
+                ->noSandbox()
                 ->pdf();
 
             /** -------------------------------------------------

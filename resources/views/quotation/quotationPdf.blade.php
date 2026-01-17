@@ -687,7 +687,7 @@
             border:0;
         ">
 
-        <div style="
+                    <div style="
                 
                 color:#004f6e;
                 margin-bottom:3px;
@@ -756,7 +756,7 @@
                         {{ $branch_address }}
                     </div>
 
-                    <div style="
+                    <div style="    
                     color:maroon;
                     font-size:13px;
                     font-weight: 700;
@@ -768,31 +768,6 @@
         </table>
 
     </div>
-
-
-    <script type="text/php">
-        if (isset($pdf) && isset($fontMetrics)) {
-        
-            /* Resolve font ONCE */
-            $pageFont = $fontMetrics->get_font("Calibri", "bold")
-                        ?: $fontMetrics->get_font("DejaVu Sans", "bold");
-        
-            $pdf->page_script(function ($pageNum, $pageCount, $canvas, $fontMetrics) use ($pageFont) {
-        
-                $size = 11;
-                $text = "Page $pageNum of $pageCount";
-        
-                $width = $fontMetrics->get_text_width($text, $pageFont, $size);
-        
-                $x = $canvas->get_width() - $width - 18;
-                $y = $canvas->get_height() - 18;
-        
-                $canvas->text($x, $y, $text, $pageFont, $size);
-            });
-        }
-    </script>
-
-
 </body>
 
 </html>
