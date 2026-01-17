@@ -517,19 +517,19 @@
 
             <tbody>
                 <tr>
-                    <th>Sr</th>
+                    <th class="money">Sr</th>
                     <th>Part No.</th>
                     <th>Description</th>
 
                     @if($isGW)
                         <th>Maker</th>
-                        <th>UOM</th>
+                        <th class="money">UOM</th>
                     @endif
 
                     <th class="money">HSN</th>
-                    <th>Qty</th>
+                    <th class="money">Qty</th>
                     <th class="money">Unit Price ({{ $currency }})</th>
-                    <th>Disc %</th>
+                    <th class="money">Disc %</th>
                     <th>Net Price ({{ $currency }})</th>
 
                     @if($isMH)
@@ -600,7 +600,7 @@
                     @if($showDetails)
                         <tr class="item-row {{ $rowClass }}">
                             <td></td>
-                            <td colspan="{{ $noteColspan - 1 }}" style="padding:4px 6px;">
+                            <td colspan="{{ $noteColspan-1 }}" style="padding:4px 4px;">
                                 <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
                                     @if($hasText($it['product_specification'] ?? null))
                                         <span class="detail-text  html-content">
