@@ -698,7 +698,7 @@
                     </div>
 
                     <div style="line-height:1.25; border:0;">
-                        <div class="terms" style="border:0;">
+                        <div class="terms" style="border:0; font-weight: 700;">
                             {!! $terms !!}
                         </div>
                     </div>
