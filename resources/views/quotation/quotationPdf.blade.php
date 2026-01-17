@@ -153,7 +153,6 @@
         .hdr .iso,
         .hdr-iso {
             font-size: 11px;
-
             line-height: 1.2;
             margin-top: 2px;
         }
@@ -313,19 +312,21 @@
             border: none !important;
         }
 
+
+
         /* Left edge */
         .items tbody tr.total-row td:first-child {
-            border-left: 0.5px solid #cfcfcf !important;
+            border-left: 1px solid #cfcfcf !important;
         }
 
         /* Right edge */
         .items tbody tr.total-row td:last-child {
-            border-right: 0.5px solid #cfcfcf !important;
+            border-right: 1px solid #cfcfcf !important;
         }
 
         /* Bottom edge (entire row) */
         .items tbody tr.total-row td {
-            border-bottom: 0.5px solid #cfcfcf !important;
+            border-bottom: 1px solid #cfcfcf !important;
         }
 
         .total-row .label {
@@ -456,7 +457,6 @@
             word-break: keep-all !important;
             overflow-wrap: normal !important;
             text-align: left;
-            padding: 2px !important;
             font-variant-numeric: tabular-nums;
         }
 
@@ -465,7 +465,6 @@
             word-break: keep-all !important;
             overflow-wrap: normal !important;
             text-align: left;
-            padding: 2px !important;
             font-variant-numeric: tabular-nums;
             font-weight: 700;
         }
@@ -512,13 +511,12 @@
 
         /* ===== FIX 3: DomPDF-safe spec block ===== */
         .spec-block {
-            border-left: 0.4px solid #c8c8c8;
-            border-right: 0.4px solid #c8c8c8;
-            border-bottom: 0.4px solid #c8c8c8;
+            border: 1px solid #c8c8c8;
             padding: 5px;
             font-size: 10px;
             line-height: 1.25;
             page-break-inside: auto;
+            border-collapse: collapse;
 
         }
 
@@ -542,17 +540,6 @@
         .ql-editor {
             background: #ffffff !important;
             color: #000;
-        }
-
-        .one-line,
-        .one-line * {
-            white-space: nowrap !important;
-        }
-
-        .one-line {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            /* optional */
         }
     </style>
 </head>
@@ -579,6 +566,41 @@
             $noteColspan = 16;
         }
 
+    @endphp
+
+    @php
+        $columns = [];
+
+        // base columns
+        $columns[] = 'sr';
+        $columns[] = 'part';
+        $columns[] = 'desc';
+
+        if ($isGW) {
+            $columns[] = 'maker';
+            $columns[] = 'uom';
+        }
+
+        $columns[] = 'hsn';
+        $columns[] = 'qty';
+        $columns[] = 'price';
+        $columns[] = 'disc';
+        $columns[] = 'net';
+
+        if ($isMH) {
+            $columns[] = 'sgst';
+            $columns[] = 'sgst_amt';
+            $columns[] = 'cgst';
+            $columns[] = 'cgst_amt';
+        } else {
+            $columns[] = 'igst';
+            $columns[] = 'igst_amt';
+        }
+
+        $columns[] = 'total';
+        $columns[] = 'delivery';
+
+        $totalCols = count($columns);
     @endphp
 
     <div class="paper">
@@ -849,35 +871,74 @@
 
             {{-- TOTAL --}}
             <tr class="total-row">
-                <td colspan="{{ $isGW ? 9 : 7 }}" class="label">
-                    Grand Total ({{ $currency }})
-                </td>
+                @foreach ($columns as $index => $col)
 
-                <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
+                    {{-- FIRST CELL → LABEL --}}
+                    @if ($index === 8)
+                        <td colspan="{{ $totalCols - 4 }}" class="label">
+                            Grand Total ({{ $currency }})
+                        </td>
 
-                @if($isMH)
-                    <td></td>
-                    <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
-                    </td>
-                    <td></td>
-                    <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
-                    </td>
-                @else
-                    <td></td>
-                    <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
-                @endif
+                        {{-- skip next cells already consumed by colspan --}}
+                        @php $skip = $totalCols - 4 - 1; @endphp
+                        @continue
+                    @endif
 
-                <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
-                <td></td>
+                    {{-- NET TOTAL --}}
+                    @if ($col === 'net')
+                        <td class="money">
+                            {{ number_format($totals['sub_net_total'], 2) }}
+                        </td>
+                        @continue
+                    @endif
+
+                    {{-- TAX TOTALS --}}
+                    @if ($col === 'sgst_amt')
+                        <td class="money">
+                            {{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
+                        @continue
+                    @endif
+
+                    @if ($col === 'cgst_amt')
+                        <td class="money">
+                            {{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        </td>
+                        @continue
+                    @endif
+
+                    @if ($col === 'igst_amt')
+                        <td class="money">
+                            {{ number_format($totals['total_igst_total'], 2) }}
+                        </td>
+                        @continue
+                    @endif
+
+                    {{-- GRAND TOTAL --}}
+                    @if ($col === 'total')
+                        <td class="money">
+                            {{ number_format($totals['grand_total'], 2) }}
+                        </td>
+                        @continue
+                    @endif
+
+                    {{-- EMPTY CELLS --}}
+                    <td></td>
+
+                @endforeach
             </tr>
 
+
             @if(!empty($product_description))
-                <tr>
-                    <td colspan="{{ $noteColspan }}" style="border:none; padding:6px 4px;">
-                        <b>NOTES :</b> {!! $product_description!!}
+                <tr style="background-color:#800000;">
+                    <td colspan="{{ $totalCols }}" style="border:none; white-space:nowrap;">
+                        <b>NOTES :</b>
+                        <span>{!! $product_description !!}</span>
                     </td>
+                    <td colspan="{{ $totalCols }}" style="border:none; white-space:nowrap;"></td>
                 </tr>
             @endif
+
             </tbody>
         </table>
 
