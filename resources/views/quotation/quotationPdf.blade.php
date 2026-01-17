@@ -44,6 +44,7 @@
             line-height: 1.5;
             color: #1f1f1f;
             font-variant-numeric: tabular-nums;
+            border: 0.25pt solid #bfbfbf;
         }
 
         html,
@@ -87,19 +88,7 @@
             overflow-wrap: anywhere;
             box-sizing: border-box;
             /* draw ONLY from right + bottom */
-            border: 0.4px solid #c8c8c8;
-        }
-
-        /* Close LEFT edge */
-        table tr th:first-child,
-        table tr td:first-child {
-            border-left: 0.4px solid #c8c8c8;
-        }
-
-        /* Close TOP edge */
-        table thead tr:first-child th,
-        table tbody tr:first-child td {
-            border-top: 0.4px solid #c8c8c8;
+            border: 0.25pt solid #bfbfbf;
         }
 
         .items tr,
@@ -227,32 +216,9 @@
 
         /* Draw ONLY horizontal row lines */
         .ship tr {
-            border: 0.2px solid #cfcfcf;
-        }
+            border: 0.25pt solid #bfbfbf;
 
-        /* Top border */
-        .ship tr:first-child th,
-        .ship tr:first-child td {
-            border: 0.2px solid #cfcfcf;
         }
-
-        /* Vertical separators — drawn once */
-        .ship th:not(:last-child),
-        .ship td:not(:last-child) {
-            border: 0.2px solid #cfcfcf;
-        }
-
-        /* Left & right edges */
-        .ship th:first-child,
-        .ship td:first-child {
-            border: 0.2px solid #cfcfcf;
-        }
-
-        .ship th:last-child,
-        .ship td:last-child {
-            border: 0.2px solid #cfcfcf;
-        }
-
         /* Header cells */
         .ship th {
             color: #004f6e;
@@ -312,21 +278,9 @@
             border: none !important;
         }
 
-
-
-        /* Left edge */
-        .items tbody tr.total-row td:first-child {
-            border-left: 1px solid #cfcfcf !important;
-        }
-
-        /* Right edge */
-        .items tbody tr.total-row td:last-child {
-            border-right: 1px solid #cfcfcf !important;
-        }
-
         /* Bottom edge (entire row) */
         .items tbody tr.total-row td {
-            border-bottom: 1px solid #cfcfcf !important;
+            border-bottom: 0.25pt solid #bfbfbf;
         }
 
         .total-row .label {
@@ -511,7 +465,8 @@
 
         /* ===== FIX 3: DomPDF-safe spec block ===== */
         .spec-block {
-            border: 1px solid #c8c8c8;
+            border-left: 0.25pt solid #bfbfbf;
+            border-right: 0.25pt solid #bfbfbf;
             padding: 5px;
             font-size: 10px;
             line-height: 1.25;
@@ -930,7 +885,7 @@
 
 
             @if(!empty($product_description))
-                <tr style="background-color:#800000;">
+                <tr style="border:none; background-color:#800000;">
                     <td colspan="{{ $totalCols }}" style="border:none; white-space:nowrap;">
                         <b>NOTES :</b>
                         <span>{!! $product_description !!}</span>
