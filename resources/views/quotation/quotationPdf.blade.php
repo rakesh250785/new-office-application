@@ -518,11 +518,11 @@
             <tbody>
                 <tr>
                     <th class="money">Sr</th>
-                    <th>Part No.</th>
-                    <th>Description</th>
+                    <th class="money">Part No.</th>
+                    <th class="money">Description</th>
 
                     @if($isGW)
-                        <th>Maker</th>
+                        <th class="money">Maker</th>
                         <th class="money">UOM</th>
                     @endif
 
@@ -533,17 +533,17 @@
                     <th>Net Price ({{ $currency }})</th>
 
                     @if($isMH)
-                        <th>SGST %</th>
-                        <th>SGST AMT</th>
-                        <th>CGST %</th>
-                        <th>CGST AMT</th>
+                        <th class="money">SGST %</th>
+                        <th class="money">SGST AMT</th>
+                        <th class="money">CGST %</th>
+                        <th class="money">CGST AMT</th>
                     @else
-                        <th>IGST %</th>
-                        <th>IGST AMT</th>
+                        <th class="money">IGST %</th>
+                        <th class="money">IGST AMT</th>
                     @endif
 
-                    <th>Total ({{ $currency }})</th>
-                    <th>Delivery</th>
+                    <th class="money">Total ({{ $currency }})</th>
+                    <th class="money">Delivery</th>
                 </tr>
 
 
@@ -570,7 +570,7 @@
                     <tr class="item-row {{ $rowClass }}">
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $it['part_no'] }}</td>
-                        <td>{!! $it['description'] !!}</td>
+                        <td>{{$it['description'] }}</td>
 
                         @if($isGW)
                             <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
@@ -600,7 +600,7 @@
                     @if($showDetails)
                         <tr class="item-row {{ $rowClass }}">
                             <td></td>
-                            <td colspan="{{ $noteColspan-1 }}" style="padding:4px 4px;">
+                            <td colspan="{{ $noteColspan - 1 }}" style="padding:4px 4px;">
                                 <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
                                     @if($hasText($it['product_specification'] ?? null))
                                         <span class="detail-text  html-content">
@@ -681,7 +681,7 @@
             <tr style="border:0;">
                 <!-- LEFT : TERMS -->
                 <td width="72%" valign="top" style="
-            padding:5px 7px;
+            padding:2px 2px;
             line-height:1.25;
             background: transparent;
             border:0;
