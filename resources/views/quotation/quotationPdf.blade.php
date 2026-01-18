@@ -262,14 +262,14 @@
         .items tbody td {
             font-size: 11px;
         }
-
+/* 
         .items tbody tr.odd td {
             background: #fdecec;
         }
 
         .items tbody tr.even td {
             background: #f6d6d6;
-        }
+        } */
 
         /* ================= TOTAL ROW ================= */
         .items tbody tr.total-row td {
@@ -567,76 +567,83 @@
                     };
                 @endphp
                 @foreach($items as $i => $it)
-                    @php
-                        $net = (float) $it['net_price'];
-                        $igst = (float) $it['igst'];
-                        $half = $igst / 2;
-                        $igstAmt = $net * $igst / 100;
-                        $halfAmt = $net * $half / 100;
-                        $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
-                        $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
-                        $showDetails =
-                            ($isGW && ($hasText($it['specification'] ?? null)))
-                            || $hasText($it['product_specification'] ?? null);
-                    @endphp
+                            @php
+                                $net = (float) $it['net_price'];
+                                $igst = (float) $it['igst'];
+                                $half = $igst / 2;
+                                $igstAmt = $net * $igst / 100;
+                                $halfAmt = $net * $half / 100;
+                                $rowTotal = $isMH ? $net + $halfAmt + $halfAmt : $net + $igstAmt;
+                                $rowClass = ($i % 2 === 0) ? 'odd' : 'even';
+                                $showDetails =
+                                    ($isGW && ($hasText($it['specification'] ?? null)))
+                                    || $hasText($it['product_specification'] ?? null);
+                            @endphp
 
 
-                    <tr class="item-row {{ $rowClass }}">
-                        <td>{{ $i + 1 }}</td>
-                        <td>{{ $it['part_no'] }}</td>
-                        <td>{{$it['description'] }}</td>
+                            <tr class="item-row {{ $rowClass }}" style="background-color: {{ 
+                                                                                            $isGW == 'GW'
+                    ? ($loop->index % 2 === 0 ? '#C1D9BF' : '#D9E9D6')
+                    : ($loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6')
+                                                                                        }};">
 
-                        @if($isGW)
-                            <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
-                            <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
-                        @endif
+                                <td>{{ $i + 1 }}</td>
+                                <td>{{ $it['part_no'] }}</td>
+                                <td>{{$it['description'] }}</td>
 
-                        <td class="money">{{ $it['hsn_code'] }}</td>
-                        <td>{{ $it['quantity'] }}</td>
-                        <td class="money-real">{{ number_format($it['price'], 2) }}</td>
-                        <td>{{ $it['discount'] }}</td>
-                        <td class="money-real">{{ number_format($net, 2) }}</td>
+                                @if($isGW)
+                                    <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
+                                    <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
+                                @endif
 
-                        @if($isMH)
-                            <td>{{ number_format($half, 2) }}</td>
-                            <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
-                            <td>{{ number_format($half, 2) }}</td>
-                            <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
-                        @else
-                            <td>{{ number_format($igst, 2) }}</td>
-                            <td class="money-real">{{ number_format($igstAmt, 2) }}</td>
-                        @endif
+                                <td class="money">{{ $it['hsn_code'] }}</td>
+                                <td>{{ $it['quantity'] }}</td>
+                                <td class="money-real">{{ number_format($it['price'], 2) }}</td>
+                                <td>{{ $it['discount'] }}</td>
+                                <td class="money-real">{{ number_format($net, 2) }}</td>
 
-                        <td class="money-real">{{ number_format($rowTotal, 2) }}</td>
-                        <td class="notes">{!! $it['notes'] ?? '' !!}</td>
-                    </tr>
+                                @if($isMH)
+                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
+                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
+                                @else
+                                    <td>{{ number_format($igst, 2) }}</td>
+                                    <td class="money-real">{{ number_format($igstAmt, 2) }}</td>
+                                @endif
 
-                    @if($showDetails)
-                        <tr class="item-row {{ $rowClass }}">
-                            <td></td>
-                            <td colspan="{{ $noteColspan - 1 }}" style="padding:4px 4px;">
-                                <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
-                                    @if($hasText($it['product_specification'] ?? null))
-                                        <span class="detail-text  html-content">
-                                            <b class="label-heading">
-                                                Comments:
-                                            </b>&nbsp;
-                                            <span>{!! $it['product_specification'] !!}</span>
+                                <td class="money-real">{{ number_format($rowTotal, 2) }}</td>
+                                <td class="notes">{!! $it['notes'] ?? '' !!}</td>
+                            </tr>
+
+                            @if($showDetails)
+                                <tr class="item-row {{ $rowClass }}"
+                                    style="background-color: {{ $loop->even ? '#faeff0' : '#f1d3d6' }};">
+                                    <td style="background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};"></td>
+                                    <td colspan="{{ $noteColspan - 1 }}"
+                                        style="padding:4px 4px; background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};">
+                                        <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
+                                            @if($hasText($it['product_specification'] ?? null))
+                                                <span class="detail-text  html-content">
+                                                    <b class="label-heading">
+                                                        Comments:
+                                                    </b>&nbsp;
+                                                    <span>{!! $it['product_specification'] !!}</span>
+                                                </span>
+                                            @endif
+                                            @if($isGW && $hasText($it['specification'] ?? null))
+                                                <span class="detail-text  html-content">
+                                                    <b class="label-heading">
+                                                        Specification with Heading:
+                                                    </b>&nbsp;
+                                                    <span>{!! $it['specification'] !!}</span>
+
+                                                </span>
+                                            @endif
                                         </span>
-                                    @endif
-                                    @if($isGW && $hasText($it['specification'] ?? null))
-                                        <span class="detail-text  html-content">
-                                            <b class="label-heading">
-                                                Specification with Heading:
-                                            </b>&nbsp;
-                                            <span>{!! $it['specification'] !!}</span>
-
-                                        </span>
-                                    @endif
-                                </span>
-                            </td>
-                        </tr>
-                    @endif
+                                    </td>
+                                </tr>
+                            @endif
                 @endforeach
 
                 {{-- TOTAL --}}
