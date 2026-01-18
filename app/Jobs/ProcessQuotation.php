@@ -113,6 +113,7 @@ class ProcessQuotation implements ShouldQueue
             $disk->put($path, $pdf);
 
             $quotationInfo->pdf_name = $fileName;
+            $quotationInfo->pdf_status = 'ready';
             $quotationInfo->save();
 
             Log::info('Quotation PDF generated successfully (Browsershot)');

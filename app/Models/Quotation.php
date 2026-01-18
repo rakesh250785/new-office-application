@@ -52,6 +52,7 @@ class Quotation extends Model
         'total_amount',
         'user_id',
         'status',
+        'pdf_status',
     ];
     
 

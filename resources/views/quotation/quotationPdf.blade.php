@@ -723,7 +723,7 @@
                     </div>
 
                     <div style="margin-top:6px;">
-                        {{ $prepared_by }}
+                        <u>{{ $prepared_by }}</u>
                     </div>
                 </td>
             </tr>
@@ -766,7 +766,6 @@
                 </td>
             </tr>
         </table>
-
     </div>
 </body>
 

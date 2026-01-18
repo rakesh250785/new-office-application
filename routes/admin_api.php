@@ -174,7 +174,8 @@ Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(functi
     Route::post('/getQuotation', [QuotationDetailController::class, 'getQuotation']);
     Route::post('/deleteQuotation', [QuotationDetailController::class, 'deleteQuotation']);
     Route::post('/updateQuotationStatus', [QuotationDetailController::class, 'updateQuotationStatus']);
-
+    Route::post('/quotationPdfStatus', [QuotationDetailController::class, 'quotationPdfStatus']);
+    
     // Order
     Route::post('/storeOrder', [FullOrderController::class, 'storeOrder']);
     Route::post('/getOrder', [FullOrderController::class, 'getOrder']);

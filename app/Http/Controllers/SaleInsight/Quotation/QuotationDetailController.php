@@ -88,7 +88,7 @@ class QuotationDetailController extends Controller
                 'billing_state_id' => 'sometimes|nullable|integer|exists:states,id',
                 'billing_mobile' => 'sometimes|nullable|string|max:15',
                 'billing_email' => 'sometimes|nullable|email|max:255',
-                'billing_landline' => 'sometimes|nullable|string|max:15',                                           
+                'billing_landline' => 'sometimes|nullable|string|max:15',
                 'billing_pin_code' => 'required|string|max:10',
                 'contact_person' => 'required|string|max:255',
 
@@ -194,6 +194,7 @@ class QuotationDetailController extends Controller
                 'tin_number' => '27700707469',
                 'user_id' => $adminId,
                 'total_amount' => $data['total_amount'] ?? null,
+                'pdf_status' => 'processing',
             ];
 
             // Update customer info
@@ -321,10 +322,8 @@ class QuotationDetailController extends Controller
                 'old_pdf_name' => $existingQuote?->pdf_name,
                 'prepared_by' => $data['prepard_by'],
                 'quotationInfo' => [
-                    'id' => $quotation->id,
+                    'id' => $quotationId,
                     'unique_quotation_no' => $quotationNumber,
-                    'user_id' => $adminId,
-                    'branch_id' => $branchId,
                 ],
                 'company' => [
                     'name' => 'Chromatography World',
@@ -618,6 +617,52 @@ class QuotationDetailController extends Controller
             Log::error($ex);
 
             return Utility::apiError('Fail at statusQuotationChange server error', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function quotationPdfStatus(Request $request)
+    {
+        try {
+            $data = $request->only([
+                'quotation_id',
+                'unique_quotation_no',
+            ]);
+
+            $validator = Validator::make($data, [
+                'quotation_id' => 'required',
+                'unique_quotation_no' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return Utility::apiError('Validation error', $validator->errors(), 221);
+            }
+
+            $q = QuotationAdd::where('id', $data['quotation_id'] ?? null)
+                ->where('unique_quotation_no', $data['unique_quotation_no'] ?? null)
+                ->first();
+
+            if ($q?->pdf_status == 'ready' && $q?->pdf_name) {
+                return Utility::apiSuccess('Quotation pdf status', [
+                    'status' => 'ready',
+                    'url' => asset('storage/'.$q->pdf_name),                                
+                ], 200);
+
+            } elseif ($q?->pdf_status == 'processing') {
+                return Utility::apiSuccess('Quotation pdf status', [
+                    'status' => 'processing',
+                    'message' => 'PDF is being Processing',
+                ], 200);
+            } else {
+                return Utility::apiSuccess('Quotation pdf status', [
+                    'status' => 'failed',
+                    'message' => 'PDF generation failed',
+                ], 200);
+            }
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Fail to check the status server error', ['exception' => $ex->getMessage()], 500);
         }
     }
 }
