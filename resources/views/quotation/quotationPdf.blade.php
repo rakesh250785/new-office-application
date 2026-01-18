@@ -288,6 +288,20 @@
             padding: 2px;
         }
 
+        .items th.money-real,
+        .items td.money-real {
+            white-space: nowrap;
+            text-align: right;
+            padding: 2px;
+        }
+
+        .total-row th.money-real,
+        .items td.money-real {
+            white-space: nowrap;
+            text-align: right;
+            padding: 2px;
+        }
+
         /* ================= HTML CONTENT RESET ================= */
         .html-content * {
             margin: 0 !important;
@@ -528,21 +542,21 @@
 
                     <th class="money">HSN</th>
                     <th class="money">Qty</th>
-                    <th class="money">Unit Price ({{ $currency }})</th>
+                    <th class="money-real">Unit Price ({{ $currency }})</th>
                     <th class="money">Disc %</th>
-                    <th>Net Price ({{ $currency }})</th>
+                    <th class="money-real">Net Price ({{ $currency }})</th>
 
                     @if($isMH)
                         <th class="money">SGST %</th>
-                        <th class="money">SGST AMT</th>
+                        <th class="money-real">SGST AMT</th>
                         <th class="money">CGST %</th>
-                        <th class="money">CGST AMT</th>
+                        <th class="money-real">CGST AMT</th>
                     @else
                         <th class="money">IGST %</th>
-                        <th class="money">IGST AMT</th>
+                        <th class="money-real">IGST AMT</th>
                     @endif
 
-                    <th class="money">Total ({{ $currency }})</th>
+                    <th class="money-real">Total ({{ $currency }})</th>
                     <th class="money">Delivery</th>
                 </tr>
 
@@ -579,21 +593,21 @@
 
                         <td class="money">{{ $it['hsn_code'] }}</td>
                         <td>{{ $it['quantity'] }}</td>
-                        <td class="money">{{ number_format($it['price'], 2) }}</td>
+                        <td class="money-real">{{ number_format($it['price'], 2) }}</td>
                         <td>{{ $it['discount'] }}</td>
-                        <td>{{ number_format($net, 2) }}</td>
+                        <td class="money-real">{{ number_format($net, 2) }}</td>
 
                         @if($isMH)
                             <td>{{ number_format($half, 2) }}</td>
-                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
+                            <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
                             <td>{{ number_format($half, 2) }}</td>
-                            <td class="money">{{ number_format($halfAmt, 2) }}</td>
+                            <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
                         @else
                             <td>{{ number_format($igst, 2) }}</td>
-                            <td class="money">{{ number_format($igstAmt, 2) }}</td>
+                            <td class="money-real">{{ number_format($igstAmt, 2) }}</td>
                         @endif
 
-                        <td class="money">{{ number_format($rowTotal, 2) }}</td>
+                        <td class="money-real">{{ number_format($rowTotal, 2) }}</td>
                         <td class="notes">{!! $it['notes'] ?? '' !!}</td>
                     </tr>
 
@@ -634,21 +648,23 @@
                         Grand Total ({{ $currency }})
                     </td>
 
-                    <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
+                    <td class="money-real">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
                     @if($isMH)
                         <td></td>
-                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        <td class="money-real">
+                            {{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
                         </td>
                         <td></td>
-                        <td class="money">{{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
+                        <td class="money-real">
+                            {{ number_format(($totals['grand_total'] - $totals['sub_net_total']) / 2, 2) }}
                         </td>
                     @else
                         <td></td>
-                        <td class="money">{{ number_format($totals['total_igst_total'], 2) }}</td>
+                        <td class="money-real">{{ number_format($totals['total_igst_total'], 2) }}</td>
                     @endif
 
-                    <td class="money">{{ number_format($totals['grand_total'], 2) }}</td>
+                    <td class="money-real">{{ number_format($totals['grand_total'], 2) }}</td>
                     <td></td>
                 </tr>
 
