@@ -618,7 +618,7 @@
 
                             @if($showDetails)
                                 <tr class="item-row {{ $rowClass }}"
-                                    style="background-color: {{ $loop->even ? '#faeff0' : '#f1d3d6' }};">
+                                    style="background-color: {{ $loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6' }};">
                                     <td style="background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};"></td>
                                     <td colspan="{{ $noteColspan - 1 }}"
                                         style="padding:4px 4px; background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};">
