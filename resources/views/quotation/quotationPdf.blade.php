@@ -262,7 +262,8 @@
         .items tbody td {
             font-size: 11px;
         }
-/* 
+
+        /* 
         .items tbody tr.odd td {
             background: #fdecec;
         }
@@ -288,11 +289,25 @@
             padding: 2px;
         }
 
+        .items th.money {
+            white-space: nowrap;
+            text-align: left;
+            padding: 2px;
+            font-size: 11px;
+        }
+
         .items th.money-real,
         .items td.money-real {
             white-space: nowrap;
             text-align: right;
             padding: 2px;
+        }
+
+        .items th.money-real {
+            white-space: nowrap;
+            text-align: right;
+            padding: 2px;
+            font-size: 11px;
         }
 
         .total-row th.money-real,
@@ -582,10 +597,10 @@
 
 
                             <tr class="item-row {{ $rowClass }}" style="background-color: {{ 
-                                                                                            $isGW == 'GW'
+                                                                                                        $isGW == 'GW'
                     ? ($loop->index % 2 === 0 ? '#C1D9BF' : '#D9E9D6')
                     : ($loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6')
-                                                                                        }};">
+                                                                                                    }};">
 
                                 <td>{{ $i + 1 }}</td>
                                 <td>{{ $it['part_no'] }}</td>
