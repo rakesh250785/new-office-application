@@ -77,7 +77,7 @@
         /* ================= UNIFORM BORDER SYSTEM ================= */
         th,
         td {
-            border: var(--border-thin) solid var(--border-color);
+            border: 0.4px solid #C2C9CC;
             padding: 2px;
             vertical-align: top;
             word-break: break-word;
@@ -88,13 +88,13 @@
         /* Close left edge */
         table tr th:first-child,
         table tr td:first-child {
-            border-left: var(--border-thin) solid var(--border-color);
+            border-left: 0.4px solid #C2C9CC;
         }
 
         /* Close top edge */
         table thead tr:first-child th,
         table tbody tr:first-child td {
-            border-top: var(--border-thin) solid var(--border-color);
+            border-top: 0.4px solid #C2C9CC;
         }
 
         /* ================= HEADER ================= */
@@ -336,9 +336,9 @@
 
         /* ================= LABEL BLOCK ================= */
         .label-heading {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 700;
-            color: #006c95;
+            color: #004f6e;
             line-height: 1;
             margin-bottom: -15px;
         }
@@ -597,10 +597,10 @@
 
 
                             <tr class="item-row {{ $rowClass }}" style="background-color: {{ 
-                                                                                                        $isGW == 'GW'
+                                                                                                                    $isGW == 'GW'
                     ? ($loop->index % 2 === 0 ? '#C1D9BF' : '#D9E9D6')
                     : ($loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6')
-                                                                                                    }};">
+                                                                                                                }};">
 
                                 <td>{{ $i + 1 }}</td>
                                 <td>{{ $it['part_no'] }}</td>
@@ -745,7 +745,7 @@
                 <!-- RIGHT : SIGNATORY -->
                 <td width="28%" valign="top" style="
                     padding:5px 7px;
-                    text-align:right;
+                    text-align:left;
                     line-height:1.25;
                     background: transparent;
                     border:0;

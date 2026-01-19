@@ -3,19 +3,18 @@
 namespace App\Jobs;
 
 use App\Models\Order;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Log;
+use Illuminate\Support\Facades\View;
+use Spatie\Browsershot\Browsershot;
 use Throwable;
+
 class ProcessOrder implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new job instance.
-     */
     public array $data;
 
     public function __construct(array $data)
@@ -23,22 +22,47 @@ class ProcessOrder implements ShouldQueue
         $this->data = $data;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         try {
-            $pdf = Pdf::setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-                'isFontSubsettingEnabled' => true,
-                'isPhpEnabled' => true,
-            ])->loadView('order.orderPdf', $this->data)->setPaper('A4', 'landscape');
+            Log::info('Starting order PDF generation job (Browsershot)');
 
+            /** -------------------------------------------------
+             *  1. Render Blade → HTML
+             * ------------------------------------------------- */
+            $html = View::make('order.orderPdf', $this->data)->render();
+
+            /** -------------------------------------------------
+             *  2. Generate PDF using Chrome
+             * ------------------------------------------------- */
+            $pdf = Browsershot::html($html)
+                ->setChromePath('/usr/bin/google-chrome')
+                ->format('A4')
+                ->landscape()
+                ->margins(10, 10, 5, 10)
+                ->showBackground()
+                ->showBrowserHeaderAndFooter()
+                ->footerHtml('
+                    <div style="
+                        width:100%;
+                        font-size:14px;
+                        text-align:right;
+                        padding-right:18px;
+                        color:#222;
+                        font-weight:700;
+                    ">
+                        Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+                    </div>
+                ')
+                ->noSandbox()
+                ->pdf();
+
+            /** -------------------------------------------------
+             *  3. File handling
+             * ------------------------------------------------- */
             $fileName = $this->data['pdf_name'];
             $oldFileName = $this->data['old_pdf_name'];
-            $directory = "ordersPdf";
+            $directory = 'ordersPdf';
             $path = "{$directory}/{$fileName}";
             $disk = Storage::disk('public');
 
@@ -48,32 +72,33 @@ class ProcessOrder implements ShouldQueue
             }
 
             $criteria = $this->data['orderInfo'] ?? [];
+
             if (empty($criteria)) {
                 Log::error('Missing order search criteria in job data');
 
                 return;
             }
 
-            $whereCon = [
+            $criteria = [
                 'id' => $criteria['id'],
                 'unique_order_no' => $criteria['unique_order_no'],
-                'unique_quotation_no' => $criteria['unique_quotation_no'],
             ];
+            $orderInfo = Order::where($criteria)->first();
 
-
-            $orderInfo = Order::where($whereCon)->first();
-            
             if (! $orderInfo) {
                 Log::error('No order found for criteria: '.json_encode($criteria));
 
                 return;
             }
 
+            /** -------------------------------------------------
+             *  4. Delete old PDF if exists
+             * ------------------------------------------------- */
             if (! empty($oldFileName)) {
-                $oldFile = "ordersPdf/{$oldFileName}";
+                $oldFile = "{$directory}/{$oldFileName}";
+
                 if (! $disk->exists($oldFile)) {
-                    $possibleFiles = $disk->allFiles('ordersPdf');
-                    foreach ($possibleFiles as $file) {
+                    foreach ($disk->allFiles($directory) as $file) {
                         if (str_ends_with($file, $orderInfo->pdf_name)) {
                             $oldFile = $file;
                             break;
@@ -86,11 +111,16 @@ class ProcessOrder implements ShouldQueue
                 }
             }
 
-            $disk->put($path, $pdf->output());
+            /** -------------------------------------------------
+             *  5. Save PDF
+             * ------------------------------------------------- */
+            $disk->put($path, $pdf);
+
             $orderInfo->pdf_name = $fileName;
+            $orderInfo->pdf_status = 'ready';
             $orderInfo->save();
 
-            Log::info('Order PDF generated successfully');
+            Log::info('Order PDF generated successfully (Browsershot)');
 
         } catch (Throwable $e) {
             Log::error('Order PDF generation failed', [
