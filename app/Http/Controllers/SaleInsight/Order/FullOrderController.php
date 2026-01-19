@@ -1072,4 +1072,50 @@ class FullOrderController extends Controller
             return null;
         }
     }
+
+    public function orderPdfStatus(Request $request)
+    {
+        try {
+            $data = $request->only([
+                'order_id',
+                'unique_order_no',
+            ]);
+
+            $validator = Validator::make($data, [
+                'order_id' => 'required',
+                'unique_order_no' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return Utility::apiError('Validation error', $validator->errors(), 221);
+            }
+
+            $q = Order::where('id', $data['order_id'] ?? null)
+                ->where('unique_order_no', $data['unique_order_no'] ?? null)
+                ->first();
+
+            if ($q?->pdf_status == 'ready' && $q?->pdf_name) {
+                return Utility::apiSuccess('Order pdf status', [
+                    'status' => 'ready',
+                    'url' => asset('storage/'.$q->pdf_name),
+                ], 200);
+
+            } elseif ($q?->pdf_status == 'processing') {
+                return Utility::apiSuccess('Order pdf status', [
+                    'status' => 'processing',
+                    'message' => 'PDF is being Processing',
+                ], 200);
+            } else {
+                return Utility::apiSuccess('Order pdf status', [
+                    'status' => 'failed',
+                    'message' => 'PDF generation failed',
+                ], 200);
+            }
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Fail to check the status server error', ['exception' => $ex->getMessage()], 500);
+        }
+    }
 }

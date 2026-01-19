@@ -41,6 +41,7 @@ class Order extends Model
         'customer_order_no',
         'branch_id',
         'pdf_name',
+        'pdf_status',
         'currency_id',
         'tin_number',
         'user_id',
