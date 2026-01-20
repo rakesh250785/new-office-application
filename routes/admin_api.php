@@ -181,6 +181,7 @@ Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(functi
     Route::post('/getOrder', [FullOrderController::class, 'getOrder']);
     Route::post('/deleteOrder', [FullOrderController::class, 'deleteOrder']);
     Route::post('/addOrderReason', [FullOrderController::class, 'addOrderReason']);
+    Route::post('/orderPdfStatus', [FullOrderController::class, 'orderPdfStatus']);
 
     // Partial rder
     Route::post('/storePartialOrder', [PartialOrderController::class, 'storePartialOrder']);

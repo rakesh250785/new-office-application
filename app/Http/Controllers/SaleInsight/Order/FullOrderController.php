@@ -545,6 +545,7 @@ class FullOrderController extends Controller
                 'date',
                 'prepard_by',
                 'pdf_name',
+                'pdf_status',
                 'enq_ref',
                 'delivery_date_id',
                 'customer_order_no',
