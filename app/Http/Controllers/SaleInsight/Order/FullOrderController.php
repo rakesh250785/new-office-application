@@ -216,6 +216,7 @@ class FullOrderController extends Controller
                 'is_order_closed' => '0',
                 'courier_id' => $data['courier_id'] ?? null,
                 'is_shipment_pending' => 1,
+                'pdf_status' => 'processing',
             ];
 
             // Update customer info
