@@ -558,16 +558,16 @@
                     <th class="money">HSN</th>
                     <th class="money">Qty</th>
                     <th class="money-real">Unit Price ({{ $currency }})</th>
-                    <th class="money">Disc %</th>
+                    <th class="money-real">Disc %</th>
                     <th class="money-real">Net Price ({{ $currency }})</th>
 
                     @if($isMH)
-                        <th class="money">SGST %</th>
+                        <th class="money-real">SGST %</th>
                         <th class="money-real">SGST AMT</th>
-                        <th class="money">CGST %</th>
+                        <th class="money-real">CGST %</th>
                         <th class="money-real">CGST AMT</th>
                     @else
-                        <th class="money">IGST %</th>
+                        <th class="money-real">IGST %</th>
                         <th class="money-real">IGST AMT</th>
                     @endif
 
@@ -614,13 +614,13 @@
                                 <td class="money">{{ $it['hsn_code'] }}</td>
                                 <td>{{ $it['quantity'] }}</td>
                                 <td class="money-real">{{ number_format($it['price'], 2) }}</td>
-                                <td>{{ $it['discount'] }}</td>
+                                <td class="money-real">{{ $it['discount'] }}</td>
                                 <td class="money-real">{{ number_format($net, 2) }}</td>
 
                                 @if($isMH)
-                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td class="money-real">{{ number_format($half, 2) }}</td>
                                     <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
-                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td class="money-real">{{ number_format($half, 2) }}</td>
                                     <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
                                 @else
                                     <td>{{ number_format($igst, 2) }}</td>
@@ -728,14 +728,14 @@
                     <div style="
                 
                 color:#004f6e;
-                margin-bottom:3px;
+                margin-bottom:2px;
                 font-weight: 700;
                 font-size:12px;
             ">
                         Terms & Conditions:
                     </div>
 
-                    <div style="line-height:1.25; border:0;">
+                    <div style="line-height:1.5; border:0; margin-left:  -22px; margin-bottom: 5px; margin-top: -8px;">
                         <div class="terms" style="border:0; font-weight: 700;">
                             {!! $terms !!}
                         </div>
@@ -745,7 +745,7 @@
                 <!-- RIGHT : SIGNATORY -->
                 <td width="28%" valign="top" style="
                     padding:5px 7px;
-                    text-align:left;
+                    text-align:right;
                     line-height:1.25;
                     background: transparent;
                     border:0;

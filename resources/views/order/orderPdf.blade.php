@@ -181,8 +181,7 @@
             padding: 0 4px;
             vertical-align: middle;
             text-align: left;
-            border: 1px solid #C2C9CC;
-            /* ← real pixel */
+            border: 0.4px solid #C2C9CC;
         }
 
         .ship th {
@@ -211,15 +210,21 @@
             background-color: #99CCFF;
         }
 
-        .ship tr.shipping th {
+        .ship tr.shipping th,
+        td {
             font-weight: 700;
+            border: 0.4px solid #9AA3A8;
+        }
+
+        .shipping th,
+        td {
+            border: 0.4px solid #9AA3A8;
         }
 
         .ship tr.topinfo:last-of-type th,
         .ship tr.topinfo:last-of-type td {
             border-bottom: none;
         }
-
 
         .ship tr.billing:last-of-type th,
         .ship tr.billing:last-of-type td {
@@ -480,7 +485,7 @@
         $currency = $currency->name ?? '';
         $isMH = ($shipping['state'] ?? '') === 'Maharashtra';
         $isGW = ($quotationInfo['quotation_type'] ?? '') === 'GW';
-    
+
     @endphp
 
     @php
@@ -697,35 +702,35 @@
                 <col span="8">
             </colgroup>
             <tbody>
-                <tr class="shipping">
-                    <th>Shipping Name</th>
-                    <td colspan="6">{{ $shipping['company'] }}</td>
-                    <th>GSTN</th>
-                    <td colspan="3">{{ $shipping['gstn'] }}</td>
+                <tr class="shipping" style="border: 0.4px solid #9AA3A8">
+                    <th style="border: 0.4px solid #9AA3A8">Shipping Name</th>
+                    <td style="border: 0.4px solid #9AA3A8" colspan="6">{{ $shipping['company'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">GSTN</th>
+                    <td style="border: 0.4px solid #9AA3A8" colspan="3">{{ $shipping['gstn'] }}</td>
                 </tr>
 
-                <tr class="shipping">
-                    <th>Shipping Address</th>
-                    <td colspan="2">{{ $shipping['address'] }}</td>
-                    <th>Pin Code</th>
-                    <td>{{ $shipping['pincode'] }}</td>
-                    <th>City</th>
-                    <td>{{ $shipping['city'] }}</td>
-                    <th>State</th>
-                    <td>{{ $shipping['state'] }}</td>
-                    <th>Country</th>
-                    <td>{{ $shipping['country'] }}</td>
+                <tr class="shipping" style="border: 0.4px solid #9AA3A8">
+                    <th style="border: 0.4px solid #9AA3A8">Shipping Address</th>
+                    <td style="border: 0.4px solid #9AA3A8" colspan="2">{{ $shipping['address'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">Pin Code</th>
+                    <td style="border: 0.4px solid #9AA3A8">{{ $shipping['pincode'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">City</th>
+                    <td style="border: 0.4px solid #9AA3A8">{{ $shipping['city'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">State</th>
+                    <td style="border: 0.4px solid #9AA3A8">{{ $shipping['state'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">Country</th>
+                    <td style="border: 0.4px solid #9AA3A8">{{ $shipping['country'] }}</td>
                 </tr>
 
-                <tr class="shipping">
-                    <th>Contact Person</th>
-                    <td>{{ $shipping['contact_person'] }}</td>
-                    <th>Email</th>
-                    <td colspan="2">{{ $shipping['email'] }}</td>
-                    <th>Phone</th>
-                    <td colspan="2">{{ $shipping['landline'] }}</td>
-                    <th>Mobile</th>
-                    <td colspan="2">{{ $shipping['mobile'] }}</td>
+                <tr class="shipping" style="border: 0.4px solid #9AA3A8">
+                    <th style="border: 0.4px solid #9AA3A8">Contact Person</th>
+                    <td style="border: 0.4px solid #9AA3A8">{{ $shipping['contact_person'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">Email</th>
+                    <td style="border: 0.4px solid #9AA3A8" colspan="2">{{ $shipping['email'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">Phone</th>
+                    <td style="border: 0.4px solid #9AA3A8" colspan="2">{{ $shipping['landline'] }}</td>
+                    <th style="border: 0.4px solid #9AA3A8">Mobile</th>
+                    <td style="border: 0.4px solid #9AA3A8" colspan="2">{{ $shipping['mobile'] }}</td>
                 </tr>
             </tbody>
         </table>
@@ -736,30 +741,30 @@
                 <tr>
                     <th class="money">Sr</th>
                     <th class="money">Part No.</th>
-                    <th className="money">Description</th>
+                    <th class="money">Description</th>
 
                     @if($isGW)
-                        <th className="money">Maker</th>
-                        <th className="money">UOM</th>
+                        <th class="money">Maker</th>
+                        <th class="money">UOM</th>
                     @endif
 
-                    <th className="money">HSN</th>
-                    <th className="money">Qty</th>
-                    <th className="money-real">Unit Price ({{ $currency }})</th>
-                    <th className="money">Disc %</th>
-                    <th className="money-real">Net Price ({{ $currency }})</th>
+                    <th class="money">HSN</th>
+                    <th class="money">Qty</th>
+                    <th class="money-real">Unit Price ({{ $currency }})</th>
+                    <th class="money-real">Disc %</th>
+                    <th class="money-real">Net Price ({{ $currency }})</th>
 
                     @if($isMH)
-                        <th>SGST %</th>
-                        <th className="money-real">SGST AMT</th>
-                        <th className="money">CGST %</th>
-                        <th className="money-real">CGST AMT</th>
+                        <th class="money-real">SGST %</th>
+                        <th class="money-real">SGST AMT</th>
+                        <th class="money-real">CGST %</th>
+                        <th class="money-real">CGST AMT</th>
                     @else
-                        <th className="money">IGST %</th>
-                        <th className="money-real">IGST AMT</th>
+                        <th class="money-real">IGST %</th>
+                        <th class="money-real">IGST AMT</th>
                     @endif
 
-                    <th className="money-real">Total ({{ $currency }})</th>
+                    <th class="money-real">Total ({{ $currency }})</th>
                     <th class="money">Delivery</th>
                 </tr>
             </thead>
@@ -786,11 +791,11 @@
 
 
                             <tr class="item-row {{ $rowClass }}" style="background-color: {{ 
-                                                                                                                                                        $isGW == 'GW'
+                                                                                                                                                                                $isGW == 'GW'
                     ? ($loop->index % 2 === 0 ? '#C1D9BF' : '#D9E9D6')
                     : ($loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6')
 
-                                                                                }};">
+                                                                                                        }};">
 
                                 <td>{{ $i + 1 }}</td>
                                 <td>{{ $it['part_no'] }}</td>
@@ -804,16 +809,16 @@
                                 <td class="money">{{ $it['hsn_code'] }}</td>
                                 <td>{{ $it['quantity'] }}</td>
                                 <td class="money-real">{{ number_format($it['price'], 2) }}</td>
-                                <td>{{ $it['discount'] }}</td>
+                                <td class="money-real">{{ $it['discount'] }}</td>
                                 <td class="money-real">{{ number_format($net, 2) }}</td>
 
                                 @if($isMH)
-                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td class="money-real">{{ number_format($half, 2) }}</td>
                                     <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
-                                    <td>{{ number_format($half, 2) }}</td>
+                                    <td class="money-real">{{ number_format($half, 2) }}</td>
                                     <td class="money-real">{{ number_format($halfAmt, 2) }}</td>
                                 @else
-                                    <td>{{ number_format($igst, 2) }}</td>
+                                    <td class="money-real">{{ number_format($igst, 2) }}</td>
                                     <td class="money-real">{{ number_format($igstAmt, 2) }}</td>
                                 @endif
 
@@ -826,7 +831,7 @@
                                     style="background-color: {{ $loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6' }};">
                                     <td style="background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};"></td>
                                     <td colspan="{{ $noteColspan - 1 }}"
-                                        style="padding:4px 4px; background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};">
+                                        style="padding:2px 2px; background-color: {{ $isGW == 'GW' ? '#f1d3d6' : 'transparent' }};">
                                         <span style="display:flex; flex-direction:column; gap:2px;font-size:10px">
                                             @if($hasText($it['product_specification'] ?? null))
                                                 <span class="detail-text  html-content">
@@ -857,7 +862,7 @@
                         Grand Total ({{ $currency }})
                     </td>
 
-                    <td class="money">{{ number_format($totals['sub_net_total'], 2) }}</td>
+                    <td class="money-real">{{ number_format($totals['sub_net_total'], 2) }}</td>
 
                     @if($isMH)
                         <td></td>

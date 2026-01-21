@@ -84,6 +84,7 @@ class FullOrderController extends Controller
                 'delivery_term_data',
                 'delivery_date_custom',
                 'courier_name',
+                'shipping_state_name'
             ]);
 
             // return $data;
@@ -92,8 +93,8 @@ class FullOrderController extends Controller
             $validator = Validator::make($data, [
                 'courier_id' => 'required|integer|exists:couriers,id',
                 'customer_order_no' => 'required|string',
-                'overdues_value' => 'required|string',
-                'overdue_no' => 'required|string',
+                'overdues_value' => 'sometimes|nullable',
+                'overdue_no' => 'sometimes|nullable',
                 'unique_quotation_no' => 'required|string',
                 'product_id' => 'nullable|integer|exists:products,id',
                 'product_description' => 'sometimes|nullable',
@@ -436,7 +437,7 @@ class FullOrderController extends Controller
                     'gstn' => $customerInfo['gst_number'] ?? null,
                     'city' => $data['shipping_city'],
                     'pincode' => $data['shipping_pin_code'],
-                    'state' => $states->name ?? $customerInfo['other_state'] ?? null,
+                    'state' => $data['shipping_state_name'] ?? $customerInfo['other_state'] ?? null,
                     'contact_person' => $data['contact_person'],
                     'country' => $data['company_details']['country']['name'] ?? null,
                 ],

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('company_id')->nullable();
             $table->unsignedBigInteger('quotation_id')->nullable();
 
-            $table->text('billing_address')->nullable();
+            $table->text('billing_address')->nullable();    
             $table->string('billing_city')->nullable();
             $table->string('billing_mobile', 20)->nullable();
             $table->string('billing_email')->nullable();
