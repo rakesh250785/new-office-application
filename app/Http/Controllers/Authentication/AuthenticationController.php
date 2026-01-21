@@ -78,9 +78,9 @@ class AuthenticationController extends Controller
             }
 
             /* ================= FETCH USER ================= */
-            $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request?->email)->first();
 
-            if (! Hash::check($request->password, $user->password)) {
+            if (! Hash::check($request?->password, $user?->password)) {
                 return Utility::apiError('Invalid credentials', [], 401);
             }
 
