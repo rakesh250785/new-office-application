@@ -118,7 +118,7 @@ class Order extends Model
 
     public function pendingQuotationDetails()
     {
-        return $this->hasOne(PendingQuotation::class, 'quotation_id', 'id');
+        return $this->hasOne(PendingQuotation::class, 'order_id', 'id');
     }
 
     public function company()

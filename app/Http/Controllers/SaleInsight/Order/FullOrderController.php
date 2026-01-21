@@ -562,9 +562,9 @@ class FullOrderController extends Controller
                     'branchDetails:id,name',
                     'currencyDetails:id,code',
                     'ownerDetails:id,name',
-                    'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
+                    'pendingQuotationDetails:order_id,unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
                 ])
-                ->whereNull('deleted_at');
+                ->whereNull('deleted_at');  
 
             if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', (array) $data['branch_list']);
@@ -948,8 +948,9 @@ class FullOrderController extends Controller
     public function addOrderReason(Request $request)
     {
         try {
-            // Extract only necessary fields
+
             $data = $request->only([
+                'order_id',
                 'quotation_id',
                 'order_number',
                 'order_value',
@@ -964,58 +965,72 @@ class FullOrderController extends Controller
                 'total_amount',
             ]);
 
-            // Validation rule
             $validator = Validator::make($data, [
+                'order_id' => 'required',
                 'quotation_id' => 'required|integer|exists:quotations,id',
                 'order_number' => 'required|string',
                 'order_value' => 'required|numeric',
                 'order_date' => 'required|date',
-                'quotation_status_code' => 'required',
+                'quotation_status_code' => 'sometimes|nullable',
                 'unique_quotation_no' => 'required',
                 'reason_text' => 'required',
                 'reason_status_id' => 'required',
                 'total_amount' => 'required',
             ]);
 
-            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
-            // Authenticated user
             $admin = Auth::user();
 
-            // Prepare insert data
-            $insertData = [
-                'quotation_id' => $data['quotation_id'] ?? null,
-                'unique_quotation_no' => $data['unique_quotation_no'] ?? null,
-                'unique_order_no' => $data['order_number'] ?? null,
+            $match = [
+                'order_id' => $data['order_id'],
+                'quotation_id' => $data['quotation_id'],
+                'unique_quotation_no' => $data['unique_quotation_no'],
+                'unique_order_no' => $data['order_number'],
+            ];
+
+            $existing = PendingQuotation::where($match)->first();
+
+            $mergedReason = $data['reason_text'];
+            if ($existing) {
+                $mergedReason = $existing->reason
+                ? $existing->reason.', '.$data['reason_text']
+                : $data['reason_text'];
+            }
+
+            /** ✍️ values */
+            $values = [
                 'amount' => $data['order_value'],
                 'date' => Carbon::parse($data['order_date']),
-                'reason' => $data['reason_text'],
+                'reason' => $mergedReason,
                 'total_amount' => $data['total_amount'],
                 'reason_status_id' => $data['reason_status_id'],
                 'branch_id' => $admin['branch_id'] ?? null,
                 'user_id' => $admin['id'] ?? null,
                 'status_code' => $data['quotation_status_code'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
                 'last_updated_at' => now(),
                 'follow_up_date' => now(),
             ];
 
-            // Update reason
-            $reason = PendingQuotation::create($insertData);
+            $reason = PendingQuotation::updateOrCreate($match, $values);
+
             if (! $reason) {
                 return Utility::apiError('fail_add_reason', [], 221);
             }
 
-            // Return response
-            return Utility::apiSuccess('added successfully', [], 200);
+            return Utility::apiSuccess('reason added successfully', [], 200);
+
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Server error while adding reason', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError(
+                'Server error while adding reason',
+                ['exception' => $ex->getMessage()],
+                500
+            );
         }
     }
 

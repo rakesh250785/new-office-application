@@ -12,6 +12,7 @@ class PendingQuotation extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'order_id',
         'quotation_id',
         'unique_quotation_no',
         'unique_order_no',
