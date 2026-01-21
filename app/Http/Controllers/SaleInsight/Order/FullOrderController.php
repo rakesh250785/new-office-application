@@ -13,7 +13,6 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\PendingQuotation;
-use App\Models\QuatationAdd;
 use App\Models\Quotation;
 use App\Models\QuotationDetail;
 use App\Models\QuotationFormat;
@@ -84,7 +83,7 @@ class FullOrderController extends Controller
                 'delivery_term_data',
                 'delivery_date_custom',
                 'courier_name',
-                'shipping_state_name'
+                'shipping_state_name',
             ]);
 
             // return $data;
@@ -690,39 +689,45 @@ class FullOrderController extends Controller
         }
     }
 
-    public function deleteOrder(Request $request, $id, $quote_id)
+    public function deleteOrder(Request $request)
     {
         try {
-            // dd($id, $quote_id);
-            // Remove order
-            // if(Auth::user()->hasPermission('branch_all')){
 
-            // }else{
-            //     $records = Order::where(['in_order_id'=>$id, 'in_branch_id'=>Auth::user()->branch_id])->delete();
-            // }
-            $records = Order::where('in_order_id', $id)->delete();
-            if ($records == 1) {
-                // if(Auth::user()->hasPermission('branch_all')){
-                //     $remove_order_details  = OrderDetails::where('in_order_id', $id)->delete();
-                //     $update_quote = QuatationAdd::where('in_quot_id', $quote_id)->update(['is_order_pending'=>0]);
-                //     $update_pending = PendingQuotation::where('int_qd_no', $quote_id)->update(['is_deleted'=>0]);
-                // }else{
-                //     $remove_order_details  = OrderDetails::where(['in_order_id'=>$id, 'branch_id'=>Auth::user()->branch_id])->delete();
-                //     $update_quote = QuatationAdd::where(['in_quot_id'=>$quote_id, 'in_branch_id'=>Auth::user()->branch_id])->update(['is_order_pending'=>0]);
-                //     $update_pending = PendingQuotation::where(['int_qd_no'=>$quote_id])->update(['is_deleted'=>0]);
-                // }
+            $data = $request->only([
+                'id',
+                'unique_quotation_no',
+            ]);
 
-                $remove_order_details = OrderDetails::where('in_order_id', $id)->delete();
-                $update_quote = QuatationAdd::where('in_quot_id', $quote_id)->update(['is_order_pending' => 0]);
-                $update_pending = PendingQuotation::where('int_qd_no', $quote_id)->update(['is_deleted' => 0]);
-                $message = 'Order deleted successfully !';
-            } else {
-                $message = 'Fail to delete records !';
+            $validator = Validator::make($data, [
+                'id' => 'required',
+                'unique_quotation_no' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
-            return back()->with([
-                'message' => $message,
-            ]);
+            $records = Order::where('id', $data['id'])->delete();
+            $quotation = Quotation::where('unique_quotation_no', $data['unique_quotation_no'])->first();
+
+            if (! $records) {
+                return Utility::apiError('Order not found', [], 221);
+            }
+            OrderDetails::where('order_id', $data['id'])->delete();
+            Quotation::where('id', $quotation?->id)->where('unique_quotation_no', $data['unique_quotation_no'])->update(['is_order_pending' => true]);
+            PendingQuotation::where('quotation_id', $quotation?->id)->update(
+                [
+                    'reason' => 'Open',
+                    'status_code' => 'open',
+                    'last_updated_at' => Carbon::now(),
+                    'user_id' => Auth::id(),
+                    'follow_up_date' => Carbon::now(),
+                    'branch_id' => Auth::user()->branch_id ?? null,
+                    'reason_status_id' => 3,
+                ]
+            );
+
+            return Utility::apiSuccess('deleted successfully !', [], 200);
         } catch (Exception $ex) {
             Log::debug($ex);
         }
