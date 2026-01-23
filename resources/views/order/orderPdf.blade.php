@@ -798,12 +798,12 @@
                                                                                                         }};">
 
                                 <td>{{ $i + 1 }}</td>
-                                <td>{{ $it['part_no'] }}</td>
+                                <td class="money">{{ $it['part_no'] }}</td>
                                 <td>{{$it['description'] }}</td>
 
                                 @if($isGW)
-                                    <td>{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
-                                    <td>{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
+                                    <td class="money">{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
+                                    <td class="money">{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
                                 @endif
 
                                 <td class="money">{{ $it['hsn_code'] }}</td>
