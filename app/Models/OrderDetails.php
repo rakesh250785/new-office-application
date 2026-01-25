@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class OrderDetails extends Model
 {
     protected $primaryKey = 'id';
+
     protected $fillable = [
         'order_id',
         'quotation_id',
-        "unique_quotation_no",
+        'unique_quotation_no',
         'unique_order_no',
         'product_id',
         'principal_id',
@@ -43,15 +44,18 @@ class OrderDetails extends Model
         'user_id',
     ];
 
-
     public function principal()
     {
         return $this->belongsTo(Principal::class, 'principal_id');
+    }
+
+    public function uom()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
-
 }

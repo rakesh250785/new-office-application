@@ -35,7 +35,7 @@ class PartialOrderController extends Controller
                 'shipping_pin_code', 'shipping_mobile', 'shipping_email', 'shipping_landline',
                 'delivery_date_id', 'product_list', 'update_status', 'quotation_id', 'total_amount',
                 'unique_quotation_no', 'unique_order_no', 'customer_order_no', 'extra_notes', 'courier_id',
-                'unique_partial_order_no', 'partial_order_id',
+                'unique_partial_order_no', 'partial_order_id', 'close_order_status',
             ]);
 
             $validator = Validator::make($data, [
@@ -43,12 +43,12 @@ class PartialOrderController extends Controller
                 'order_id' => 'required|exists:orders,id',
                 'customer_order_no' => 'required|string',
                 'unique_quotation_no' => 'required|string',
-                'product_description' => 'required|string',
+                'product_description' => 'nullable|string',
                 'payment_term_condition' => 'required|string',
                 'lead_from' => 'required|string|max:255',
                 'billing_address' => 'required|string|max:500',
                 'billing_city' => 'required|string|max:255',
-                'billing_state_id' => 'required|integer|exists:states,id',
+                'billing_state_id' => 'nullable|integer|exists:states,id',
                 'billing_mobile' => 'required|string|max:15',
                 'billing_email' => 'required|email|max:255',
                 'billing_landline' => 'required|string|max:15',
@@ -56,14 +56,14 @@ class PartialOrderController extends Controller
                 'contact_person' => 'required|string|max:255',
                 'shipping_address' => 'required|string|max:500',
                 'shipping_city' => 'required|string|max:255',
-                'shipping_state_id' => 'required|integer|exists:states,id',
+                'shipping_state_id' => 'nullable|integer|exists:states,id',
                 'shipping_pin_code' => 'required|string|max:10',
                 'shipping_mobile' => 'required|string|max:15',
                 'shipping_email' => 'required|email|max:255',
                 'shipping_landline' => 'required|string|max:15',
                 'company_id' => 'required|integer|exists:customers,id',
                 'quotation_type_id' => 'required|integer|exists:quotation_types,id',
-                'notification_id' => 'required|integer|exists:notifications_email,id',
+                // 'notification_id' => 'required|integer|exists:notifications_email,id',
                 'owner_id' => 'required|integer|exists:owners,id',
                 'currency_id' => 'required|integer|exists:currencies,id',
                 'delivery_date_id' => 'required|integer|exists:payment_day_advances,id',
@@ -78,7 +78,7 @@ class PartialOrderController extends Controller
                 'product_list.*.quantity' => 'required|numeric|min:1',
                 'product_list.*.in_stock' => 'nullable|numeric|max:255',
                 'product_list.*.price' => 'required|numeric|min:0',
-                'product_list.*.send_qty' => 'required|numeric|min:1',
+                'product_list.*.send_qty' => 'nullable|numeric|min:0',
                 'product_list.*.discount' => 'nullable|numeric|min:0|max:100',
                 'product_list.*.net_price' => 'required|numeric|min:0',
                 'product_list.*.igst' => 'nullable|numeric|min:0',
@@ -98,19 +98,6 @@ class PartialOrderController extends Controller
             $branch = Branch::find($branchId);
             $branchInitials = $branch ? substr($branch->name, 0, 3) : 'BR-';
             $pdfFilePath = 'order_'.time().'_'.date('dmy').'.pdf';
-
-            // // Prevent creating partial if order already fully closed: check if any remaining balance exists
-            // $remainingItems = OrderDetails::whereNull('deleted_at')
-            //     ->where('order_id', $data['order_id'])
-            //     // ->whereRaw('quantity - IFNULL(balance_quantity,0) < quantity')
-            //     ->get();
-
-            // return $remainingItems;
-
-            // If no remaining items, block
-            // if ($remainingItems == 0) {
-            //     return Utility::apiError('Order has been fully completed', [], 221);
-            // }
 
             // Update customer
             $customerUpdate = Customer::where('id', $data['company_id'])->update([
@@ -143,73 +130,61 @@ class PartialOrderController extends Controller
                 return Utility::apiError('Failed to update order total.', [], 221);
             }
 
-            // create or update partial order explicitly (avoid mixing id + unique keys in updateOrCreate)
-            if (! empty($data['partial_order_id'])) {
-                // updating existing partial
-                $partial = PartialOrder::find($data['partial_order_id']);
-                if (! $partial) {
-                    return Utility::apiError('Partial order not found.', [], 221);
-                }
-                // remove existing details to re-insert
-                PartialOrderDetails::where('partial_order_id', $partial->id)->delete();
-                $uniquePartialNo = $partial->unique_partial_order_no;
-            } else {
-                // create new partial number
-                $dateStr = Carbon::now()->format('dmY');
-                $partialCount = PartialOrder::where('branch_id', $branchId)
-                    ->whereDate('created_at', Carbon::today())
-                    ->count();
-                $uniquePartialNo = $branchInitials.'/'.$dateStr.'/Part-'.($partialCount + 1);
+            $dateStr = Carbon::now()->format('dmY');
+            $partialCount = PartialOrder::where('branch_id', $branchId)
+                ->whereDate('created_at', Carbon::today())
+                ->count();
+            $uniquePartialNo = $branchInitials.'/'.$dateStr.'/Part-'.($partialCount + 1);
 
-                // create new partial placeholder
-                $partial = PartialOrder::create([
-                    'unique_partial_order_no' => $uniquePartialNo,
-                    'unique_order_no' => $data['unique_order_no'] ?? null,
-                    'unique_quotation_no' => $data['unique_quotation_no'] ?? null,
-                    'quotation_id' => $data['quotation_id'] ?? null,
-                    'order_id' => $data['order_id'],
-                    'company_id' => $data['company_id'] ?? null,
-                    'billing_address' => $data['billing_address'] ?? null,
-                    'billing_city' => $data['billing_city'] ?? null,
-                    'billing_mobile' => $data['billing_mobile'] ?? null,
-                    'billing_email' => $data['billing_email'] ?? null,
-                    'billing_landline' => $data['billing_landline'] ?? null,
-                    'billing_pin_code' => $data['billing_pin_code'] ?? null,
-                    'billing_state_id' => $data['billing_state_id'] ?? null,
-                    'billing_contact_person' => $data['contact_person'] ?? null,
-                    'shipping_address' => $data['shipping_address'] ?? null,
-                    'shipping_city' => $data['shipping_city'] ?? null,
-                    'shipping_state_id' => $data['shipping_state_id'] ?? null,
-                    'shipping_pin_code' => $data['shipping_pin_code'] ?? null,
-                    'shipping_mobile' => $data['shipping_mobile'] ?? null,
-                    'shipping_email' => $data['shipping_email'] ?? null,
-                    'shipping_landline' => $data['shipping_landline'] ?? null,
-                    'product_description' => $data['product_description'] ?? null,
-                    'delivery_date_id' => $data['delivery_date_id'] ?? null,
-                    'lead_from' => $data['lead_from'] ?? null,
-                    'notification_id' => $data['notification_id'] ?? null,
-                    'owner_id' => $data['owner_id'] ?? null,
-                    'quotation_type_id' => $data['quotation_type_id'] ?? null,
-                    'payment_term_condition' => $data['payment_term_condition'] ?? null,
-                    'date' => Carbon::now()->toDateString(),
-                    'enq_ref' => $data['enq_ref'] ?? null,
-                    'prepard_by' => $data['prepard_by'] ?? null,
-                    'branch_id' => $branchId ?? null,
-                    'pdf_name' => $pdfFilePath ?? null,
-                    'currency_id' => $data['currency_id'] ?? null,
-                    'tin_number' => '27700707469',
-                    'user_id' => $adminUserId,
-                    'total_amount' => $data['total_amount'] ?? null,
-                    'customer_order_no' => $data['customer_order_no'] ?? null,
-                    'extra_notes' => $data['extra_notes'] ?? null,
-                    'courier_id' => $data['courier_id'] ?? null,
-                ]);
-                if (! $partial) {
-                    return Utility::apiError('Failed to create partial order.', [], 221);
-                }
+            // create new partial placeholder
+            $partial = PartialOrder::create([
+                'unique_partial_order_no' => $uniquePartialNo,
+                'unique_order_no' => $data['unique_order_no'] ?? null,
+                'unique_quotation_no' => $data['unique_quotation_no'] ?? null,
+                'quotation_id' => $data['quotation_id'] ?? null,
+                'order_id' => $data['order_id'],
+                'company_id' => $data['company_id'] ?? null,
+                'billing_address' => $data['billing_address'] ?? null,
+                'billing_city' => $data['billing_city'] ?? null,
+                'billing_mobile' => $data['billing_mobile'] ?? null,
+                'billing_email' => $data['billing_email'] ?? null,
+                'billing_landline' => $data['billing_landline'] ?? null,
+                'billing_pin_code' => $data['billing_pin_code'] ?? null,
+                'billing_state_id' => $data['billing_state_id'] ?? null,
+                'billing_contact_person' => $data['contact_person'] ?? null,
+                'shipping_address' => $data['shipping_address'] ?? null,
+                'shipping_city' => $data['shipping_city'] ?? null,
+                'shipping_state_id' => $data['shipping_state_id'] ?? null,
+                'shipping_pin_code' => $data['shipping_pin_code'] ?? null,
+                'shipping_mobile' => $data['shipping_mobile'] ?? null,
+                'shipping_email' => $data['shipping_email'] ?? null,
+                'shipping_landline' => $data['shipping_landline'] ?? null,
+                'product_description' => $data['product_description'] ?? null,
+                'delivery_date_id' => $data['delivery_date_id'] ?? null,
+                'lead_from' => $data['lead_from'] ?? null,
+                'notification_id' => null,
+                'owner_id' => $data['owner_id'] ?? null,
+                'quotation_type_id' => $data['quotation_type_id'] ?? null,
+                'payment_term_condition' => $data['payment_term_condition'] ?? null,
+                'date' => Carbon::now()->toDateString(),
+                'enq_ref' => $data['enq_ref'] ?? null,
+                'prepard_by' => $data['prepard_by'] ?? null,
+                'branch_id' => $branchId ?? null,
+                'pdf_name' => $pdfFilePath ?? null,
+                'currency_id' => $data['currency_id'] ?? null,
+                'tin_number' => '27700707469',
+                'user_id' => $adminUserId,
+                'total_amount' => $data['total_amount'] ?? null,
+                'customer_order_no' => $data['customer_order_no'] ?? null,
+                'extra_notes' => $data['extra_notes'] ?? null,
+                'courier_id' => $data['courier_id'] ?? null,
+            ]);
+            if (! $partial) {
+                return Utility::apiError('Failed to create partial order.', [], 221);
             }
+        
 
-            $partialId = $partial->id;
+            $partialId = $partial?->id;
             $productListRows = [];
             $orderDetailsToUpdate = [];
             $grandTotal = 0;
@@ -271,6 +246,7 @@ class PartialOrderController extends Controller
                     'quantity' => $quantity,
                     'total' => $totalAmount,
                     'status' => 0,
+                    'is_checked' => $item['is_checked'] ?? 1,
                     'partial_order_status' => $balanceQty == 0 ? 1 : 0,
                     'notes' => $item['notes'] ?? null,
                     'product_specification' => $item['product_specification'] ?? null,
@@ -441,6 +417,7 @@ class PartialOrderController extends Controller
                 'total_amount',
                 'customer_order_no',
                 'courier_id',
+                'invoice_id',
             ])
                 ->with([
                     'orderDetails',

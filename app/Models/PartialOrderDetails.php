@@ -29,6 +29,7 @@ class PartialOrderDetails extends Model
         'quantity',
         'total',
         'status',
+        'is_checked',
         'partial_order_status',
         'notes',
         'product_specification',
@@ -40,6 +41,4 @@ class PartialOrderDetails extends Model
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
-
 }
-

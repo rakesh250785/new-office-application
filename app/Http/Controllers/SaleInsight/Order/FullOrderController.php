@@ -102,7 +102,7 @@ class FullOrderController extends Controller
                 'lead_from' => 'required|string|max:255',
                 'billing_address' => 'required|string|max:500',
                 'billing_city' => 'required|string|max:255',
-                'billing_state_id' => 'required|integer|exists:states,id',
+                'billing_state_id' => 'nullable|integer|exists:states,id',
                 'billing_mobile' => 'required|string|max:15',
                 'billing_email' => 'required|email|max:255',
                 'billing_landline' => 'required|string|max:15',
@@ -110,7 +110,7 @@ class FullOrderController extends Controller
                 'contact_person' => 'required|string|max:255',
                 'shipping_address' => 'required|string|max:500',
                 'shipping_city' => 'required|string|max:255',
-                'shipping_state_id' => 'required|integer|exists:states,id',
+                'shipping_state_id' => 'nullable|integer|exists:states,id',
                 'shipping_pin_code' => 'required|string|max:10',
                 'shipping_mobile' => 'required|string|max:15',
                 'shipping_email' => 'required|email|max:255',
@@ -557,6 +557,7 @@ class FullOrderController extends Controller
             ])
                 ->with([
                     'orderDetails',
+                    'orderDetails.uom:id,uom',
                     'orderDetails.principal:id,type',
                     'companyDetails:id,company_name,customer_name,email_id',
                     'branchDetails:id,name',

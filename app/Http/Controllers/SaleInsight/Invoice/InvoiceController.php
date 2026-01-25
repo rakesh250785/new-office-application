@@ -6,6 +6,7 @@ use App\Exports\InvoiceExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Models\PartialOrder;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -65,7 +66,12 @@ class InvoiceController extends Controller
                 ]
             );
 
-            // Return if fail to insert
+            $status = PartialOrder::where('id', $data['partial_order_id'])->update(['invoice_id' => $invoice?->id]);
+
+            if (! $status) {
+                return Utility::apiError('Upload failed partial invoice id', [], 221);
+            }
+
             if (! $invoice) {
                 return Utility::apiError('Upload failed', [], 221);
             }
@@ -98,7 +104,7 @@ class InvoiceController extends Controller
                 'download',
             ]);
 
-            if (!empty($data['download'])) {
+            if (! empty($data['download'])) {
                 $columns = [
                     'invoice_no' => 'Invoice No',
                     'invoice_date' => 'Invoice Date',
@@ -199,11 +205,11 @@ class InvoiceController extends Controller
     {
         try {
             // Get specific fields
-            $data = $request->only(['partial_order_id']);
+            $data = $request->only(['id']);
 
             // Validation rule
             $validator = Validator::make($data, [
-                'partial_order_id' => 'required|integer|exists:invoice,partial_order_id',
+                'id' => 'required|integer|exists:invoices,id',
             ]);
 
             // Return validation error
@@ -211,12 +217,26 @@ class InvoiceController extends Controller
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            // Delete invoice
-            $deleted = Invoice::where('id', $data['partial_order_id'])->delete();
+            // Get invoice
+            $invoiceRec = Invoice::where('id', $data['id'])->first();           
 
             // Return if fail
-            if (! $deleted) {
-                return Utility::apiError('Invoice deletion failed', [], 221);
+            if (! $invoiceRec) {
+                return Utility::apiError('Invoice not found', [], 221);
+            }
+
+            $updateStatus = PartialOrder::where('id', $invoiceRec['partial_order_id'])->update([
+                'invoice_id' => null,
+            ]);
+
+            if (! $updateStatus) {
+                return Utility::apiError('Fail to update partial order invoice field', [], 221);
+            }
+
+            $delStatus = $invoiceRec->delete();
+
+            if (! $delStatus) {
+                return Utility::apiError('Fail to delete invoice', [], 221);
             }
 
             // Return response

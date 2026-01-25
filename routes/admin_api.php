@@ -198,7 +198,8 @@ Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(functi
     Route::post('getInvoice', [InvoiceController::class, 'getInvoice']);
     Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);
     Route::get('/orderinvoicedocs/download/{filename}', [InvoiceController::class, 'downloadInvoice']);
-
+    Route::post('deleteInvoice', [InvoiceController::class, 'deleteInvoice']);
+    
     // Profile details
     Route::post('updateProfile', [ProfileController::class, 'updateProfile']);
     Route::post('getProfile', [ProfileController::class, 'getProfile']);

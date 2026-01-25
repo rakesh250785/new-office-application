@@ -53,6 +53,7 @@ return new class extends Migration {
             $table->string('customer_order_no')->nullable();
             $table->text('extra_notes')->nullable();
             $table->integer('partial_order_status')->nullable();
+            $table->unsignedBigInteger('invoice_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

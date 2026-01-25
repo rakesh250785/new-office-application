@@ -86,7 +86,7 @@ class PartialOrder extends Model
 
     public function orderDetails()
     {
-        return $this->hasMany(PartialOrderDetails::class, 'partial_order_id', 'id');
+        return $this->hasMany(PartialOrderDetails::class, 'partial_order_id', 'id') ;
     }
 
     public function ownerDetails()

@@ -3,8 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Helpers\Utility;
+use App\Models\User;
 use Closure;
-use Illuminate\Support\Facades\Auth;
+use Log;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -42,17 +43,28 @@ class SingleWindowMiddleware
 
         } catch (TokenExpiredException $e) {
 
-            /* ================= TOKEN EXPIRED ================= */
-            if (Auth::check()) {
-                Auth::user()->update(['active_jwt' => null]);
+            try {   
+                // get payload even if token is expired
+                $payload = JWTAuth::getPayload($token);
+                logger('payloadddddddddddd');
+                logger($payload);
+                $userId = $payload->get('sub');
+                logger('userIdiddddddddddddd');
+                logger($userId);
+                User::where('id', $userId)
+                    ->update([
+                        'active_jwt' => null,
+                    ]);
+
+            } catch (\Exception $e) {
+                Log::error('Token exception error: '.$e);
             }
 
             return Utility::apiError(
                 'Session expired. Please login again.',
                 [],
-                409
+                401
             );
-
         } catch (JWTException $e) {
 
             /* ================= INVALID TOKEN ================= */
