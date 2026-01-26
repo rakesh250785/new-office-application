@@ -5,59 +5,48 @@ namespace App\Http\Middleware;
 use App\Helpers\Utility;
 use App\Models\User;
 use Closure;
-use Log;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SingleWindowMiddleware
-{
+{   
     public function handle($request, Closure $next)
     {
+        $token = $request->bearerToken();
+
+        if (! $token) {
+            return Utility::apiError('Token not provided', [], 401);
+        }       
+
         try {
-            /* ================= GET TOKEN ================= */
-            $token = JWTAuth::getToken();
 
-            if (! $token) {
-                return Utility::apiError('Token not provided', [], 401);
-            }
+            JWTAuth::setToken($token);
+            $user = JWTAuth::authenticate();
 
-            /* ================= AUTHENTICATE TOKEN ================= */
-            $user = JWTAuth::parseToken()->authenticate();
-
-            if (! $user) {
-                return Utility::apiError('User not authenticated', [], 401);
-            }
-
-            /* ================= SINGLE SESSION CHECK ================= */
-            if (
-                empty($user->active_jwt) ||
-                ! hash_equals((string) $user->active_jwt, (string) $token)
-            ) {
+            // valid token → normal flow
+            if ($user->active_jwt !== $token) {
                 return Utility::apiError(
-                    'Token error OR You are already logged in on another device',
+                    'You are logged in from another device',
                     [],
-                    409
+                    401
                 );
             }
 
         } catch (TokenExpiredException $e) {
 
-            try {   
-                // get payload even if token is expired
-                $payload = JWTAuth::getPayload($token);
-                logger('payloadddddddddddd');
-                logger($payload);
-                $userId = $payload->get('sub');
-                logger('userIdiddddddddddddd');
-                logger($userId);
-                User::where('id', $userId)
-                    ->update([
-                        'active_jwt' => null,
-                    ]);
+            logger("TokenExpiredException");
+            // expired but readable → cleanup allowed
+            try {
+                $payload = JWTAuth::setToken($token)->getPayload();
+                $userId = $payload->get('   ');
 
+                User::where('id', $userId)->update([
+                    'active_jwt' => null,
+                ]);
             } catch (\Exception $e) {
-                Log::error('Token exception error: '.$e);
+                // ignore — nothing we can do
             }
 
             return Utility::apiError(
@@ -65,13 +54,22 @@ class SingleWindowMiddleware
                 [],
                 401
             );
-        } catch (JWTException $e) {
 
-            /* ================= INVALID TOKEN ================= */
+        } catch (TokenInvalidException $e) {
+            logger("TokenInvalidException");
+            // malformed token → cannot know user
             return Utility::apiError(
-                'Invalid or malformed token',
+                'Invalid token',
                 [],
-                409
+                401
+            );
+
+        } catch (JWTException $e) {
+            logger("JWTException");
+            return Utility::apiError(
+                'Authentication error',
+                [],
+                401
             );
         }
 

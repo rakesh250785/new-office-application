@@ -63,7 +63,7 @@ Route::prefix('admin')->group(function () {
 });
 
 // Aiuth route
-Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(function () {
+Route::prefix('admin')->middleware(['single.session'])->group(function () {
     Route::post('/logout', [AuthenticationController::class, 'apiLogout']);
 
     // Vendor Inside
@@ -175,7 +175,7 @@ Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(functi
     Route::post('/deleteQuotation', [QuotationDetailController::class, 'deleteQuotation']);
     Route::post('/updateQuotationStatus', [QuotationDetailController::class, 'updateQuotationStatus']);
     Route::post('/quotationPdfStatus', [QuotationDetailController::class, 'quotationPdfStatus']);
-    
+
     // Order
     Route::post('/storeOrder', [FullOrderController::class, 'storeOrder']);
     Route::post('/getOrder', [FullOrderController::class, 'getOrder']);
@@ -199,7 +199,7 @@ Route::prefix('admin')->middleware(['auth:api', 'single.session'])->group(functi
     Route::post('addUpdateInvoice', [InvoiceController::class, 'addUpdateInvoice']);
     Route::get('/orderinvoicedocs/download/{filename}', [InvoiceController::class, 'downloadInvoice']);
     Route::post('deleteInvoice', [InvoiceController::class, 'deleteInvoice']);
-    
+
     // Profile details
     Route::post('updateProfile', [ProfileController::class, 'updateProfile']);
     Route::post('getProfile', [ProfileController::class, 'getProfile']);

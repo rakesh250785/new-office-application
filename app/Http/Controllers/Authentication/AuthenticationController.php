@@ -22,7 +22,7 @@ class AuthenticationController extends Controller
     private function getUserLocation(string $ip): array
     {
         try {
-            $position = Location::get('103.177.112.254');
+            $position = Location::get('184.168.121.218');
             if ($position) {
                 return [
                     'country' => $position->countryName ?? null,
@@ -66,7 +66,7 @@ class AuthenticationController extends Controller
     public function apiLogin(Request $request)
     {
         try {
-            
+
             /* ================= VALIDATION ================= */
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
@@ -89,7 +89,7 @@ class AuthenticationController extends Controller
                 return Utility::apiError(
                     'You are already logged in on another device',
                     [],
-                    409
+                    401
                 );
             }
 
@@ -105,7 +105,7 @@ class AuthenticationController extends Controller
                 return Utility::apiError(
                     'Fail to update JWT token',
                     [],
-                    409
+                    401
                 );
             }
 
@@ -136,6 +136,7 @@ class AuthenticationController extends Controller
                 'logo_url' => asset('appLogo/logo.png'),
             ];
             SendLoginLogoutEmail::dispatch($details)->onQueue('emails');
+
             return Utility::apiSuccess('Login successful', [
                 'token' => $token,
             ], 200);
