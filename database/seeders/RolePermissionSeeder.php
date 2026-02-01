@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Permission;        
 use App\Models\User;
 
 class RolePermissionSeeder extends Seeder
@@ -17,9 +17,9 @@ class RolePermissionSeeder extends Seeder
         # Define modules and permissions
         $modulesPermissions = [
             'expances' => ['view_expanses'],
-            'expances' => ['view_expanses'],
+            'financial_report' => ['view_financial_report', 'export_financial_report', 'financial_approved_action'],
+            'performance_report' => ['view_performance_report', 'export_performance_report'],
             'order_summary' => ['view_order_summary'],
-            'performance_report' => ['view_performance_report'],
             'quotation_summary' => ['view_quotation_summary'],
             'quotation_detail' => [
                 'view_quotation_detail',
