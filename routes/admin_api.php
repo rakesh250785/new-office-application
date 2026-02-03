@@ -210,7 +210,8 @@ Route::prefix('admin')->middleware(['single.session'])->group(function () {
     Route::post('quotationBranchReport', [QuotationSummaryController::class, 'quotationBranchReport']);
     Route::post('quotationOwnerReport', [QuotationSummaryController::class, 'quotationOwnerReport']);
     Route::post('quotationPrincipalDealerReport', [QuotationSummaryController::class, 'quotationPrincipalDealerReport']);
-
+    Route::post('filterQuotationSummary', [QuotationSummaryController::class, 'filterQuotationSummary']);
+    
     // Order Summary Report
     Route::post('principalWiseOrder', [OrderSummaryController::class, 'principalWiseOrder']);
     Route::post('companyWiseOrder', [OrderSummaryController::class, 'companyWiseOrder']);

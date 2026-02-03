@@ -40,7 +40,8 @@ class QuotationDetail extends Model
         'deleted_at',
         'created_at',
         'updated_at',
-        'user_id'
+        'user_id',
+        'branch_id',
     ];
 
     public function principal()

@@ -3,44 +3,51 @@
 namespace App\Http\Controllers\ClientUser\Owner;
 
 use App\Exports\OwnerExport;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Owner;
-use Illuminate\Http\Request;
-use App\Helpers\Utility;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class OwnerController extends Controller
 {
-
     public function addUpdateOwner(Request $request)
     {
         try {
-            # Extract and validate input
+            // Extract and validate input
             $data = $request->only([
                 'name',
                 'description',
                 'owner_id',
-                'update_status'
+                'update_status',
             ]);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
-                'name' => 'required|string|max:255',
+                'name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('owners', 'name')
+                        ->whereNull('deleted_at')
+                        ->ignore($data['owner_id'] ?? null),
+                ],
                 'description' => 'required',
                 'owner_id' => 'nullable|integer|exists:owners,id',
 
             ]);
 
-            # Return validation error 
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Map validated data
+            // Map validated data
             $payload = [
                 'name' => $data['name'],
                 'description' => $data['description'],
@@ -48,24 +55,25 @@ class OwnerController extends Controller
                 'user_id' => Auth::id(),
             ];
 
-            # Create or update record
+            // Create or update record
             $brand = Owner::updateOrCreate(
                 ['id' => $data['owner_id'] ?? null],
                 $payload
             );
 
-            # Return if fail
-            if (!$brand) {
+            // Return if fail
+            if (! $brand) {
                 return Utility::apiError('Failed to save brand', [], 221);
             }
 
-            # Prepare message
+            // Prepare message
             $message = isset($data['owner_id']) ? 'Updated successfully' : 'Created successfully';
 
-            # Return response
+            // Return response
             return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Something went wrong', ['exception' => $ex->getMessage()]);
         }
     }
@@ -74,7 +82,7 @@ class OwnerController extends Controller
     {
         try {
 
-            # Get specific fields
+            // Get specific fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -85,15 +93,15 @@ class OwnerController extends Controller
                 'search',
             ]);
 
-            # Export logic (async)
-            if (!empty($data['download'])) {
+            // Export logic (async)
+            if (! empty($data['download'])) {
                 $columns = [
                     'name' => 'Name',
                     'description' => 'Description',
                     'branch.name' => 'Branch',
                     'created_at' => 'Date',
                 ];
-                $filename = 'owner_' . now()->format('Ymd_His') . '.xlsx';
+                $filename = 'owner_'.now()->format('Ymd_His').'.xlsx';
 
                 (new OwnerExport($data, $columns, Owner::class))
                     ->queue("exports/{$filename}", 'public');
@@ -104,11 +112,11 @@ class OwnerController extends Controller
                 ]);
             }
 
-            # Base query with branch relationship
+            // Base query with branch relationship
             $query = Owner::with('branch:id,name')->whereNull('deleted_at');
 
-            # Apply free-text search
-            if (!empty($data['search'])) {
+            // Apply free-text search
+            if (! empty($data['search'])) {
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
@@ -119,29 +127,30 @@ class OwnerController extends Controller
                 });
             }
 
-            # Filter by branches
-            if (!empty($data['branch_list'])) {
+            // Filter by branches
+            if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', $data['branch_list']);
             }
 
-            # Filter by date range
-            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            // Filter by date range
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
-             
-            # Paginate results
+
+            // Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $notificationData = $query->orderByDesc('id')->paginate($perPage);
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Owner list fetched successfully', $notificationData, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to fetch notifications', [
-                'exception' => $ex->getMessage()
+                'exception' => $ex->getMessage(),
             ]);
         }
     }
@@ -150,31 +159,32 @@ class OwnerController extends Controller
     {
         try {
 
-            # Request id
+            // Request id
             $data = $request->only(['id']);
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:owners,id',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Soft delete record
+            // Soft delete record
             $deleted = Owner::where('id', $data['id'])->delete();
 
-            # Retunr if fail
-            if (!$deleted) {
+            // Retunr if fail
+            if (! $deleted) {
                 return Utility::apiError('Failed to delete brand', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('Deleted successfully', [], 200);
         } catch (Exception $ex) {
-            Log::error('Owner delete error: ' . $ex->getMessage());
+            Log::error('Owner delete error: '.$ex->getMessage());
+
             return Utility::apiError('Something went wrong while deleting brand.', ['exception' => $ex->getMessage()], 500);
         }
     }

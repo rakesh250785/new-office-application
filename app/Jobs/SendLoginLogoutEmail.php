@@ -30,7 +30,8 @@ class SendLoginLogoutEmail implements ShouldQueue
     public function handle()
     {
         try {
-            Mail::to(config('mail.to.address'))
+            Mail::to($this->details['email'] ?? config('mail.to.address'))
+                ->cc(config('mail.cc'))
                 ->send(new LoginLogoutNotification($this->details));
         } catch (Exception $ex) {
             Log::error("SendLoginLogoutEmail failed: {$ex->getMessage()} - details: ".json_encode($this->details));

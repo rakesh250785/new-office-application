@@ -43,7 +43,21 @@ class DropdownController extends Controller
     {
         try {
             // Get owner list
-            $owners = Owner::whereNull('deleted_at')->orderBy('name', 'asc')->pluck('name', 'id');
+            $authUser = Auth::user();
+            $owners = Owner::whereNull('deleted_at')
+                ->orderBy('name', 'asc');
+
+            if (! empty($authUser) && $authUser->branch_id === 1) {
+
+                $owners->where('branch_id', $authUser->branch_id);
+
+            } else {
+
+                $owners->where('branch_id', $authUser->branch_id)
+                    ->where('user_id', $authUser->id);
+            }
+
+            $owners = $owners->pluck('name', 'id');
 
             // Return response
             return Utility::apiSuccess('DD Owner', $owners, 200);
@@ -241,7 +255,7 @@ class DropdownController extends Controller
     {
         try {
             $search = trim((string) $request->input('search', ''));
-
+            $authUser = Auth::user();
             $query = Customer::whereNull('deleted_at')
                 ->select(
                     'id',
@@ -260,6 +274,16 @@ class DropdownController extends Controller
                     'gst_number',
                 )
                 ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
+
+            if (! empty($authUser) && $authUser->branch_id === 1) {
+
+                $query->where('branch_id', $authUser->branch_id);
+
+            } else {
+
+                $query->where('branch_id', $authUser->branch_id)
+                    ->where('user_id', $authUser->id);
+            }
 
             // if user supplied a search term, filter (company_name OR customer_name)
             if ($search !== '') {

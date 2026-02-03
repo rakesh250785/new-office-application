@@ -20,10 +20,9 @@ class QuotationSummaryController extends Controller
         try {
             // Validate request
             $validated = $request->validate([
-                'from' => ['nullable', 'date'],
-                'to' => ['nullable', 'date'],
+                'start_date' => ['nullable', 'date'],
+                'end_date' => ['nullable', 'date'],
                 'branch_id' => ['nullable', 'integer'],
-                'user_id' => ['nullable', 'integer'],
             ]);
 
             // Base query
@@ -31,10 +30,10 @@ class QuotationSummaryController extends Controller
 
             // Filters
             if (! empty($validated['from'])) {
-                $q->whereDate('last_updated_at', '>=', $validated['from']);
+                $q->whereDate('last_updated_at', '>=', $validated['start_date']);
             }
             if (! empty($validated['to'])) {
-                $q->whereDate('last_updated_at', '<=', $validated['to']);
+                $q->whereDate('last_updated_at', '<=', $validated['end_date']);
             }
             if (! empty($validated['branch_id'])) {
                 $q->where('branch_id', $validated['branch_id']);
@@ -87,11 +86,11 @@ class QuotationSummaryController extends Controller
                     (float) ($row->open_cnt ?? 0),
                     (float) ($row->win_cnt ?? 0),
                     (float) ($row->lose_cnt ?? 0),
-                    (float) ($row->closed_cnt ?? 0),                
+                    (float) ($row->closed_cnt ?? 0),
                 ],
                 'total' => $totalCount,
                 'filters' => [
-                    'from' => $validated['from'] ?? null,       
+                    'from' => $validated['from'] ?? null,
                     'to' => $validated['to'] ?? null,
                     'branch_id' => $validated['branch_id'] ?? null,
                     'user_id' => $validated['user_id'] ?? null,
@@ -107,19 +106,21 @@ class QuotationSummaryController extends Controller
                 'Error quotationStatusReport',
                 ['exception' => $ex->getMessage()]
             );
-        }   
+        }
 
     }
 
     public function quotationBranchReport(Request $request)
     {
         $validated = $request->validate([
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+            'branch_id' => ['nullable', 'integer'],
         ]);
 
-        $from = $validated['from'] ?? null;
-        $to = $validated['to'] ?? null;
+        $from = $validated['start_date'] ?? null;
+        $to = $validated['end_date'] ?? null;
+        $branchId = $validated['branch_id'] ?? null;
 
         $query = DB::table('pending_quotations as pqd')
             ->join('quotations as q', 'q.id', '=', 'pqd.quotation_id')
@@ -135,6 +136,10 @@ class QuotationSummaryController extends Controller
         ")
             ->groupBy('b.id', 'b.name')
             ->orderBy('b.name');
+
+        if (! empty($validated['branch_id'])) {
+            $query->where('q.branch_id', $branchId);
+        }
 
         if ($from) {
             $query->whereDate('q.created_at', '>=', $from);
@@ -185,16 +190,16 @@ class QuotationSummaryController extends Controller
         try {
             // Request specific data
             $validated = $request->validate([
-                'from' => ['nullable', 'date'],
-                'to' => ['nullable', 'date'],
+                'start_date' => ['nullable', 'date'],
+                'end_date' => ['nullable', 'date'],
                 'branch_id' => ['nullable', 'integer'],
                 'limit' => ['nullable', 'integer', 'min:1', 'max:1000'],
                 'show_all' => ['nullable', 'boolean'],
             ]);
 
             // Date filter
-            $from = $validated['from'] ?? null;
-            $to = $validated['to'] ?? null;
+            $from = $validated['start_date'] ?? null;
+            $to = $validated['end_date'] ?? null;
             $branchId = $validated['branch_id'] ?? null;
             $showAll = (bool) ($validated['show_all'] ?? false);
             $limit = $validated['limit'] ?? 10;
@@ -276,11 +281,13 @@ class QuotationSummaryController extends Controller
             $data = $request->validate([
                 'start_date' => ['nullable', 'date'],
                 'end_date' => ['nullable', 'date'],
+                'branch_id' => ['nullable', 'integer'],
             ]);
 
             // Date filter
             $end = ! empty($data['end_date']) ? Carbon::parse($data['end_date'])->endOfDay() : now()->endOfDay();
             $start = ! empty($data['start_date']) ? Carbon::parse($data['start_date'])->startOfDay() : (clone $end)->subMonths(5)->startOfMonth();
+            $branchId = $data['branch_id'] ?? null;
 
             // Month buckets
             $months = [];
@@ -297,6 +304,9 @@ class QuotationSummaryController extends Controller
                 ->join('principal_types as pt', 'pt.id', '=', 'p.type_id')
                 ->when(! empty($data['start_date']) || ! empty($data['end_date']), function ($q) use ($start, $end) {
                     $q->whereBetween('quotation_details.created_at', [$start, $end]);
+                })
+                ->when(! empty($data['branch_id']), function ($q) use ($branchId) {
+                    $q->where('quotation_details.branch_id', $branchId);
                 })
                 ->selectRaw("DATE_FORMAT(quotation_details.created_at, '%Y-%m') as ym")
                 ->selectRaw('SUM(quotation_details.total) as total_amount')
@@ -425,4 +435,21 @@ class QuotationSummaryController extends Controller
 
         return 10 * $base;
     }
+
+    // public function filterQuotationSummary(Request $request)
+    // {
+    //     try {
+    //         $this->quotationStatusReport(Request::createFrom($request));
+    //         $this->quotationBranchReport(Request::createFrom($request));
+    //         $this->quotationOwnerReport(Request::createFrom($request));
+    //         $this->quotationPrincipalDealerReport(Request::createFrom($request));
+
+    //         return Utility::apiSuccess('Quotation summary', [], 200);
+
+    //     } catch (Exception $ex) {
+    //         Log::error($ex);
+
+    //         return Utility::apiError('Error filterQuotationSummary', ['exception' => $ex->getMessage()]);
+    //     }
+    // }
 }

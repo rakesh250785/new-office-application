@@ -119,4 +119,9 @@ return [
         'address' => env('MAIL_TO_ADDRESS', null),
     ],
 
+    'cc' => [
+        'info@chromatographyworld.com',
+        'mkyadav59@gmail.com.com',
+    ],
+
 ];

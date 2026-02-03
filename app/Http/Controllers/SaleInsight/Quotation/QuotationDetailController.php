@@ -301,6 +301,8 @@ class QuotationDetailController extends Controller
                         'deleted_at' => null,
                         'created_at' => now(),
                         'updated_at' => now(),
+                        'user_id'=> $adminId,
+                        'branch_id'=> $branchId
                     ];
                 }
 

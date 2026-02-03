@@ -16,7 +16,7 @@ class RolePermissionSeeder extends Seeder
 
         # Define modules and permissions
         $modulesPermissions = [
-            'expances' => ['view_expanses'],
+            'expances' => ['view_expanses', 'add_new_expanses', 'view_history', 'export_expanses', 'edit_expanses', 'delete_expanses', 'download_expanses_bill'],
             'financial_report' => ['view_financial_report', 'export_financial_report', 'financial_approved_action'],
             'performance_report' => ['view_performance_report', 'export_performance_report'],
             'order_summary' => ['view_order_summary'],
@@ -49,9 +49,13 @@ class RolePermissionSeeder extends Seeder
                 'edit_partial_order',
                 'delete_partial_order',
                 'export_partial_order',
+                'upload_partial_order',
             ],
-            'order_report' => ['view_order_report', 'export_order_report'],
-            'invoice' => ['view_invoice', 'export_invoice'],
+            'order_report' => [
+                'view_order_report', 
+                'export_order_report'
+            ],
+            'invoice' => ['view_invoice', 'export_invoice', 'view_pod_doc', 'upload_pod_doc'],
             'owner' => ['view_owner', 'export_owner', 'edit_owner', 'delete_owner', 'add_owner'],
             'customer' => ['view_customer', 'export_customer', 'edit_customer', 'delete_customer', 'add_customer'],
             'user' => ['view_user', 'export_user', 'edit_user', 'delete_user', 'add_user'],

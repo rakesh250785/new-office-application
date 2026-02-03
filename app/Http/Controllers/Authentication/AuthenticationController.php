@@ -134,8 +134,9 @@ class AuthenticationController extends Controller
                 'device' => $agentInfo['device'] ?? null,
                 'to_email' => $user->email,
                 'logo_url' => asset('appLogo/logo.png'),
+                'email'=> $user->email
             ];
-            SendLoginLogoutEmail::dispatch($details)->onQueue('emails');
+            SendLoginLogoutEmail::dispatch($details);
 
             return Utility::apiSuccess('Login successful', [
                 'token' => $token,
