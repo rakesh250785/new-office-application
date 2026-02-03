@@ -29,10 +29,10 @@ class QuotationSummaryController extends Controller
             $q = PendingQuotation::query();
 
             // Filters
-            if (! empty($validated['from'])) {
+            if (! empty($validated['start_date'])) {
                 $q->whereDate('last_updated_at', '>=', $validated['start_date']);
             }
-            if (! empty($validated['to'])) {
+            if (! empty($validated['end_date'])) {
                 $q->whereDate('last_updated_at', '<=', $validated['end_date']);
             }
             if (! empty($validated['branch_id'])) {

@@ -122,7 +122,7 @@ class InvoiceController extends Controller
                     'file' => $filename,
                     'url' => $fileUrl,
                 ]);
-            }
+            }   
 
             $authUser = Auth::user();
 
@@ -130,12 +130,12 @@ class InvoiceController extends Controller
             // Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
-                ->orderBy('id', 'DESC')
+                ->orderBy('id', 'DESC');
 
-                ->when(Auth::user()?->role?->name == 'branches', function ($query) use ($authUser) {
-                    $query->where('branch_id', $authUser->branch_id)
-                        ->where('user_id', $authUser->id);
-                });
+                // ->when(Auth::user()?->role?->name == 'branches', function ($query) use ($authUser) {
+                //     $query->where('branch_id', $authUser->branch_id)
+                //         ->where('user_id', $authUser->id);
+                // });
             // Apply filters (arrays are expected from frontend; cast to array to be safe)
             if (! empty($data['branch_list'])) {
                 $query->whereIn('branch_id', (array) $data['branch_list']);
