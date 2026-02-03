@@ -47,15 +47,15 @@ class DropdownController extends Controller
             $owners = Owner::whereNull('deleted_at')
                 ->orderBy('name', 'asc');
 
-            if (! empty($authUser) && $authUser->branch_id === 1) {
+            // if (! empty($authUser) && $authUser->branch_id === 1) {
 
-                $owners->where('branch_id', $authUser->branch_id);
+            //     $owners->where('branch_id', $authUser->branch_id);
 
-            } else {
+            // } else {
 
-                $owners->where('branch_id', $authUser->branch_id)
-                    ->where('user_id', $authUser->id);
-            }
+            //     $owners->where('branch_id', $authUser->branch_id)
+            //         ->where('user_id', $authUser->id);
+            // }
 
             $owners = $owners->pluck('name', 'id');
 
@@ -275,15 +275,15 @@ class DropdownController extends Controller
                 )
                 ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
 
-            if (! empty($authUser) && $authUser->branch_id === 1) {
+            // if (! empty($authUser) && $authUser->branch_id === 1) {
 
-                $query->where('branch_id', $authUser->branch_id);
+            //     $query->where('branch_id', $authUser->branch_id);
 
-            } else {
+            // } else {
 
-                $query->where('branch_id', $authUser->branch_id)
-                    ->where('user_id', $authUser->id);
-            }
+            //     $query->where('branch_id', $authUser->branch_id)
+            //         ->where('user_id', $authUser->id);
+            // }
 
             // if user supplied a search term, filter (company_name OR customer_name)
             if ($search !== '') {
