@@ -95,9 +95,10 @@ class UspController extends Controller
                 'start_date',
                 'end_date',
                 'download',
-                'branch_list',
-                'principal_list',
                 'category_list',
+                'usp_list',
+                'brand_list',
+                'principal_list',
                 'search',
             ]);
 
@@ -109,7 +110,7 @@ class UspController extends Controller
                     'usp_brand' => 'USP Brand',
                     'principal.type' => 'Principal',
                     'category.name' => 'Category',
-                    'branch.name' => 'Branch',  
+                    'branch.name' => 'Branch',
                     'created_at' => 'Date',
                 ];
 
@@ -145,19 +146,24 @@ class UspController extends Controller
                 });
             }
 
+            // Category filter
+            if (! empty($data['category_list'])) {
+                $query->whereIn('category_id', (array) $data['category_list']);
+            }
+
+            // Usp Filter
+            if (! empty($data['usp_list'])) {
+                $query->whereIn('id', (array) $data['usp_list']);
+            }
+
             // Branch filter
-            if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+            if (! empty($data['brand_list'])) {
+                $query->whereIn('id', (array) $data['brand_list']);
             }
 
             // Principal filter
             if (! empty($data['principal_list'])) {
                 $query->whereIn('principal_id', (array) $data['principal_list']);
-            }
-
-            // Category filter
-            if (! empty($data['category_list'])) {
-                $query->whereIn('category_id', (array) $data['category_list']);
             }
 
             // Date filter

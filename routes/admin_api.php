@@ -142,6 +142,10 @@ Route::prefix('admin')->middleware(['single.session'])->group(function () {
     Route::post('/getUSP', [UspController::class, 'getUSP']);
     Route::post('/deleteUSP', [UspController::class, 'deleteUSP']);
 
+    Route::get('/getUspDD', [DropdownController::class, 'getUspDD']);
+    Route::get('/getUspBrandDD', [DropdownController::class, 'getUspBrandDD']);
+    Route::get('/getUspPrincipalDD', [DropdownController::class, 'getUspPrincipalDD']);
+
     // Owner
     Route::post('/addUpdateOwner', [OwnerController::class, 'addUpdateOwner']);
     Route::post('/getOwner', [OwnerController::class, 'getOwner']);
@@ -211,7 +215,7 @@ Route::prefix('admin')->middleware(['single.session'])->group(function () {
     Route::post('quotationOwnerReport', [QuotationSummaryController::class, 'quotationOwnerReport']);
     Route::post('quotationPrincipalDealerReport', [QuotationSummaryController::class, 'quotationPrincipalDealerReport']);
     Route::post('filterQuotationSummary', [QuotationSummaryController::class, 'filterQuotationSummary']);
-    
+
     // Order Summary Report
     Route::post('principalWiseOrder', [OrderSummaryController::class, 'principalWiseOrder']);
     Route::post('companyWiseOrder', [OrderSummaryController::class, 'companyWiseOrder']);

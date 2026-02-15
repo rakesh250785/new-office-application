@@ -26,6 +26,7 @@ use App\Models\ReasonType;
 use App\Models\Role;
 use App\Models\Source;
 use App\Models\States;
+use App\Models\Usp;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
@@ -203,6 +204,42 @@ class DropdownController extends Controller
         }
     }
 
+    public function getUspPrincipalDD(Request $request)
+    {
+        try {
+
+            if ($request->filled('category_id')) {
+                $principal = DB::table('usps')
+                    ->join('principals', 'principals.id', '=', 'usps.principal_id')
+                    ->whereNull('usps.deleted_at')
+                    ->where('usps.category_id', $request->category_id)
+                    ->select('principals.id', 'principals.type')
+                    ->distinct()
+                    ->orderBy('principals.type')
+                    ->pluck('principals.type', 'principals.id')
+                    ->toArray();
+
+            } else {
+
+                $principal = Principal::orderBy('type')
+                    ->pluck('type', 'id')
+                    ->toArray();
+            }
+
+            return Utility::apiSuccess('DD principal', $principal, 200);
+
+        } catch (Exception $ex) {
+
+            Log::error($ex);
+
+            return Utility::apiError(
+                'Something went wrong in getPrincipalDD',
+                ['exception' => $ex->getMessage()],
+                500
+            );
+        }
+    }
+
     public function getPrincipalDD()
     {
         try {
@@ -222,6 +259,7 @@ class DropdownController extends Controller
     public function getCurrencyDD()
     {
         try {
+
             // Get currency
             $currency = Currency::pluck('name', 'id')->toArray();
 
@@ -449,7 +487,36 @@ class DropdownController extends Controller
         }
     }
 
-    public function getUpsTypeDD() {}
+    public function getUspDD(Request $request)
+    {
+        $query = Usp::query()->whereNull('deleted_at');
+
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $data = $query->distinct()->pluck('usp_type', 'id');
+
+        return Utility::apiSuccess('DD Usp Type', $data, 200);
+    }
+
+    public function getUspBrandDD(Request $request)
+    {
+        $query = Usp::whereNull('deleted_at');
+
+        // dependent filter
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $brands = $query
+            ->select('usp_brand', 'id')
+            ->distinct()
+            ->orderBy('usp_brand')
+            ->pluck('usp_brand', 'id');
+
+        return Utility::apiSuccess('Brand list fetched', $brands, 200);
+    }
 
     public function getParameterFieldDD()
     {
