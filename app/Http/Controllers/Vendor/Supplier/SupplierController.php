@@ -38,6 +38,7 @@ class SupplierController extends Controller
                 'product_list' => ['required', 'array', 'min:1'],
                 'product_list.*.id' => ['nullable', 'integer', 'exists:suppliers,id'],
                 'product_list.*.currency_id' => ['required', 'integer', 'exists:currencies,id'],
+                'product_list.*.date' => ['required', 'date'],
                 'product_list.*.source_id' => ['required', 'integer', 'exists:sources,id'],
                 'product_list.*.rate_fc' => ['required', 'numeric'],
                 'product_list.*.factor_fc' => ['required', 'numeric'],
@@ -55,7 +56,7 @@ class SupplierController extends Controller
             // Context setup
             $branchId = Auth::user()->branch_id;
             $userId = Auth::id();
-            $date = Carbon::parse($data['date'])->format('Y-m-d');
+            // $date = Carbon::parse($data['date'])->format('Y-m-d');
 
             // Track all submitted IDs
 
@@ -79,7 +80,7 @@ class SupplierController extends Controller
                         'user_id' => $userId,
                         'branch_id' => $branchId,
                         'deleted_at' => null,
-                        'date' => $date,
+                        'date' => $item['date'],
                     ]
                 );
             }
@@ -155,7 +156,7 @@ class SupplierController extends Controller
                 ->whereNull('suppliers.deleted_at');
 
             // Apply filters
-                    
+
             if ($filters['branch']) {
                 $query->whereIn('suppliers.branch_id', $filters['branch']);
             }
