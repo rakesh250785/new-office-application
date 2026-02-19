@@ -77,7 +77,7 @@ class ProductController extends Controller
                     Rule::unique('products', 'part_no')->ignore($data['product_id'] ?? null),
                 ],
                 'hsn_no' => 'required|string',
-                'principal_id' => 'required',           
+                'principal_id' => 'required',
                 'category_id' => 'required',
                 'brand_id' => 'required',
                 'price' => 'required|numeric|gt:0',
@@ -87,12 +87,12 @@ class ProductController extends Controller
                 'quantity' => 'required|numeric',
                 'description' => 'required|string',
                 'additional_description' => 'sometimes|nullable',
-                'specification' => 'sometimes|nullable',                                    
+                'specification' => 'sometimes|nullable',
                 'product_id' => 'nullable|numeric|exists:products,id',
             ];
 
             // File rule
-            $fileRules = [];                                                        
+            $fileRules = [];
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $fileRules['image'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:3072';
@@ -274,6 +274,7 @@ class ProductController extends Controller
                 'principal:id,type',
                 'category:id,name,description,parameter_field',
                 'brand:id,name',
+                'supplier',
             ])
                 ->whereNull('deleted_at')
                 ->orderByDesc('id');
@@ -324,7 +325,7 @@ class ProductController extends Controller
             }
 
             $perPage = (int) ($data['per_page'] ?? 15);
-            $products = $query->paginate($perPage);
+            $products = $query->paginate($perPage);             
 
             $allIds = $products->pluck('category.parameter_field')
                 ->filter()
