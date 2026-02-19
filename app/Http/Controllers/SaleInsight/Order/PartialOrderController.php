@@ -429,20 +429,20 @@ class PartialOrderController extends Controller
                 ->whereNull('deleted_at')
                 ->when(
                     ! empty($data['branch_list']),
-                    fn ($q) => $q->whereIn('branch_id', $data['branch_list'])
+                    fn ($q) => $q->where('branch_id', $data['branch_list'])
                 )
                 ->when(
                     ! empty($data['owner_list']),
-                    fn ($q) => $q->whereIn('owner_id', $data['owner_list'])
+                    fn ($q) => $q->where('owner_id', $data['owner_list'])
                 )
                 ->when(
                     ! empty($data['currency_list']),
-                    fn ($q) => $q->whereIn('currency_id', $data['currency_list'])
+                    fn ($q) => $q->where('currency_id', $data['currency_list'])
                 )
                 ->when(
                     ! empty($data['principal_list']),
                     fn ($q) => $q->whereHas('orderDetails', function ($d) use ($data) {
-                        $d->whereIn('principal_id', (array) $data['principal_list']);
+                        $d->where('principal_id', (array) $data['principal_list']);
                     })
                 )
                 ->when(! empty($data['start_date']) && ! empty($data['end_date']), function ($q) use ($data) {

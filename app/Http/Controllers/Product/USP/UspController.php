@@ -148,22 +148,22 @@ class UspController extends Controller
 
             // Category filter
             if (! empty($data['category_list'])) {
-                $query->whereIn('category_id', (array) $data['category_list']);
+                $query->where('category_id', (array) $data['category_list']);
             }
 
             // Usp Filter
             if (! empty($data['usp_list'])) {
-                $query->whereIn('id', (array) $data['usp_list']);
+                $query->where('id', (array) $data['usp_list']);
             }
 
             // Branch filter
             if (! empty($data['brand_list'])) {
-                $query->whereIn('id', (array) $data['brand_list']);
+                $query->where('id', (array) $data['brand_list']);
             }
 
             // Principal filter
             if (! empty($data['principal_list'])) {
-                $query->whereIn('principal_id', (array) $data['principal_list']);
+                $query->where('principal_id', (array) $data['principal_list']);
             }
 
             // Date filter

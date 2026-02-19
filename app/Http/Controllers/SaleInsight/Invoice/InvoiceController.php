@@ -122,40 +122,39 @@ class InvoiceController extends Controller
                     'file' => $filename,
                     'url' => $fileUrl,
                 ]);
-            }   
+            }
 
             $authUser = Auth::user();
-
 
             // Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
 
-                // ->when(Auth::user()?->role?->name == 'branches', function ($query) use ($authUser) {
-                //     $query->where('branch_id', $authUser->branch_id)
-                //         ->where('user_id', $authUser->id);
-                // });
+            // ->when(Auth::user()?->role?->name == 'branches', function ($query) use ($authUser) {
+            //     $query->where('branch_id', $authUser->branch_id)
+            //         ->where('user_id', $authUser->id);
+            // });
             // Apply filters (arrays are expected from frontend; cast to array to be safe)
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+                $query->where('branch_id', (array) $data['branch_list']);
             }
 
             if (! empty($data['owner_list'])) {
                 $query->whereHas('customerDetails.owner', function ($q) use ($data) {
-                    $q->whereIn('id', (array) $data['owner_list']);
+                    $q->where('id', (array) $data['owner_list']);
                 });
             }
 
             if (! empty($data['currency_list'])) {
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
-                    $q->whereIn('currency_id', (array) $data['currency_list']);
+                    $q->where('currency_id', (array) $data['currency_list']);
                 });
             }
 
             if (! empty($data['principal_list'])) {
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
-                    $q->whereIn('principal_id', (array) $data['principal_list']);
+                    $q->where('principal_id', (array) $data['principal_list']);
                 });
             }
 
@@ -195,8 +194,8 @@ class InvoiceController extends Controller
                         'download_url' => url("/orderinvoicedocs/{$doc}"),
                     ])->values();
 
-                return $invoice;
-            });
+                return $invoice;        
+            });     
 
             // Return response
             return Utility::apiSuccess('list_invoices', $invoiceData, 200);
@@ -225,7 +224,7 @@ class InvoiceController extends Controller
             }
 
             // Get invoice
-            $invoiceRec = Invoice::where('id', $data['id'])->first();           
+            $invoiceRec = Invoice::where('id', $data['id'])->first();
 
             // Return if fail
             if (! $invoiceRec) {

@@ -2,73 +2,72 @@
 
 namespace App\Http\Controllers\Vendor\Courier;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
-use Illuminate\Http\Request;
-use App\Helpers\Utility;
-use App\Models\Courier;
 use App\Exports\CourierExport;
+use App\Helpers\Utility;
+use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Courier;
+use Auth;
 use Carbon\Carbon;
 use Exception;
-use Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class CourierController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
+
     public function addUpdateCourier(Request $request)
     {
         try {
 
-            # Get specific fields
+            // Get specific fields
             $data = $request->only(['courier_name', 'branch_name', 'branch_id', 'update_status', 'courier_id']);
 
-            # Get branch id
+            // Get branch id
             $branchId = Auth::user()['branch_id'] ?? $data['branch_id'] ?? null;
 
-            # Validate fields
+            // Validate fields
             $validator = Validator::make($data, [
                 'courier_name' => [
                     'required',
                     'string',
                     'max:255',
                     Rule::unique('couriers', 'name')
-                        ->where(fn($query) => $query->where('branch_id', $branchId ?? null))
+                        ->where(fn ($query) => $query->where('branch_id', $branchId ?? null))
                         ->ignore($data['courier_id'] ?? null),
                 ],
                 'branch_id' => 'nullable|integer|exists:branches,id',
                 'courier_id' => 'nullable|integer|exists:couriers,id',
-                'update_status' => 'nullable|sometimes|boolean'
+                'update_status' => 'nullable|sometimes|boolean',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Get branch name
+            // Get branch name
             $branch = Branch::find($branchId);
             $branchCode = $branch['code'] ?? null;
 
-            # Return if branch not found
-            if (!$branchCode) {
+            // Return if branch not found
+            if (! $branchCode) {
                 return Utility::apiSuccess('Branch not found', [], 221);
             }
 
-            # Prepare input
+            // Prepare input
             $addUpdate = [
                 'name' => $data['courier_name'],
                 'branch_id' => $branchId,
             ];
 
-            # Decide condition
+            // Decide condition
             $where = [];
 
-            if (!empty($data['update_status']) && !empty($data['courier_id'])) {
+            if (! empty($data['update_status']) && ! empty($data['courier_id'])) {
                 $where = ['id' => $data['courier_id']];
                 $message = 'updated successfully!';
             } else {
@@ -76,18 +75,19 @@ class CourierController extends Controller
                 $message = 'created successfully!';
             }
 
-            # Execute updateOrCreate
+            // Execute updateOrCreate
             $status = Courier::updateOrCreate($where, $addUpdate);
 
-            # Return error if failed
-            if (!$status) {
+            // Return error if failed
+            if (! $status) {
                 return Utility::apiError('Fail to create courier', [], 221);
             }
 
-            # Return success
+            // Return success
             return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
-            Log::error('Courier creation error: ' . $ex->getMessage());
+            Log::error('Courier creation error: '.$ex->getMessage());
+
             return Utility::apiError('Something went wrong.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -95,7 +95,7 @@ class CourierController extends Controller
     public function getCourier(Request $request)
     {
         try {
-            # Request specific fields
+            // Request specific fields
             $data = $request->only([
                 'page',
                 'per_page',
@@ -104,96 +104,98 @@ class CourierController extends Controller
                 'start_date',
                 'end_date',
                 'download',
-                'branch_list'
+                'branch_list',
             ]);
 
-            # Download
-            if (!empty($data['download'])) {
+            // Download
+            if (! empty($data['download'])) {
                 $columns = [
                     'name' => 'Name',
                     'created_at' => 'Date',
                 ];
-                $filename = 'courier_' . now()->format('Ymd_His') . '.xlsx';
+                $filename = 'courier_'.now()->format('Ymd_His').'.xlsx';
                 (new CourierExport($data, $columns))->queue("exports/{$filename}", 'public');
 
                 $fileUrl = url("storage/exports/{$filename}");
+
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [
                     'file' => $filename,
                     'url' => $fileUrl,
                 ]);
             }
 
-            # Validation rule
+            // Validation rule
             $validator = Validator::make($data, [
                 'branch_id' => 'nullable|integer|exists:branches,id',
                 'page' => 'nullable|integer|min:1',
                 'per_page' => 'nullable|integer|min:1|max:100',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
-            # Filter query
+            // Filter query
             $query = Courier::with('branch')->whereNull('deleted_at');
 
-            if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+            if (! empty($data['branch_list'])) {
+                $query->where('branch_id', $data['branch_list']);
             }
 
-            if (!empty($data['courier_name'])) {
-                $query->where('name', 'like', '%' . $data['courier_name'] . '%');
+            if (! empty($data['courier_name'])) {
+                $query->where('name', 'like', '%'.$data['courier_name'].'%');
             }
 
-            if (!empty($data['start_date']) && !empty($data['end_date'])) {
+            if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
-                    Carbon::parse($data['end_date'])->endOfDay()
+                    Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
             }
 
-            # Paginated records
+            // Paginated records
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $courierData = $query->orderBy('id', 'desc')->paginate($perPage);
 
-            # Return resonse
+            // Return resonse
             return Utility::apiSuccess('Courier data fetched', $courierData);
         } catch (Exception $ex) {
-            Log::error('Courier fetch error: ' . $ex->getMessage());
+            Log::error('Courier fetch error: '.$ex->getMessage());
+
             return Utility::apiError('Failed to fetch couriers.', [
-                'exception' => $ex->getMessage()
+                'exception' => $ex->getMessage(),
             ], 500);
         }
     }
 
-
     public function deleteCourier(Request $request)
     {
         try {
-            # Get requested fields
+            // Get requested fields
             $data = $request->only(['id']);
 
-            # Validate fields
+            // Validate fields
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:couriers,id',
             ]);
 
-            # Return validation error
+            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            # Delete courier
+            // Delete courier
             $records = Courier::where('id', $data['id'])->delete();
-            if (!$records) {
+            if (! $records) {
                 return Utility::apiError('Fail to delete Courier !', [], 221);
             }
 
-            # Return response
+            // Return response
             return Utility::apiSuccess('deleted successfully!', [], 200);
         } catch (Exception $ex) {
-            Log::debug('Courier delete error: ' . $ex->getMessage());
+            Log::debug('Courier delete error: '.$ex->getMessage());
+
             return Utility::apiError('Something went wrong while deleting courier.', ['exception' => $ex->getMessage()], 500);
         }
     }

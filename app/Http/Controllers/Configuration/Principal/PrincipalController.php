@@ -128,7 +128,7 @@ class PrincipalController extends Controller
 
             // Branch filter
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Date filter
@@ -168,7 +168,7 @@ class PrincipalController extends Controller
                     'exists:principals,id',
                     function ($attribute, $value, $fail) {
                         $exists = Product::where('principal_id', $value)->exists();
-            
+
                         if ($exists) {
                             $fail('This principal is already assigned to a product.');
                         }

@@ -565,28 +565,28 @@ class FullOrderController extends Controller
                     'ownerDetails:id,name',
                     'pendingQuotationDetails:order_id,unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
                 ])
-                ->whereNull('deleted_at');  
+                ->whereNull('deleted_at');
 
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+                $query->where('branch_id', (array) $data['branch_list']);
             }
 
             if (! empty($data['owner_list'])) {
-                $query->whereIn('owner_id', (array) $data['owner_list']);
+                $query->where('owner_id', (array) $data['owner_list']);
             }
 
             if (! empty($data['currency_list'])) {
-                $query->whereIn('currency_id', (array) $data['currency_list']);
+                $query->where('currency_id', (array) $data['currency_list']);
             }
 
             if (! empty($data['status_list'])) {
                 // filter on is_order_pending (kept consistent with getQuotation)
-                $query->whereIn('is_order_closed', (array) $data['status_list']);
+                $query->where('is_order_closed', (array) $data['status_list']);
             }
 
             if (! empty($data['principal_list'])) {
                 $query->whereHas('orderDetails', function ($d) use ($data) {
-                    $d->whereIn('principal_id', (array) $data['principal_list']);
+                    $d->where('principal_id', (array) $data['principal_list']);
                 });
             }
 

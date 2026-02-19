@@ -125,7 +125,7 @@ class RolePermissionController extends Controller
 
             // Filter by branch_id
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Get records

@@ -144,7 +144,7 @@ class CategoryController extends Controller
 
             // Branch filter
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Date range filter

@@ -150,7 +150,7 @@ class SupplierController extends Controller
                     'product:id,part_no,description',
                     'principal:id,type',
                     'source:id,name',
-                    'currency:id,name',
+                    'currency:id,name', 
                     'branch:id,name',
                 ])
                 ->whereNull('suppliers.deleted_at');
@@ -158,19 +158,19 @@ class SupplierController extends Controller
             // Apply filters
 
             if ($filters['branch']) {
-                $query->whereIn('suppliers.branch_id', $filters['branch']);
+                $query->where('suppliers.branch_id', $filters['branch']);
             }
             if ($filters['principal']) {
-                $query->whereIn('suppliers.principal_id', $filters['principal']);
+                $query->where('suppliers.principal_id', $filters['principal']);
             }
             if ($filters['product']) {
-                $query->whereIn('suppliers.product_id', $filters['product']);
+                $query->where('suppliers.product_id', $filters['product']);
             }
             if ($filters['source']) {
-                $query->whereIn('suppliers.source_id', $filters['source']);
+                $query->where('suppliers.source_id', $filters['source']);
             }
             if ($filters['currency']) {
-                $query->whereIn('suppliers.currency_id', $filters['currency']);
+                $query->where('suppliers.currency_id', $filters['currency']);
             }
             if (! empty($filters['start_date']) && ! empty($filters['end_date'])) {
                 $query->whereBetween('suppliers.date', [$filters['start_date'], $filters['end_date']]);
