@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\ImportJob;
 use App\Models\Parameter;
 use App\Models\Product;
+use App\Models\Supplier;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -325,7 +326,7 @@ class ProductController extends Controller
             }
 
             $perPage = (int) ($data['per_page'] ?? 15);
-            $products = $query->paginate($perPage);             
+            $products = $query->paginate($perPage);
 
             $allIds = $products->pluck('category.parameter_field')
                 ->filter()
@@ -380,6 +381,12 @@ class ProductController extends Controller
                 return Utility::apiError('Validation failed', $validator->errors(), 422);
             }
 
+            $linkProduct = Supplier::where('product_id', $data['id'])->first();
+
+            if ($linkProduct) {
+                return Utility::apiError('Can not delete !', [], 221);
+
+            }
             // Delete product
             $deleted = Product::where('id', $data['id'])->update(['deleted_at' => Carbon::now()]);
 
