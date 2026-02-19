@@ -33,7 +33,7 @@ class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadin
             ->whereNull('deleted_at')
 
             ->when(! empty($this->filters['branch_list']), function ($q) {
-                $q->whereIn('branch_id', (array) $this->filters['branch_list']);
+                $q->where('branch_id', (array) $this->filters['branch_list']);
             })
 
             ->when(! empty($this->filters['search']), function ($q) {

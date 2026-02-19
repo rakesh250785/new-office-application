@@ -145,7 +145,7 @@ class ParameterController extends Controller
 
             // Filter by branches
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Filter by date range

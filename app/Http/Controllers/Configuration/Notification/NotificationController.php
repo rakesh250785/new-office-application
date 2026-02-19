@@ -133,7 +133,7 @@ class NotificationController extends Controller
 
             // Branch filter
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Date filter

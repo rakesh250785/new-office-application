@@ -45,27 +45,27 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
         /* ---------------- FILTERS ---------------- */
 
         if (! empty($this->filters['branch_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->whereIn('branch_id', (array) $this->filters['branch_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('branch_id',  $this->filters['branch_list'])
             );
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->whereIn('owner_id', (array) $this->filters['owner_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('owner_id',  $this->filters['owner_list'])
             );
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->whereIn('currency_id', (array) $this->filters['currency_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('currency_id',  $this->filters['currency_list'])
             );
         }
 
         if (! empty($this->filters['status_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->whereIn('is_order_pending', (array) $this->filters['status_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('is_order_pending',  $this->filters['status_list'])
             );
         }
 
         if (! empty($this->filters['principal_list'])) {
-            $q->whereIn('principal_id', (array) $this->filters['principal_list']);
+            $q->where('principal_id',  $this->filters['principal_list']);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

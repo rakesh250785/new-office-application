@@ -27,7 +27,7 @@ class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkRe
     {
         $query = Courier::query()->whereNull('deleted_at');
         if (!empty($this->filters['branch_list'])) {
-            $query->whereIn('branch_id', $this->filters['branch_list']);
+            $query->where('branch_id', $this->filters['branch_list']);
         }
 
         if (!empty($this->filters['courier_name'])) {

@@ -13,7 +13,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class ProductExport implements FromCollection, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -27,9 +27,9 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
     protected string $modelClass;
 
     /**
-     * @param array $filters  Expect keys: search,start_date,end_date,principal_list,brand_list,category_list,branch_list
-     * @param array $columns  ['part_no'=>'Part No.', 'category.name'=>'Category', ...]
-     * @param string $modelClass Usually \App\Models\Product::class
+     * @param  array  $filters  Expect keys: search,start_date,end_date,principal_list,brand_list,category_list,branch_list
+     * @param  array  $columns  ['part_no'=>'Part No.', 'category.name'=>'Category', ...]
+     * @param  string  $modelClass  Usually \App\Models\Product::class
      */
     public function __construct(array $filters, array $columns, string $modelClass)
     {
@@ -54,7 +54,7 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
             ->whereNull('deleted_at');
 
         // Search (mirrors controller)
-        if (!empty($this->filters['search'])) {
+        if (! empty($this->filters['search'])) {
             $s = $this->filters['search'];
             $query->where(function ($q) use ($s) {
                 $q->where('part_no', 'like', "%{$s}%")
@@ -70,27 +70,27 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
                     ->orWhere('quantity', 'like', "%{$s}%")
                     ->orWhere('price_updated_at', 'like', "%{$s}%")
                     ->orWhere('quantity_updated_at', 'like', "%{$s}%")
-                    ->orWhereHas('principal', fn($b) => $b->where('type', 'like', "%{$s}%"))
-                    ->orWhereHas('category', fn($b) => $b->where('name', 'like', "%{$s}%"))
-                    ->orWhereHas('brand', fn($b) => $b->where('name', 'like', "%{$s}%"))
-                    ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%{$s}%"));
+                    ->orWhereHas('principal', fn ($b) => $b->where('type', 'like', "%{$s}%"))
+                    ->orWhereHas('category', fn ($b) => $b->where('name', 'like', "%{$s}%"))
+                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', "%{$s}%"))
+                    ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%{$s}%"));
             });
         }
 
-        if (!empty($this->filters['principal_list'])) {
-            $query->whereIn('principal_id', (array) $this->filters['principal_list']);
+        if (! empty($this->filters['principal_list'])) {
+            $query->where('principal_id', $this->filters['principal_list']);
         }
-        if (!empty($this->filters['category_list'])) {
-            $query->whereIn('category_id', (array) $this->filters['category_list']);
+        if (! empty($this->filters['category_list'])) {
+            $query->where('category_id', $this->filters['category_list']);
         }
-        if (!empty($this->filters['brand_list'])) {
-            $query->whereIn('brand_id', (array) $this->filters['brand_list']);
+        if (! empty($this->filters['brand_list'])) {
+            $query->where('brand_id', $this->filters['brand_list']);
         }
-        if (!empty($this->filters['branch_list'])) {
-            $query->whereIn('branch_id', (array) $this->filters['branch_list']);
+        if (! empty($this->filters['branch_list'])) {
+            $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('created_at', [
                 Carbon::parse($this->filters['start_date'])->startOfDay(),
                 Carbon::parse($this->filters['end_date'])->endOfDay(),
@@ -129,6 +129,7 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
 
             $vals[] = $val;
         }
+
         return $vals;
     }
 
@@ -169,13 +170,15 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
     protected function looksLikeDateKey(string $key): bool
     {
         $k = Str::lower($key);
+
         return Str::endsWith($k, ['_at', 'date']) || in_array($k, ['created_at', 'updated_at'], true);
     }
 
     protected function formatDate($value): ?string
     {
-        if (empty($value))
+        if (empty($value)) {
             return null;
+        }
         try {
             if ($value instanceof Carbon) {
                 $dt = $value;
@@ -184,6 +187,7 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
             } else {
                 $dt = Carbon::parse((string) $value);
             }
+
             return $dt->format('d-m-Y H:i');
         } catch (\Throwable $e) {
             return is_scalar($value) ? (string) $value : null;
@@ -193,6 +197,7 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
     protected function looksLikeHtmlyKey(string $key): bool
     {
         $k = Str::lower($key);
+
         return in_array($k, ['description', 'additional_description', 'specification'], true);
     }
 
@@ -200,6 +205,7 @@ class ProductExport implements FromCollection, WithMapping, WithHeadings, WithCh
     {
         $text = strip_tags($text);
         $text = preg_replace('/\s+/u', ' ', $text ?? '') ?? '';
+
         return trim($text);
     }
 }

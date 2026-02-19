@@ -304,16 +304,16 @@ class ProductController extends Controller
 
             // Apply individual filters
             if (! empty($data['principal_list'])) {
-                $query->whereIn('principal_id', $data['principal_list']);
+                $query->where('principal_id', $data['principal_list']);
             }
             if (! empty($data['category_list'])) {
-                $query->whereIn('category_id', $data['category_list']);
+                $query->where('category_id', $data['category_list']);
             }
             if (! empty($data['brand_list'])) {
-                $query->whereIn('brand_id', $data['brand_list']);
+                $query->where('brand_id', $data['brand_list']);
             }
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Date filter

@@ -55,23 +55,23 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
             ]);
 
         if (! empty($this->filters['branch_list'])) {
-            $q->whereIn('branch_id', (array) $this->filters['branch_list']);
+            $q->where('branch_id', $this->filters['branch_list']);
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->whereIn('owner_id', (array) $this->filters['owner_list']);
+            $q->where('owner_id', $this->filters['owner_list']);
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->whereIn('currency_id', (array) $this->filters['currency_list']);
+            $q->where('currency_id', $this->filters['currency_list']);
         }
 
         if (! empty($this->filters['status_list'])) {
-            $q->whereIn('is_order_closed', (array) $this->filters['status_list']);
+            $q->where('is_order_closed', $this->filters['status_list']);
         }
 
         if (! empty($this->filters['principal_list'])) {
-            $q->whereHas('orderDetails', fn ($d) => $d->whereIn('principal_id', (array) $this->filters['principal_list']));
+            $q->whereHas('orderDetails', fn ($d) => $d->where('principal_id', $this->filters['principal_list']));
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

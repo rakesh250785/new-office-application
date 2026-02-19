@@ -49,19 +49,19 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
             ]);
 
         if (! empty($this->filters['branch_list'])) {
-            $q->whereIn('branch_id', (array) $this->filters['branch_list']);
+            $q->where('branch_id', $this->filters['branch_list']);
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->whereHas('customerDetails.owner', fn ($qq) => $qq->whereIn('id', (array) $this->filters['owner_list']));
+            $q->whereHas('customerDetails.owner', fn ($qq) => $qq->where('id', $this->filters['owner_list']));
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->whereHas('partialOrder.orderDetails', fn ($qq) => $qq->whereIn('currency_id', (array) $this->filters['currency_list']));
+            $q->whereHas('partialOrder.orderDetails', fn ($qq) => $qq->where('currency_id', $this->filters['currency_list']));
         }
 
         if (! empty($this->filters['principal_list'])) {
-            $q->whereHas('partialOrder.orderDetails', fn ($qq) => $qq->whereIn('principal_id', (array) $this->filters['principal_list']));
+            $q->whereHas('partialOrder.orderDetails', fn ($qq) => $qq->where('principal_id', $this->filters['principal_list']));
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

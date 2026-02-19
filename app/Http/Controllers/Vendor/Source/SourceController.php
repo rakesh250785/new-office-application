@@ -113,7 +113,7 @@ class SourceController extends Controller
             }
 
             if (!empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             if (!empty($data['start_date']) && !empty($data['end_date'])) {

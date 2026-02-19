@@ -200,12 +200,12 @@ class CustomerController extends Controller
 
             // Apply branch filter
             if (! empty($data['branch_list'])) {
-                $query->whereIn('branch_id', (array) $data['branch_list']);
+                $query->where('branch_id', $data['branch_list']);
             }
 
             // Apply owner filter
             if (! empty($data['owner_list'])) {
-                $query->whereIn('owner_id', (array) $data['owner_list']);
+                $query->where('owner_id', $data['owner_list']);
             }
 
             // Search across fields & relations

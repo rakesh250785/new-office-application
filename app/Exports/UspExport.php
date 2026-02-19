@@ -49,17 +49,17 @@ class UspExport implements FromCollection, WithMapping, WithHeadings, WithChunkR
 
         # Branch filter
         if (!empty($this->filters['branch_list'])) {
-            $query->whereIn('branch_id', (array) $this->filters['branch_list']);
+            $query->where('branch_id', $this->filters['branch_list']);
         }
 
         # Principal filter
         if (!empty($this->filters['principal_list'])) {
-            $query->whereIn('principal_id', (array) $this->filters['principal_list']);
+            $query->where('principal_id', $this->filters['principal_list']);
         }
 
         # Category filter
         if (!empty($this->filters['category_list'])) {
-            $query->whereIn('category_id', (array) $this->filters['category_list']);
+            $query->where('category_id', $this->filters['category_list']);
         }
 
         # Date range filter

@@ -40,22 +40,22 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
             ->whereNull('suppliers.deleted_at');
         // Apply same filters as controller
         if (! empty($this->filters['owner'])) {
-            $query->whereIn('suppliers.user_id', $this->filters['owner']);
+            $query->where('suppliers.user_id', $this->filters['owner']);
         }
         if (! empty($this->filters['branch'])) {
-            $query->whereIn('suppliers.branch_id', $this->filters['branch']);
+            $query->where('suppliers.branch_id', $this->filters['branch']);
         }
         if (! empty($this->filters['principal'])) {
-            $query->whereIn('suppliers.principal_id', $this->filters['principal']);
+            $query->where('suppliers.principal_id', $this->filters['principal']);
         }
         if (! empty($this->filters['product'])) {
-            $query->whereIn('suppliers.product_id', $this->filters['product']);
+            $query->where('suppliers.product_id', $this->filters['product']);
         }
         if (! empty($this->filters['source'])) {
-            $query->whereIn('suppliers.source_id', $this->filters['source']);
+            $query->where('suppliers.source_id', $this->filters['source']);
         }
         if (! empty($this->filters['currency'])) {
-            $query->whereIn('suppliers.currency_id', $this->filters['currency']);
+            $query->where('suppliers.currency_id', $this->filters['currency']);
         }
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('suppliers.date', [$this->filters['start_date'], $this->filters['end_date']]);

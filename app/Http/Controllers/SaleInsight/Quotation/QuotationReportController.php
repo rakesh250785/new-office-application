@@ -80,11 +80,11 @@ class QuotationReportController extends Controller
                     'pendingQuotationDetails:unique_quotation_no,quotation_id,reason,status_code,follow_up_date,total_amount,reason_status_id,last_updated_at',
                 ])
                 ->whereNull('deleted_at')
-                ->when(!empty($data['branch_list']), fn($q) => $q->whereIn('branch_id', (array) $data['branch_list']))
-                ->when(!empty($data['owner_list']), fn($q) => $q->whereIn('owner_id', (array) $data['owner_list']))
-                ->when(!empty($data['currency_list']), fn($q) => $q->whereIn('currency_id', (array) $data['currency_list']))
-                ->when(!empty($data['status_list']), fn($q) => $q->whereIn('is_order_pending', (array) $data['status_list']))
-                ->when(!empty($data['principal_list']), fn($q) => $q->whereHas('quotationDetails', fn($d) => $d->whereIn('principal_id', (array) $data['principal_list'])))
+                ->when(!empty($data['branch_list']), fn($q) => $q->where('branch_id', $data['branch_list']))
+                ->when(!empty($data['owner_list']), fn($q) => $q->where('owner_id', $data['owner_list']))
+                ->when(!empty($data['currency_list']), fn($q) => $q->where('currency_id', $data['currency_list']))
+                ->when(!empty($data['status_list']), fn($q) => $q->where('is_order_pending', $data['status_list']))
+                ->when(!empty($data['principal_list']), fn($q) => $q->whereHas('quotationDetails', fn($d) => $d->where('principal_id', $data['principal_list'])))
                 ->when(!empty($data['start_date']) && !empty($data['end_date']), function ($q) use ($data) {
                     $q->whereBetween('created_at', [
                         Carbon::parse($data['start_date'])->startOfDay(),

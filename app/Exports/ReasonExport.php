@@ -41,7 +41,7 @@ class ReasonExport implements FromCollection, WithMapping, WithHeadings, WithChu
         }
 
         if (!empty($this->filters['branch_list'])) {
-            $query->whereIn('branch_id', (array) $this->filters['branch_list']);
+            $query->where('branch_id', $this->filters['branch_list']);
         }
 
         if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {

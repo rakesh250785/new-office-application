@@ -62,20 +62,20 @@ class OrderReportController extends Controller
 
             # Apply filters (arrays are expected from frontend; cast to array to be safe)
             if (!empty($params['branch_list'])) {
-                $query->whereIn('branch_id', (array) $params['branch_list']);
+                $query->where('branch_id',  $params['branch_list']);
             }
 
             if (!empty($params['owner_list'])) {
-                $query->whereIn('owner_id', (array) $params['owner_list']);
+                $query->where('owner_id', $params['owner_list']);
             }
 
             if (!empty($params['currency_list'])) {
-                $query->whereIn('currency_id', (array) $params['currency_list']);
+                $query->where('currency_id', $params['currency_list']);
             }
 
             if (!empty($params['principal_list'])) {
                 $query->whereHas('details', function ($q) use ($params) {
-                    $q->whereIn('principal_id', (array) $params['principal_list']);
+                    $q->where('principal_id', $params['principal_list']);
                 });
             }
 

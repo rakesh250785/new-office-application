@@ -47,7 +47,7 @@ class NotificationExport implements FromCollection, WithMapping, WithHeadings, W
 
         // Branch filter
         if (!empty($this->filters['branch_list'])) {
-            $query->whereIn('branch_id', (array) $this->filters['branch_list']);
+            $query->where('branch_id', $this->filters['branch_list']);
         }
 
         //  Date range filter
