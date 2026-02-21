@@ -95,6 +95,7 @@ Route::prefix('admin')->middleware(['single.session'])->group(function () {
     Route::post('/getRoleDD', [DropdownController::class, 'getRoleDD']);
     Route::post('/getOrderStatusDD', [DropdownController::class, 'getOrderStatusDD']);
     Route::post('/getQuotationFormatDD', [DropdownController::class, 'getQuotationFormatDD']);
+    Route::post('/getCategoryParameterDD', [DropdownController::class, 'getCategoryParameterDD']);
 
     // Quotation format
     Route::post('/addUpdateQuotationFormat', [QuotationFormatController::class, 'addUpdateQuotationFormat']);

@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Log;
 use Maatwebsite\Excel\Facades\Excel;
+use Schema;
 
 class ProductController extends Controller
 {
@@ -237,7 +238,7 @@ class ProductController extends Controller
     {
         try {
             // Request specific fields
-            $data = $request->only(['search', 'download', 'per_page', 'start_date', 'end_date', 'principal_list', 'brand_list', 'category_list', 'branch_list']);
+            $data = $request->only(['search', 'download', 'column', 'per_page', 'start_date', 'end_date', 'principal_list', 'brand_list', 'category_list', 'branch_list']);
 
             if (! empty($data['download'])) {
                 $columns = [
@@ -279,6 +280,25 @@ class ProductController extends Controller
             ])
                 ->whereNull('deleted_at')
                 ->orderByDesc('id');
+
+            /* ---------------- Dynamic Column Filters ---------------- */
+
+            $columnFilters = $request->input('column', []);
+
+            if (! empty($columnFilters) && is_array($columnFilters)) {
+
+                foreach ($columnFilters as $column => $value) {
+
+                    // skip empty values
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+
+                    if (Schema::hasColumn('products', $column)) {
+                        $query->where($column, $value);
+                    }
+                }
+            }
 
             // Apply search filter across multiple fields
             if (! empty($data['search'])) {

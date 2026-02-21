@@ -32,6 +32,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Log;
+use Schema;
 
 class DropdownController extends Controller
 {
@@ -240,19 +241,46 @@ class DropdownController extends Controller
         }
     }
 
-    public function getPrincipalDD()
+    public function getPrincipalDD(Request $request)
     {
         try {
-            // Get principal
+
+            $filter = $request->only(['category_id', 'brand_id']);
+
+            // Default dropdown
             $principal = Principal::pluck('type', 'id')->toArray();
 
-            // Return response
-            return Utility::apiSuccess('DD principal', $principal, 200);
+            // Apply filters if any exist
+            if (! empty($filter['category_id']) || ! empty($filter['brand_id'])) {
 
-        } catch (Exception $ex) {
+                $query = Product::query()->with('principal:id,type');
+
+                if (! empty($filter['category_id'])) {
+                    $query->where('category_id', $filter['category_id']);
+                }
+
+                if (! empty($filter['brand_id'])) {
+                    $query->where('brand_id', $filter['brand_id']);
+                }
+
+                $principal = $query->get()
+                    ->pluck('principal.type', 'principal.id')
+                    ->filter()
+                    ->unique()
+                    ->toArray();
+            }
+
+            return Utility::apiSuccess('DD Principal', $principal, 200);
+
+        } catch (\Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Something went wrong in getPrincipalDD', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError(
+                'Something went wrong in getPrincipalDD',
+                ['exception' => $ex->getMessage()],
+                500
+            );
         }
     }
 
@@ -269,7 +297,7 @@ class DropdownController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
 
-            return Utility::apiError('Something went wrong in getPrincipalDD', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Something went wrong in getCurrencyDD', ['exception' => $ex->getMessage()], 500);
         }
     }
 
@@ -428,41 +456,153 @@ class DropdownController extends Controller
         } catch (Exception $ex) {
             Log::error($ex);
 
-            return Utility::apiError('Something went wrong in getPaymentAdvanceDD', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError('Something went wrong in           getPaymentAdvanceDD', ['exception' => $ex->getMessage()], 500);
         }
     }
 
     public function getReasonDD() {}
 
-    public function getBrandDD()
+    public function getBrandDD(Request $request)
     {
         try {
-            // Get type
+
+            $filter = $request->only(['category_id', 'principal_id']);
+
+            // Default dropdown
             $brand = Brand::pluck('name', 'id')->toArray();
 
-            // Return response
+            // Apply dynamic filters
+            if (! empty($filter['category_id']) || ! empty($filter['principal_id'])) {
+
+                $query = Product::query()->with('brand:id,name');
+
+                if (! empty($filter['category_id'])) {
+                    $query->where('category_id', $filter['category_id']);
+                }
+
+                if (! empty($filter['principal_id'])) {
+                    $query->where('principal_id', $filter['principal_id']);
+                }
+
+                $brand = $query->get()
+                    ->pluck('brand.name', 'brand.id')
+                    ->filter()
+                    ->unique()
+                    ->toArray();
+            }
+
             return Utility::apiSuccess('DD brand', $brand, 200);
 
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Something went wrong in getBrandDD', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError(
+                'Something went wrong in getBrandDD',
+                ['exception' => $ex->getMessage()],
+                500
+            );
         }
     }
 
-    public function getCategoryDD()
+    public function getCategoryDD(Request $request)
     {
         try {
-            // Get type
+
+            $filter = $request->only(['category_id', 'brand_id', 'principal_id']);
+
+            // Default dropdown
             $category = Category::pluck('name', 'id')->toArray();
 
-            // Return response
-            return Utility::apiSuccess('DD brand', $category, 200);
+            // Apply dynamic filters
+            if (! empty($filter['brand_id']) || ! empty($filter['principal_id'])) {
+
+                $query = Product::query()->with('category:id,name');
+
+                if (! empty($filter['brand_id'])) {
+                    $query->where('brand_id', $filter['brand_id']);
+                }
+
+                if (! empty($filter['principal_id'])) {
+                    $query->where('principal_id', $filter['principal_id']);
+                }
+
+                $category = $query->get()
+                    ->pluck('category.name', 'category.id')
+                    ->filter()
+                    ->unique()
+                    ->toArray();
+            }
+
+            return Utility::apiSuccess('DD category', $category, 200);
 
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Something went wrong in getCategoryDD', ['exception' => $ex->getMessage()], 500);
+            return Utility::apiError(
+                'Something went wrong in getCategoryDD',
+                ['exception' => $ex->getMessage()],
+                500
+            );
+        }
+    }
+
+    public function getCategoryParameterDD(Request $request)
+    {
+        try {
+
+            $filter = $request->only(['category_id']);
+            $type = []      ;
+
+            if (empty($filter['category_id'])) {
+                return Utility::apiSuccess('DD Usp Type', $type, 200);
+            }
+
+            $category = Category::find($filter['category_id']);
+
+            if ($category && ! empty($category->parameter_field)) {
+
+                // parameter_field = "1,2,3"
+                $paramIds = array_filter(
+                    array_map('intval', explode(',', $category->parameter_field))
+                );
+                // Get parameter names mapped with id
+                $parameters = Parameter::whereIn('id', $paramIds)
+                    ->pluck('column_name', 'id')
+                    ->toArray();
+                // Collect values dynamically from product table
+                foreach ($parameters as $paramId => $columnName) {
+
+                    if (! Schema::hasColumn('products', $columnName)) {
+                        continue;
+                    }
+
+                    $values = Product::where('category_id', $filter['category_id'])
+                        ->whereNotNull($columnName)
+                        ->distinct()
+                        ->pluck($columnName)
+                        ->filter()
+                        ->values()
+                        ->toArray();
+
+                    if (! empty($values)) {
+                        $type[$columnName] = $values;
+                    }
+                }
+            }
+
+            return Utility::apiSuccess('DD Usp Type', $type, 200);
+
+        } catch (Exception $ex) {
+
+            Log::error($ex);
+
+            return Utility::apiError(
+                'Something went wrong in getCategoryParameterDD',
+                ['exception' => $ex->getMessage()],
+                500
+            );
         }
     }
 
