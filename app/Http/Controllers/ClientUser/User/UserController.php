@@ -43,7 +43,7 @@ class UserController extends Controller
 
             // Define rule
             $rules = [
-                'team_type' => 'required|string|max:255',
+                'team_type' => 'nullable|string|max:255',
                 'name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'user_name' => [

@@ -336,8 +336,9 @@ class DropdownController extends Controller
                     'pin_code',
                     'mobile_no',
                     'landline_no',
-                    'country_id',
+                    'country_id',   
                     'gst_number',
+                    'classification_id'
                 )
                 ->with(['owner:id,name', 'state:id,name', 'country:id,name']);
 
@@ -553,7 +554,7 @@ class DropdownController extends Controller
         try {
 
             $filter = $request->only(['category_id']);
-            $type = []      ;
+            $type = [];
 
             if (empty($filter['category_id'])) {
                 return Utility::apiSuccess('DD Usp Type', $type, 200);
