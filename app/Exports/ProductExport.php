@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Schema;
 
 class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
@@ -52,6 +53,21 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
                 'brand:id,name',
             ])
             ->whereNull('deleted_at');
+
+        if (! empty($this->filters['column']) && is_array($this->filters['column'])) {
+
+            foreach ($this->filters['column'] as $column => $value) {
+
+                // skip empty values
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                if (Schema::hasColumn('products', $column)) {
+                    $query->where($column, $value);
+                }
+            }
+        }
 
         // Search (mirrors controller)
         if (! empty($this->filters['search'])) {

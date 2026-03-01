@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 class PartialOrder extends Model
 {
     protected $primaryKey = 'id';
+
     protected $fillable = [
         'unique_partial_order_no',
         'unique_order_no',
@@ -56,6 +57,7 @@ class PartialOrder extends Model
     {
         return $this->hasMany(PartialOrder::class, 'partial_order_id', 'id');
     }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'cusomer_id');
@@ -72,12 +74,10 @@ class PartialOrder extends Model
             ->whereNull('deleted_at');
     }
 
-
     public function getCreatedAtAttribute($value)
     {
         return Carbon::parse($value)->format('d-m-Y');
     }
-
 
     public function companyDetails()
     {
@@ -86,7 +86,7 @@ class PartialOrder extends Model
 
     public function orderDetails()
     {
-        return $this->hasMany(PartialOrderDetails::class, 'partial_order_id', 'id') ;
+        return $this->hasMany(PartialOrderDetails::class, 'partial_order_id', 'id');
     }
 
     public function ownerDetails()
@@ -112,5 +112,10 @@ class PartialOrder extends Model
     public function pendingQuotationDetails()
     {
         return $this->hasOne(PendingQuotation::class, 'quotation_id', 'id');
+    }
+
+    public function courier()
+    {
+        return $this->belongsTo(Courier::class, 'courier_id', 'id');
     }
 }

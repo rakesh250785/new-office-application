@@ -40,8 +40,6 @@ class EnqueueProductImport implements ShouldQueue
                 'file' => $this->filePath,
                 'jobId' => $this->jobId,
             ]);
-
-            // Update ImportJob to failed:
             ImportJob::where('id', $this->jobId)->update(['status' => 'failed']);
             throw $e;
         }

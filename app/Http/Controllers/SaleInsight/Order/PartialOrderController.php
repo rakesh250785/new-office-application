@@ -182,7 +182,6 @@ class PartialOrderController extends Controller
             if (! $partial) {
                 return Utility::apiError('Failed to create partial order.', [], 221);
             }
-        
 
             $partialId = $partial?->id;
             $productListRows = [];
