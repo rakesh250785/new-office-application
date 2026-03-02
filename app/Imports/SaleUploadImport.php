@@ -96,6 +96,7 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
                 $batch = [];
             }
         }
+        
 
         if (! empty($batch)) {
             $this->flushUpsert($batch);
