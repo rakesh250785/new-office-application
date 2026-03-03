@@ -14,8 +14,9 @@ class RolePermissionSeeder extends Seeder
         # Clear cached permissions & roles
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        # Define modules and permissions
+        # Define modules and permissions    
         $modulesPermissions = [
+            'website_dashboard' =>['view_website_dashboard', 'edit_website_dashboard'],
             'expances' => ['view_expanses', 'add_new_expanses', 'view_history', 'export_expanses', 'edit_expanses', 'delete_expanses', 'download_expanses_bill','sale_team', 'service_team'],
             'financial_report' => ['view_financial_report', 'export_financial_report', 'financial_approved_action'],
             'performance_report' => ['view_performance_report', 'export_performance_report'],
