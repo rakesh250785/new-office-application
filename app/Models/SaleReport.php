@@ -20,6 +20,7 @@ class SaleReport extends Model
         'order_no',
         'customer_name',
         'branch',
+        'branch_id',
         'description',
         'part_no',
         'category',
@@ -27,13 +28,12 @@ class SaleReport extends Model
         'authorised',
         'qty',
         'amount',
-        'status'
+        'status',
     ];
 
     protected $casts = [
-        'invoice_date' => 'date:Y-m-d', 
-        'qty'          => 'integer',    
-        'amount'       => 'decimal:2',  
+        'invoice_date' => 'date:Y-m-d',
+        'qty' => 'integer',
+        'amount' => 'decimal:2',
     ];
-    
 }

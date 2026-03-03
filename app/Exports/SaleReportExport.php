@@ -20,7 +20,7 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping
     {
         $query = SaleReport::query();
 
-        if (!empty($this->filters['q'])) {
+        if (! empty($this->filters['q'])) {
             $q = $this->filters['q'];
             $query->where(function ($qq) use ($q) {
                 $qq->where('invoice', 'like', "%{$q}%")
@@ -31,12 +31,16 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping
             });
         }
 
-        if (!empty($this->filters['date_from'])) {
+        if (! empty($this->filters['date_from'])) {
             $query->whereDate('invoice_date', '>=', $this->filters['date_from']);
         }
 
-        if (!empty($this->filters['date_to'])) {
+        if (! empty($this->filters['date_to'])) {
             $query->whereDate('invoice_date', '<=', $this->filters['date_to']);
+        }
+
+        if (! empty($this->filters['branch_list'])) {
+            $query->where('branch_id', $this->filters['branch_list']);
         }
 
         return $query->orderBy('invoice_date', 'desc')->get();

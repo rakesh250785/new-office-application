@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Exports\AuthorisedSummaryExport;
 use App\Exports\BranchSummaryExport;
+use App\Exports\CategorySummaryExport;
+use App\Exports\CustomerSummaryExport;
+use App\Exports\PrincipalSummaryExport;
 use App\Exports\SaleReportExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
@@ -58,7 +62,7 @@ class PerformanceSummaryController extends Controller
             $perPage = (int) ($data['per_page'] ?? 15);
             $sortBy = $data['sort_by'] ?? 'invoice_date';
             $sortDir = $data['sort_dir'] ?? 'desc';
-
+            $branchId = $request->input('branch_list');
             $query = SaleReport::query();
             if (! empty($data['q'])) {
                 $q = $data['q'];
@@ -95,6 +99,10 @@ class PerformanceSummaryController extends Controller
             }
             if (! empty($data['date_to'])) {
                 $query->whereDate('invoice_date', '<=', $data['date_to']);
+            }
+
+            if ($branchId) {
+                $query->where('branch_id', $branchId);
             }
 
             $query->orderBy($sortBy, $sortDir)
@@ -238,7 +246,7 @@ class PerformanceSummaryController extends Controller
     public function exportSaleData(Request $request)
     {
         try {
-            $filters = $request->only(['q', 'date_from', 'date_to']);
+            $filters = $request->only(['q', 'date_from', 'date_to', 'branch_list']);
             $fileName = 'performance_reports_'.now()->format('Ymd_His').'.xlsx';
 
             return Excel::download(new SaleReportExport($filters), $fileName);
@@ -530,14 +538,22 @@ class PerformanceSummaryController extends Controller
     public function principalSummaryReport(Request $request)
     {
         try {
+
             $years = $request->input('years');
             $month = $request->input('month');
             $quarter = $request->input('quarter');
             $perPage = $request->input('per_page', 10);
+            $download = $request->boolean('download');
 
+            /*
+            |--------------------------------------------------------------------------
+            | Default Financial Years
+            |--------------------------------------------------------------------------
+            */
             if (empty($years) || ! is_array($years)) {
                 $currentYear = now()->year;
                 $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+
                 $years = [
                     ($fyStart - 2).'-'.($fyStart - 1),
                     ($fyStart - 1).'-'.$fyStart,
@@ -545,40 +561,37 @@ class PerformanceSummaryController extends Controller
                 ];
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Normalize FY
+            |--------------------------------------------------------------------------
+            */
             $normalizeYearRange = function (string $y) {
                 $y = trim($y);
-                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
-                    $start4 = (int) $m[1];
-                    $end4 = (int) $m[2];
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
+                    $short = sprintf('%02d-%02d', $m[1] % 100, $m[2] % 100);
+
+                    return ['label' => $short, 'variants' => [$short, "{$m[1]}-{$m[2]}"]];
                 }
+
                 if (preg_match('/^(\d{2})\s*-\s*(\d{2})$/', $y, $m)) {
                     $s2 = (int) $m[1];
                     $e2 = (int) $m[2];
                     $start4 = 2000 + $s2;
                     $end4 = 2000 + $e2;
                     if ($e2 < $s2) {
-                        $end4 = 2000 + $e2 + 100;
+                        $end4 += 100;
                     }
                     $short = sprintf('%02d-%02d', $s2, $e2);
 
                     return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
                 }
+
                 if (preg_match('/^\d{4}$/', $y)) {
-                    $start4 = (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
+                    $short = sprintf('%02d-%02d', $y % 100, ($y + 1) % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
-                }
-                if (preg_match('/^\d{2}$/', $y)) {
-                    $start4 = 2000 + (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
-
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                    return ['label' => $short, 'variants' => [$short, "{$y}-".($y + 1)]];
                 }
 
                 return ['label' => $y, 'variants' => [$y]];
@@ -589,112 +602,179 @@ class PerformanceSummaryController extends Controller
                 $yearItems[] = $normalizeYearRange((string) $y);
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Month / Quarter
+            |--------------------------------------------------------------------------
+            */
             $monthNames = [
                 1 => 'January', 2 => 'February', 3 => 'March',
                 4 => 'April', 5 => 'May', 6 => 'June',
                 7 => 'July', 8 => 'August', 9 => 'September',
                 10 => 'October', 11 => 'November', 12 => 'December',
             ];
+
             $quarterMap = [
                 'Q1' => ['April', 'May', 'June'],
                 'Q2' => ['July', 'August', 'September'],
                 'Q3' => ['October', 'November', 'December'],
                 'Q4' => ['January', 'February', 'March'],
             ];
+
             $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
 
-            // Build selects using variants (fy_year IN (...))
+            /*
+            |--------------------------------------------------------------------------
+            | Build Select Columns
+            |--------------------------------------------------------------------------
+            */
             $selects = ['principal_name as principal'];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(
+                    fn ($v) => "'".str_replace("'", "''", $v)."'",
+                    $it['variants']
+                ));
                 $label = str_replace('`', '', $it['label']);
-                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                            THEN amount ELSE 0 END) as `{$label}`";
             }
 
             if (count($yearItems) >= 2) {
+
                 $prev = $yearItems[count($yearItems) - 2];
                 $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
 
-                $selects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
-                ELSE NULL END as growth";
+                $prevSql = implode(', ', array_map(fn ($v) => "'$v'", $prev['variants']));
+                $currSql = implode(', ', array_map(fn ($v) => "'$v'", $curr['variants']));
+
+                $selects[] = "CASE
+                    WHEN SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END) > 0
+                    THEN ROUND(
+                        (
+                            SUM(CASE WHEN fy_year IN ({$currSql}) THEN amount ELSE 0 END)
+                            -
+                            SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                        )
+                        /
+                        SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                    *100,2)
+                    ELSE NULL END as growth";
             } else {
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports')->where('status', 'approved');
+            /*
+            |--------------------------------------------------------------------------
+            | Base Query
+            |--------------------------------------------------------------------------
+            */
+            $query = DB::table('performance_reports')
+                ->where('status', 'approved');
+
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
                 $query->whereIn('month', $quarterMonths);
             }
 
-            $rows = (clone $query)
+            $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('principal_name')
-                ->orderBy('principal_name')
-                ->paginate($perPage);
+                ->orderBy('principal_name');
 
-            // Totals (single-row) using same variant logic
+            $rows = $download
+                ? $baseQuery->get()
+                : $baseQuery->paginate($perPage);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Totals
+            |--------------------------------------------------------------------------
+            */
             $totalSelects = ["'Total' as principal"];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(fn ($v) => "'$v'", $it['variants']));
                 $label = str_replace('`', '', $it['label']);
-                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                                THEN amount ELSE 0 END) as `{$label}`";
             }
 
-            if (count($yearItems) >= 2) {
-                $prev = $yearItems[count($yearItems) - 2];
-                $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
+            $totalSelects[] = 'NULL as growth';
 
-                $totalSelects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
-                ELSE NULL END as growth";
-            } else {
-                $totalSelects[] = 'NULL as growth';
+            $totals = (clone $query)
+                ->selectRaw(implode(', ', $totalSelects))
+                ->first();
+
+            $headers = array_merge(
+                ['principal'],
+                array_map(fn ($it) => $it['label'], $yearItems),
+                ['growth']
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | EXPORT
+            |--------------------------------------------------------------------------
+            */
+            if ($download) {
+
+                $filename = 'principal_summary_'.now()->format('Ymd_His').'.xlsx';
+
+                (new PrincipalSummaryExport($headers, $rows, $totals))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess(
+                    'Export started. You will get a download link soon.',
+                    [
+                        'file' => $filename,
+                        'url' => url("storage/exports/{$filename}"),
+                    ]
+                );
             }
 
-            $totals = (clone $query)->selectRaw(implode(', ', $totalSelects))->first();
-            $headers = array_merge(['principal'], array_map(fn ($it) => $it['label'], $yearItems), ['growth']);
-
+            /*
+            |--------------------------------------------------------------------------
+            | Normal API Response
+            |--------------------------------------------------------------------------
+            */
             return Utility::apiSuccess('Principal summary report', [
                 'headers' => $headers,
                 'pagination' => $rows,
                 'total' => $totals,
             ], 200);
 
-        } catch (Exception $ex) {
+        } catch (\Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Error principalSummaryReport', ['exception' => $ex->getMessage()]);
+            return Utility::apiError(
+                'Error principalSummaryReport',
+                ['exception' => $ex->getMessage()]
+            );
         }
     }
 
     public function customerSummaryReport(Request $request)
     {
         try {
+
             $years = $request->input('years');
             $month = $request->input('month');
             $quarter = $request->input('quarter');
             $perPage = $request->input('per_page', 10);
+            $download = $request->boolean('download'); // ⭐ NEW
 
+            /*
+            |--------------------------------------------------------------------------
+            | Default Financial Years
+            |--------------------------------------------------------------------------
+            */
             if (empty($years) || ! is_array($years)) {
                 $currentYear = now()->year;
                 $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+
                 $years = [
                     ($fyStart - 2).'-'.($fyStart - 1),
                     ($fyStart - 1).'-'.$fyStart,
@@ -702,42 +782,37 @@ class PerformanceSummaryController extends Controller
                 ];
             }
 
-            // --- YEAR NORMALIZER (same behavior as branch/principal) ---
-            // returns ['label' => '24-25', 'variants' => ['24-25','2024-2025']]
+            /*
+            |--------------------------------------------------------------------------
+            | Normalize FY
+            |--------------------------------------------------------------------------
+            */
             $normalizeYearRange = function (string $y) {
                 $y = trim($y);
-                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
-                    $start4 = (int) $m[1];
-                    $end4 = (int) $m[2];
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
+                    $short = sprintf('%02d-%02d', $m[1] % 100, $m[2] % 100);
+
+                    return ['label' => $short, 'variants' => [$short, "{$m[1]}-{$m[2]}"]];
                 }
+
                 if (preg_match('/^(\d{2})\s*-\s*(\d{2})$/', $y, $m)) {
                     $s2 = (int) $m[1];
                     $e2 = (int) $m[2];
                     $start4 = 2000 + $s2;
                     $end4 = 2000 + $e2;
                     if ($e2 < $s2) {
-                        $end4 = 2000 + $e2 + 100;
+                        $end4 += 100;
                     }
                     $short = sprintf('%02d-%02d', $s2, $e2);
 
                     return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
                 }
+
                 if (preg_match('/^\d{4}$/', $y)) {
-                    $start4 = (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
+                    $short = sprintf('%02d-%02d', $y % 100, ($y + 1) % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
-                }
-                if (preg_match('/^\d{2}$/', $y)) {
-                    $start4 = 2000 + (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
-
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                    return ['label' => $short, 'variants' => [$short, "{$y}-".($y + 1)]];
                 }
 
                 return ['label' => $y, 'variants' => [$y]];
@@ -748,88 +823,143 @@ class PerformanceSummaryController extends Controller
                 $yearItems[] = $normalizeYearRange((string) $y);
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Month / Quarter
+            |--------------------------------------------------------------------------
+            */
             $monthNames = [
                 1 => 'January', 2 => 'February', 3 => 'March',
                 4 => 'April', 5 => 'May', 6 => 'June',
                 7 => 'July', 8 => 'August', 9 => 'September',
                 10 => 'October', 11 => 'November', 12 => 'December',
             ];
+
             $quarterMap = [
                 'Q1' => ['April', 'May', 'June'],
                 'Q2' => ['July', 'August', 'September'],
                 'Q3' => ['October', 'November', 'December'],
                 'Q4' => ['January', 'February', 'March'],
             ];
+
             $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
 
-            // Build selects using variants (fy_year IN (...))
+            /*
+            |--------------------------------------------------------------------------
+            | Build Select Columns
+            |--------------------------------------------------------------------------
+            */
             $selects = ['customer_name as customer'];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(
+                    fn ($v) => "'".str_replace("'", "''", $v)."'",
+                    $it['variants']
+                ));
                 $label = str_replace('`', '', $it['label']);
-                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                            THEN amount ELSE 0 END) as `{$label}`";
             }
 
             if (count($yearItems) >= 2) {
+
                 $prev = $yearItems[count($yearItems) - 2];
                 $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
 
-                $selects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
-                ELSE NULL END as growth";
+                $prevSql = implode(', ', array_map(fn ($v) => "'$v'", $prev['variants']));
+                $currSql = implode(', ', array_map(fn ($v) => "'$v'", $curr['variants']));
+
+                $selects[] = "CASE
+                    WHEN SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END) > 0
+                    THEN ROUND(
+                        (
+                            SUM(CASE WHEN fy_year IN ({$currSql}) THEN amount ELSE 0 END)
+                            -
+                            SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                        )
+                        /
+                        SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                    *100,2)
+                    ELSE NULL END as growth";
             } else {
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports')->where('status', 'approved');
+            /*
+            |--------------------------------------------------------------------------
+            | Base Query
+            |--------------------------------------------------------------------------
+            */
+            $query = DB::table('performance_reports')
+                ->where('status', 'approved');
+
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
                 $query->whereIn('month', $quarterMonths);
             }
 
-            $rows = (clone $query)
+            $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('customer_name')
-                ->orderBy('customer_name')
-                ->paginate($perPage);
+                ->orderBy('customer_name');
 
-            // Totals (single-row) using same variant logic
+            $rows = $download
+                ? $baseQuery->get()
+                : $baseQuery->paginate($perPage);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Totals
+            |--------------------------------------------------------------------------
+            */
             $totalSelects = ["'Total' as customer"];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(fn ($v) => "'$v'", $it['variants']));
                 $label = str_replace('`', '', $it['label']);
-                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                                THEN amount ELSE 0 END) as `{$label}`";
             }
 
-            if (count($yearItems) >= 2) {
-                $prev = $yearItems[count($yearItems) - 2];
-                $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
+            $totalSelects[] = 'NULL as growth';
 
-                $totalSelects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
-                ELSE NULL END as growth";
-            } else {
-                $totalSelects[] = 'NULL as growth';
+            $totals = (clone $query)
+                ->selectRaw(implode(', ', $totalSelects))
+                ->first();
+
+            $headers = array_merge(
+                ['customer'],
+                array_map(fn ($it) => $it['label'], $yearItems),
+                ['growth']
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | EXPORT
+            |--------------------------------------------------------------------------
+            */
+            if ($download) {
+
+                $filename = 'customer_summary_'.now()->format('Ymd_His').'.xlsx';
+
+                (new CustomerSummaryExport($headers, $rows, $totals))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess(
+                    'Export started. You will get a download link soon.',
+                    [
+                        'file' => $filename,
+                        'url' => url("storage/exports/{$filename}"),
+                    ]
+                );
             }
 
-            $totals = (clone $query)->selectRaw(implode(', ', $totalSelects))->first();
-            $headers = array_merge(['customer'], array_map(fn ($it) => $it['label'], $yearItems), ['growth']);
-
+            /*
+            |--------------------------------------------------------------------------
+            | Normal API Response
+            |--------------------------------------------------------------------------
+            */
             return Utility::apiSuccess('Customer summary report', [
                 'headers' => $headers,
                 'pagination' => $rows,
@@ -837,23 +967,30 @@ class PerformanceSummaryController extends Controller
             ], 200);
 
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Error customerSummaryReport', ['exception' => $ex->getMessage()]);
+            return Utility::apiError(
+                'Error customerSummaryReport',
+                ['exception' => $ex->getMessage()]
+            );
         }
     }
 
     public function categorySummaryReport(Request $request)
     {
         try {
+
             $years = $request->input('years');
             $month = $request->input('month');
             $quarter = $request->input('quarter');
             $perPage = $request->input('per_page', 10);
+            $download = $request->boolean('download'); // ⭐ added
 
             if (empty($years) || ! is_array($years)) {
                 $currentYear = now()->year;
                 $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+
                 $years = [
                     ($fyStart - 2).'-'.($fyStart - 1),
                     ($fyStart - 1).'-'.$fyStart,
@@ -861,41 +998,37 @@ class PerformanceSummaryController extends Controller
                 ];
             }
 
-            // YEAR NORMALIZER — returns ['label' => '24-25', 'variants' => ['24-25','2024-2025']]
+            /*
+            |--------------------------------------------------------------------------
+            | Year Normalizer
+            |--------------------------------------------------------------------------
+            */
             $normalizeYearRange = function (string $y) {
                 $y = trim($y);
-                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
-                    $start4 = (int) $m[1];
-                    $end4 = (int) $m[2];
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
+                    $short = sprintf('%02d-%02d', $m[1] % 100, $m[2] % 100);
+
+                    return ['label' => $short, 'variants' => [$short, "{$m[1]}-{$m[2]}"]];
                 }
+
                 if (preg_match('/^(\d{2})\s*-\s*(\d{2})$/', $y, $m)) {
                     $s2 = (int) $m[1];
                     $e2 = (int) $m[2];
                     $start4 = 2000 + $s2;
                     $end4 = 2000 + $e2;
                     if ($e2 < $s2) {
-                        $end4 = 2000 + $e2 + 100;
+                        $end4 += 100;
                     }
                     $short = sprintf('%02d-%02d', $s2, $e2);
 
                     return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
                 }
+
                 if (preg_match('/^\d{4}$/', $y)) {
-                    $start4 = (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
+                    $short = sprintf('%02d-%02d', $y % 100, ($y + 1) % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
-                }
-                if (preg_match('/^\d{2}$/', $y)) {
-                    $start4 = 2000 + (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
-
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                    return ['label' => $short, 'variants' => [$short, "{$y}-".($y + 1)]];
                 }
 
                 return ['label' => $y, 'variants' => [$y]];
@@ -906,87 +1039,138 @@ class PerformanceSummaryController extends Controller
                 $yearItems[] = $normalizeYearRange((string) $y);
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Month / Quarter Filter
+            |--------------------------------------------------------------------------
+            */
             $monthNames = [
                 1 => 'January', 2 => 'February', 3 => 'March',
                 4 => 'April', 5 => 'May', 6 => 'June',
                 7 => 'July', 8 => 'August', 9 => 'September',
                 10 => 'October', 11 => 'November', 12 => 'December',
             ];
+
             $quarterMap = [
                 'Q1' => ['April', 'May', 'June'],
                 'Q2' => ['July', 'August', 'September'],
                 'Q3' => ['October', 'November', 'December'],
                 'Q4' => ['January', 'February', 'March'],
             ];
+
             $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
 
-            // Build selects using variants
+            /*
+            |--------------------------------------------------------------------------
+            | Select Columns
+            |--------------------------------------------------------------------------
+            */
             $selects = ['category'];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(
+                    fn ($v) => "'".str_replace("'", "''", $v)."'",
+                    $it['variants']
+                ));
                 $label = str_replace('`', '', $it['label']);
-                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+
+                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                        THEN amount ELSE 0 END) as `{$label}`";
             }
 
             if (count($yearItems) >= 2) {
+
                 $prev = $yearItems[count($yearItems) - 2];
                 $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
 
-                $selects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
+                $prevSql = implode(', ', array_map(fn ($v) => "'$v'", $prev['variants']));
+                $currSql = implode(', ', array_map(fn ($v) => "'$v'", $curr['variants']));
+
+                $selects[] = "CASE
+                WHEN SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END) > 0
+                THEN ROUND(
+                    (
+                        SUM(CASE WHEN fy_year IN ({$currSql}) THEN amount ELSE 0 END)
+                        -
+                        SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                    )
+                    /
+                    SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                *100,2)
                 ELSE NULL END as growth";
             } else {
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports')->where('status', 'approved');
+            /*
+            |--------------------------------------------------------------------------
+            | Base Query
+            |--------------------------------------------------------------------------
+            */
+            $query = DB::table('performance_reports')
+                ->where('status', 'approved');
+
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
                 $query->whereIn('month', $quarterMonths);
             }
 
-            $rows = (clone $query)
+            $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('category')
-                ->orderBy('category')
-                ->paginate($perPage);
+                ->orderBy('category');
 
-            // Totals (single-row) using same variant logic
+            $rows = $download
+                ? $baseQuery->get()
+                : $baseQuery->paginate($perPage);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Totals
+            |--------------------------------------------------------------------------
+            */
             $totalSelects = ["'Total' as category"];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(fn ($v) => "'$v'", $it['variants']));
                 $label = str_replace('`', '', $it['label']);
-                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                            THEN amount ELSE 0 END) as `{$label}`";
             }
 
-            if (count($yearItems) >= 2) {
-                $prev = $yearItems[count($yearItems) - 2];
-                $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
+            $totalSelects[] = 'NULL as growth';
 
-                $totalSelects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
-                ELSE NULL END as growth";
-            } else {
-                $totalSelects[] = 'NULL as growth';
+            $totals = (clone $query)
+                ->selectRaw(implode(', ', $totalSelects))
+                ->first();
+
+            $headers = array_merge(
+                ['category'],
+                array_map(fn ($it) => $it['label'], $yearItems),
+                ['growth']
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Export Block
+            |--------------------------------------------------------------------------
+            */
+            if ($download) {
+
+                $filename = 'category_summary_'.now()->format('Ymd_His').'.xlsx';
+
+                (new CategorySummaryExport($headers, $rows, $totals))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess(
+                    'Export started. You will get a download link soon.',
+                    [
+                        'file' => $filename,
+                        'url' => url("storage/exports/{$filename}"),
+                    ]
+                );
             }
-
-            $totals = (clone $query)->selectRaw(implode(', ', $totalSelects))->first();
-            $headers = array_merge(['category'], array_map(fn ($it) => $it['label'], $yearItems), ['growth']);
 
             return Utility::apiSuccess('Category summary report', [
                 'headers' => $headers,
@@ -995,23 +1179,30 @@ class PerformanceSummaryController extends Controller
             ], 200);
 
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Error categorySummaryReport', ['exception' => $ex->getMessage()]);
+            return Utility::apiError(
+                'Error categorySummaryReport',
+                ['exception' => $ex->getMessage()]
+            );
         }
     }
 
     public function authorisedSummaryReport(Request $request)
     {
         try {
+
             $years = $request->input('years');
             $month = $request->input('month');
             $quarter = $request->input('quarter');
             $perPage = $request->input('per_page', 10);
+            $download = $request->boolean('download'); // ⭐ added
 
             if (empty($years) || ! is_array($years)) {
                 $currentYear = now()->year;
                 $fyStart = now()->month >= 4 ? $currentYear : $currentYear - 1;
+
                 $years = [
                     ($fyStart - 2).'-'.($fyStart - 1),
                     ($fyStart - 1).'-'.$fyStart,
@@ -1019,40 +1210,38 @@ class PerformanceSummaryController extends Controller
                 ];
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Year Normalizer
+            |--------------------------------------------------------------------------
+            */
             $normalizeYearRange = function (string $y) {
-                $y = trim($y);
-                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
-                    $start4 = (int) $m[1];
-                    $end4 = (int) $m[2];
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                $y = trim($y);
+
+                if (preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $y, $m)) {
+                    $short = sprintf('%02d-%02d', $m[1] % 100, $m[2] % 100);
+
+                    return ['label' => $short, 'variants' => [$short, "{$m[1]}-{$m[2]}"]];
                 }
+
                 if (preg_match('/^(\d{2})\s*-\s*(\d{2})$/', $y, $m)) {
                     $s2 = (int) $m[1];
                     $e2 = (int) $m[2];
                     $start4 = 2000 + $s2;
                     $end4 = 2000 + $e2;
                     if ($e2 < $s2) {
-                        $end4 = 2000 + $e2 + 100;
+                        $end4 += 100;
                     }
                     $short = sprintf('%02d-%02d', $s2, $e2);
 
                     return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
                 }
+
                 if (preg_match('/^\d{4}$/', $y)) {
-                    $start4 = (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
+                    $short = sprintf('%02d-%02d', $y % 100, ($y + 1) % 100);
 
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
-                }
-                if (preg_match('/^\d{2}$/', $y)) {
-                    $start4 = 2000 + (int) $y;
-                    $end4 = $start4 + 1;
-                    $short = sprintf('%02d-%02d', $start4 % 100, $end4 % 100);
-
-                    return ['label' => $short, 'variants' => [$short, "{$start4}-{$end4}"]];
+                    return ['label' => $short, 'variants' => [$short, "{$y}-".($y + 1)]];
                 }
 
                 return ['label' => $y, 'variants' => [$y]];
@@ -1063,94 +1252,139 @@ class PerformanceSummaryController extends Controller
                 $yearItems[] = $normalizeYearRange((string) $y);
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Month / Quarter Filter
+            |--------------------------------------------------------------------------
+            */
             $monthNames = [
-                1 => 'January',
-                2 => 'February',
-                3 => 'March',
-                4 => 'April',
-                5 => 'May',
-                6 => 'June',
-                7 => 'July',
-                8 => 'August',
-                9 => 'September',
-                10 => 'October',
-                11 => 'November',
-                12 => 'December',
+                1 => 'January', 2 => 'February', 3 => 'March',
+                4 => 'April', 5 => 'May', 6 => 'June',
+                7 => 'July', 8 => 'August', 9 => 'September',
+                10 => 'October', 11 => 'November', 12 => 'December',
             ];
+
             $quarterMap = [
                 'Q1' => ['April', 'May', 'June'],
                 'Q2' => ['July', 'August', 'September'],
                 'Q3' => ['October', 'November', 'December'],
                 'Q4' => ['January', 'February', 'March'],
             ];
+
             $quarterMonths = $quarter ? ($quarterMap[$quarter] ?? []) : [];
 
+            /*
+            |--------------------------------------------------------------------------
+            | Build Selects
+            |--------------------------------------------------------------------------
+            */
             $selects = ['authorised'];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(
+                    fn ($v) => "'".str_replace("'", "''", $v)."'",
+                    $it['variants']
+                ));
+
                 $label = str_replace('`', '', $it['label']);
-                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+
+                $selects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                        THEN amount ELSE 0 END) as `{$label}`";
             }
 
             if (count($yearItems) >= 2) {
+
                 $prev = $yearItems[count($yearItems) - 2];
                 $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
 
-                $selects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
+                $prevSql = implode(', ', array_map(fn ($v) => "'$v'", $prev['variants']));
+                $currSql = implode(', ', array_map(fn ($v) => "'$v'", $curr['variants']));
+
+                $selects[] = "CASE
+                WHEN SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END) > 0
+                THEN ROUND(
+                    (
+                        SUM(CASE WHEN fy_year IN ({$currSql}) THEN amount ELSE 0 END)
+                        -
+                        SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                    )
+                    /
+                    SUM(CASE WHEN fy_year IN ({$prevSql}) THEN amount ELSE 0 END)
+                *100,2)
                 ELSE NULL END as growth";
             } else {
                 $selects[] = 'NULL as growth';
             }
 
-            $query = DB::table('performance_reports')->where('status', 'approved');
+            /*
+            |--------------------------------------------------------------------------
+            | Base Query
+            |--------------------------------------------------------------------------
+            */
+            $query = DB::table('performance_reports')
+                ->where('status', 'approved');
+
             if ($month && isset($monthNames[(int) $month])) {
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
                 $query->whereIn('month', $quarterMonths);
             }
 
-            $rows = (clone $query)
+            $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('authorised')
-                ->orderBy('authorised')
-                ->paginate($perPage);
+                ->orderBy('authorised');
 
+            $rows = $download
+                ? $baseQuery->get()
+                : $baseQuery->paginate($perPage);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Totals
+            |--------------------------------------------------------------------------
+            */
             $totalSelects = ["'Total' as authorised"];
+
             foreach ($yearItems as $it) {
-                $variantsSql = implode(', ', array_map(function ($v) {
-                    return "'".str_replace("'", "''", $v)."'";
-                }, $it['variants']));
+                $variantsSql = implode(', ', array_map(fn ($v) => "'$v'", $it['variants']));
                 $label = str_replace('`', '', $it['label']);
-                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql}) THEN amount ELSE 0 END) as `{$label}`";
+                $totalSelects[] = "SUM(CASE WHEN fy_year IN ({$variantsSql})
+                            THEN amount ELSE 0 END) as `{$label}`";
             }
 
-            if (count($yearItems) >= 2) {
-                $prev = $yearItems[count($yearItems) - 2];
-                $curr = $yearItems[count($yearItems) - 1];
-                $prevVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $prev['variants']));
-                $currVariantsSql = implode(', ', array_map(fn ($v) => "'".str_replace("'", "''", $v)."'", $curr['variants']));
+            $totalSelects[] = 'NULL as growth';
 
-                $totalSelects[] = "CASE 
-                WHEN SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END) > 0
-                THEN ROUND(((SUM(CASE WHEN fy_year IN ({$currVariantsSql}) THEN amount ELSE 0 END) -
-                             SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END))
-                             / SUM(CASE WHEN fy_year IN ({$prevVariantsSql}) THEN amount ELSE 0 END)) * 100, 2)
-                ELSE NULL END as growth";
-            } else {
-                $totalSelects[] = 'NULL as growth';
+            $totals = (clone $query)
+                ->selectRaw(implode(', ', $totalSelects))
+                ->first();
+
+            $headers = array_merge(
+                ['authorised'],
+                array_map(fn ($it) => $it['label'], $yearItems),
+                ['growth']
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Export
+            |--------------------------------------------------------------------------
+            */
+            if ($download) {
+
+                $filename = 'authorised_summary_'.now()->format('Ymd_His').'.xlsx';
+
+                (new AuthorisedSummaryExport($headers, $rows, $totals))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess(
+                    'Export started. You will get a download link soon.',
+                    [
+                        'file' => $filename,
+                        'url' => url("storage/exports/{$filename}"),
+                    ]
+                );
             }
-
-            $totals = (clone $query)->selectRaw(implode(', ', $totalSelects))->first();
-
-            $headers = array_merge(['authorised'], array_map(fn ($it) => $it['label'], $yearItems), ['growth']);
 
             return Utility::apiSuccess('Authorised summary report', [
                 'headers' => $headers,
@@ -1159,9 +1393,13 @@ class PerformanceSummaryController extends Controller
             ], 200);
 
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Error authorisedSummaryReport', ['exception' => $ex->getMessage()]);
+            return Utility::apiError(
+                'Error authorisedSummaryReport',
+                ['exception' => $ex->getMessage()]
+            );
         }
     }
 

@@ -2,12 +2,14 @@
 
 namespace App\Imports;
 
+use App\Models\Branch;
 use App\Models\ImportJob;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -41,6 +43,7 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
             return;
         }
 
+        $branches = Branch::pluck('id', 'code');
         $now = Carbon::now()->toDateTimeString();
         $batch = [];
         $validRowCount = 0;
@@ -78,6 +81,7 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
                 'order_no' => $orderNo,
                 'customer_name' => $this->nullableTrim($r['customer_name'] ?? null),
                 'branch' => $this->nullableTrim($r['branch'] ?? null),
+                'branch_id' => $branches[Str::slug($r['branch'])] ?? null,
                 'description' => $this->nullableTrim($r['description'] ?? null),
                 'part_no' => $part,
                 'category' => $this->nullableTrim($r['categories'] ?? null),
@@ -96,7 +100,6 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
                 $batch = [];
             }
         }
-        
 
         if (! empty($batch)) {
             $this->flushUpsert($batch);
@@ -113,7 +116,7 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
 
     protected function flushUpsert(array $rows)
     {
-        if (empty($rows)) {     
+        if (empty($rows)) {
             return;
         }
 
