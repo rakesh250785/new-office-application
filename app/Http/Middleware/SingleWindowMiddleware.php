@@ -24,28 +24,30 @@ class SingleWindowMiddleware
         $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
         $authUserId = Auth::id();
 
-        logger($moduleName);
         if (! $authUserId) {
             return Utility::apiError('Permission denied', [], 403);
         }
 
-        $moduleExists = DB::table('permissions')
-            ->where('module_name', $moduleName)
-            ->exists();
-
-        if ($moduleExists) {
-            $hasPermission = User::whereKey($authUserId)
-                ->whereHas('role.permissions', function ($query) use ($moduleName) {
-                    $query->whereIn('name', [
-                        'view_'.$moduleName,
-                        'edit_'.$moduleName,
-                    ]);
-                })
+        if (! empty($moduleName)) {
+            $moduleExists = DB::table('permissions')
+                ->where('module_name', $moduleName)
                 ->exists();
 
-            if (! $hasPermission && ! empty($moduleName)) {
-                return Utility::apiError('Permission denied', [], 403);
+            if ($moduleExists) {
+                $hasPermission = User::whereKey($authUserId)
+                    ->whereHas('role.permissions', function ($query) use ($moduleName) {
+                        $query->whereIn('name', [
+                            'view_'.$moduleName,
+                            'edit_'.$moduleName,
+                        ]);
+                    })
+                    ->exists();
+
+                if (! $hasPermission) {
+                    return Utility::apiError('Permission denied', [], 403);
+                }
             }
+
         }
 
         try {
