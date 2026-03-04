@@ -21,6 +21,7 @@ class SingleWindowMiddleware
         if (! $token) {
             return Utility::apiError('Token not provided', [], 401);
         }
+
         $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
         $authUserId = Auth::id();
 
@@ -33,7 +34,7 @@ class SingleWindowMiddleware
                 ->where('module_name', $moduleName)
                 ->exists();
 
-            if ($moduleExists) {
+            if (! empty($moduleExists)) {
                 $hasPermission = User::whereKey($authUserId)
                     ->whereHas('role.permissions', function ($query) use ($moduleName) {
                         $query->whereIn('name', [
@@ -47,7 +48,6 @@ class SingleWindowMiddleware
                     return Utility::apiError('Permission denied', [], 403);
                 }
             }
-
         }
 
         try {
