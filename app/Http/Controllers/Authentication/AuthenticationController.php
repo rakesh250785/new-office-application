@@ -81,7 +81,7 @@ class AuthenticationController extends Controller
             $user = User::where('email', $request?->email)->first();
 
             if (! Hash::check($request?->password, $user?->password)) {
-                return Utility::apiError('Invalid credentials', [], 401);
+                return Utility::apiError('Invalid credentials', [], 422);
             }
 
             /* ================= SINGLE SESSION CHECK ================= */
@@ -89,7 +89,7 @@ class AuthenticationController extends Controller
                 return Utility::apiError(
                     'You are already logged in on another device',
                     [],
-                    401
+                    422
                 );
             }
 
@@ -134,7 +134,7 @@ class AuthenticationController extends Controller
                 'device' => $agentInfo['device'] ?? null,
                 'to_email' => $user->email,
                 'logo_url' => asset('appLogo/logo.png'),
-                'email'=> $user->email
+                'email' => $user->email,
             ];
             SendLoginLogoutEmail::dispatch($details);
 

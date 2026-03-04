@@ -24,6 +24,7 @@ class SingleWindowMiddleware
         $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
         $authUserId = Auth::id();
 
+        logger($moduleName);
         if (! $authUserId) {
             return Utility::apiError('Permission denied', [], 403);
         }
