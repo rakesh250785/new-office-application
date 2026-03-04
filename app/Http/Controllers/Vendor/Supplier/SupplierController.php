@@ -100,7 +100,7 @@ class SupplierController extends Controller
             // Get page info
             $page = max((int) $request->input('page', 1), 1);
             $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
-            $search = trim($request->input('search', ''));
+            $search = $request->input('search', '');
 
             // Get filters
             $filters = [
@@ -150,7 +150,7 @@ class SupplierController extends Controller
                     'product:id,part_no,description',
                     'principal:id,type',
                     'source:id,name',
-                    'currency:id,name', 
+                    'currency:id,name',
                     'branch:id,name',
                 ])
                 ->whereNull('suppliers.deleted_at');

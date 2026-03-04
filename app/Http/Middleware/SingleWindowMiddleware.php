@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Helpers\Utility;
 use App\Models\User;
+use Auth;
 use Closure;
+use DB;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
@@ -18,6 +20,31 @@ class SingleWindowMiddleware
 
         if (! $token) {
             return Utility::apiError('Token not provided', [], 401);
+        }
+        $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
+        $authUserId = Auth::id();
+
+        if (! $authUserId) {
+            return Utility::apiError('Permission denied', [], 403);
+        }
+
+        $moduleExists = DB::table('permissions')
+            ->where('module_name', $moduleName)
+            ->exists();
+
+        if ($moduleExists) {
+            $hasPermission = User::whereKey($authUserId)
+                ->whereHas('role.permissions', function ($query) use ($moduleName) {
+                    $query->whereIn('name', [
+                        'view_'.$moduleName,
+                        'edit_'.$moduleName,
+                    ]);
+                })
+                ->exists();
+
+            if (! $hasPermission && ! empty($moduleName)) {
+                return Utility::apiError('Permission denied', [], 403);
+            }
         }
 
         try {

@@ -17,7 +17,7 @@ class RolePermissionSeeder extends Seeder
         # Define modules and permissions    
         $modulesPermissions = [
             'website_dashboard' =>['view_website_dashboard', 'edit_website_dashboard'],
-            'expances' => ['view_expanses', 'add_new_expanses', 'view_history', 'export_expanses', 'edit_expanses', 'delete_expanses', 'download_expanses_bill','sale_team', 'service_team'],
+            'expenses' => ['view_expenses', 'add_new_expenses', 'view_history', 'export_expenses', 'edit_expenses', 'delete_expenses', 'download_expenses_bill','sale_team', 'service_team'],
             'financial_report' => ['view_financial_report', 'export_financial_report', 'financial_approved_action'],
             'performance_report' => ['view_performance_report', 'export_performance_report'],
             'order_summary' => ['view_order_summary'],
@@ -71,7 +71,7 @@ class RolePermissionSeeder extends Seeder
                 'import_product_price',
             ],
             'parameter' => ['view_parameter', 'export_parameter', 'edit_parameter', 'delete_parameter', 'add_parameter'],
-            'ups' => ['view_ups', 'export_ups', 'edit_ups', 'delete_ups', 'add_ups'],
+            'usp' => ['view_usp', 'export_usp', 'edit_usp', 'delete_usp', 'add_usp'],
             'brand' => ['view_brand', 'export_brand', 'edit_brand', 'delete_brand', 'add_brand'],
             'category' => ['view_category', 'export_category', 'edit_category', 'delete_category', 'add_category'],
             'quotation_format' => [
@@ -83,7 +83,7 @@ class RolePermissionSeeder extends Seeder
             ],
             'principal' => ['view_principal', 'export_principal', 'edit_principal', 'delete_principal', 'add_principal'],
             'reason' => ['view_reason', 'export_reason', 'edit_reason', 'delete_reason', 'add_reason'],
-            'notification' => ['view_notification', 'export_notification', 'edit_notification', 'delete_notification', 'add_notification'],
+            'notifications' => ['view_notifications', 'delete_notifications'],
             'source' => ['view_source', 'export_source', 'edit_source', 'delete_source', 'add_source'],
             'supplier' => ['view_supplier', 'export_supplier', 'edit_supplier', 'delete_supplier', 'add_supplier'],
             'courier' => ['view_courier', 'export_courier', 'edit_courier', 'delete_courier', 'add_courier'],
@@ -92,7 +92,7 @@ class RolePermissionSeeder extends Seeder
         # Create permissions with module_name
         foreach ($modulesPermissions as $module => $permissions) {
             foreach ($permissions as $permission) {
-                Permission::firstOrCreate(
+                Permission::firstOrCreate(          
                     ['name' => $permission],
                     ['module_name' => $module]
                 );
