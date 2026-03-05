@@ -6,7 +6,6 @@ use App\Exports\SupplierExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +19,7 @@ class SupplierController extends Controller
     public function addUpdateSupplier(Request $request)
     {
         try {
-            // Extract only expected fields
+
             $data = $request->only([
                 'product_id',
                 'date',
@@ -30,7 +29,6 @@ class SupplierController extends Controller
                 'principal_id',
             ]);
 
-            // Validate input
             $validator = Validator::make($data, [
                 'product_id' => ['required', 'integer', 'exists:products,id'],
                 'principal_id' => ['required', 'integer', 'exists:principals,id'],
@@ -38,7 +36,7 @@ class SupplierController extends Controller
                 'product_list' => ['required', 'array', 'min:1'],
                 'product_list.*.id' => ['nullable', 'integer', 'exists:suppliers,id'],
                 'product_list.*.currency_id' => ['required', 'integer', 'exists:currencies,id'],
-                'product_list.*.date' => ['required', 'date'],
+                'product_list.*.date' => ['nullable', 'date'],
                 'product_list.*.source_id' => ['required', 'integer', 'exists:sources,id'],
                 'product_list.*.rate_fc' => ['required', 'numeric'],
                 'product_list.*.factor_fc' => ['required', 'numeric'],
@@ -48,23 +46,26 @@ class SupplierController extends Controller
                 'product_list.*.custom_price' => ['required', 'numeric'],
             ]);
 
-            // Return validation error
             if ($validator->fails()) {
                 return Utility::apiError('Validation failed', $validator->errors(), 221);
             }
 
-            // Context setup
             $branchId = Auth::user()->branch_id;
             $userId = Auth::id();
-            // $date = Carbon::parse($data['date'])->format('Y-m-d');
-
-            // Track all submitted IDs
 
             foreach ($data['product_list'] as $item) {
-                $supplier = Supplier::updateOrCreate(
-                    ['product_id' => $data['product_id'],
+
+                // Decide date
+                $productDate = $data['update_status']
+                                ? $item['date']      // edit case
+                                : $data['date'];     // add case
+
+                Supplier::updateOrCreate(
+                    [
+                        'product_id' => $data['product_id'],
                         'principal_id' => $data['principal_id'],
-                        'source_id' => $item['source_id']],
+                        'source_id' => $item['source_id'],
+                    ],
                     [
                         'product_id' => $data['product_id'],
                         'principal_id' => $data['principal_id'],
@@ -80,17 +81,20 @@ class SupplierController extends Controller
                         'user_id' => $userId,
                         'branch_id' => $branchId,
                         'deleted_at' => null,
-                        'date' => $item['date'],
+                        'date' => $productDate,
                     ]
                 );
             }
 
-            // Return success
             return Utility::apiSuccess('Data saved successfully', [], 200);
+
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Error while saving supplier', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Error while saving supplier', [
+                'exception' => $ex->getMessage(),
+            ]);
         }
     }
 
