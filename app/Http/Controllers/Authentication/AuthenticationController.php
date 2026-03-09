@@ -78,10 +78,19 @@ class AuthenticationController extends Controller
             }
 
             /* ================= FETCH USER ================= */
-            $user = User::where('email', $request?->email)->first();
+            $user = User::where('email', $request->email)->first();
 
-            if (! Hash::check($request?->password, $user?->password)) {
+            if (! $user || ! Hash::check($request->password, $user->password)) {
                 return Utility::apiError('Invalid credentials', [], 422);
+            }
+
+            /* ================= EXPIRED SESSION CLEANUP ================= */
+            if ($user?->token_expires_at && now()->gt($user?->token_expires_at)) {
+
+                $user->update([
+                    'active_jwt' => null,
+                    'token_expires_at' => null,
+                ]);
             }
 
             /* ================= SINGLE SESSION CHECK ================= */
@@ -96,10 +105,15 @@ class AuthenticationController extends Controller
             /* ================= ISSUE TOKEN ================= */
             $token = JWTAuth::fromUser($user);
 
+            $expiry = now()->addMinutes(60);
+
             /* ================= ATOMIC UPDATE ================= */
             $updated = User::where('id', $user->id)
                 ->whereNull('active_jwt')
-                ->update(['active_jwt' => $token]);
+                ->update([
+                    'active_jwt' => $token,
+                    'token_expires_at' => $expiry,
+                ]);
 
             if (! $updated) {
                 return Utility::apiError(
@@ -136,13 +150,16 @@ class AuthenticationController extends Controller
                 'logo_url' => asset('appLogo/logo.png'),
                 'email' => $user->email,
             ];
+
             SendLoginLogoutEmail::dispatch($details);
 
             return Utility::apiSuccess('Login successful', [
                 'token' => $token,
+                'expires_at' => $expiry,
             ], 200);
 
         } catch (Exception $e) {
+
             Log::error('Login error', ['exception' => $e]);
 
             return Utility::apiError('Unexpected error occurred', [], 500);
@@ -152,11 +169,13 @@ class AuthenticationController extends Controller
     public function apiLogout(Request $request)
     {
         try {
+
             $user = Auth::user();
 
             if (! $user) {
                 return Utility::apiError('User not authenticated', [], 401);
             }
+
             $ip = $request->ip() ?? 'unknown';
             $userAgent = $request->header('User-Agent', 'unknown');
 
@@ -183,18 +202,26 @@ class AuthenticationController extends Controller
                 'logo_url' => asset('appLogo/logo.png'),
             ];
 
-            $user->update(['active_jwt' => null]);
-            try {
-                JWTAuth::invalidate(JWTAuth::getToken());
-            } catch (\Throwable $e) {
-                Log::info('JWT already invalidated or expired');
+            if ($user->active_jwt) {
+                $user->update(['active_jwt' => null]);
+            }
+
+            $token = JWTAuth::getToken();
+
+            if ($token) {
+                try {
+                    JWTAuth::invalidate($token);
+                } catch (\Throwable $e) {
+                    Log::info('JWT already invalidated or expired');
+                }
             }
 
             SendLoginLogoutEmail::dispatch($details)->onQueue('emails');
 
             return Utility::apiSuccess('Logout successful', [], 200);
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+
             Log::error('Logout error', ['exception' => $e]);
 
             return Utility::apiError('Unexpected error occurred', [], 500);

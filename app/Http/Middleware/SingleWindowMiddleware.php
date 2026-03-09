@@ -22,38 +22,20 @@ class SingleWindowMiddleware
             return Utility::apiError('Token not provided', [], 401);
         }
 
-        $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
-        $authUserId = Auth::id();
-
-        if (! $authUserId) {
-            return Utility::apiError('Permission denied', [], 403);
-        }
-
-        if (! empty($moduleName)) {
-            $moduleExists = DB::table('permissions')
-                ->where('module_name', $moduleName)
-                ->exists();
-
-            if (! empty($moduleExists)) {
-                $hasPermission = User::whereKey($authUserId)
-                    ->whereHas('role.permissions', function ($query) use ($moduleName) {
-                        $query->whereIn('name', [
-                            'view_'.$moduleName,
-                            'edit_'.$moduleName,
-                        ]);
-                    })
-                    ->exists();
-
-                if (! $hasPermission) {
-                    return Utility::apiError('Permission denied', [], 403);
-                }
-            }
-        }
-
         try {
 
             JWTAuth::setToken($token);
             $user = JWTAuth::authenticate();
+
+            if ($user->token_expires_at && now()->gt($user->token_expires_at)) {
+
+                $user->update([
+                    'active_jwt' => null,
+                    'token_expires_at' => null,
+                ]);
+
+                return Utility::apiError('Session expired', [], 401);
+            }
 
             // valid token → normal flow
             if ($user->active_jwt !== $token) {
@@ -64,9 +46,38 @@ class SingleWindowMiddleware
                 );
             }
 
+            $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
+            $authUserId = Auth::id();
+
+            if (! $authUserId) {
+                return Utility::apiError('Permission denied', [], 403);
+            }
+
+            if (! empty($moduleName)) {
+                $moduleExists = DB::table('permissions')
+                    ->where('module_name', $moduleName)
+                    ->exists();
+
+                if (! empty($moduleExists)) {
+                    $hasPermission = User::whereKey($authUserId)
+                        ->whereHas('role.permissions', function ($query) use ($moduleName) {
+                            $query->whereIn('name', [
+                                'view_'.$moduleName,
+                                'edit_'.$moduleName,
+                            ]);
+                        })
+                        ->exists();
+
+                    if (! $hasPermission) {
+                        return Utility::apiError('Permission denied', [], 403);
+                    }
+                }
+            }
+
         } catch (TokenExpiredException $e) {
             User::where('active_jwt', $token)->update([
                 'active_jwt' => null,
+                'token_expires_at' => null,
             ]);
 
             return Utility::apiError(
@@ -78,6 +89,7 @@ class SingleWindowMiddleware
         } catch (TokenInvalidException $e) {
             User::where('active_jwt', $token)->update([
                 'active_jwt' => null,
+                'token_expires_at' => null,
             ]);
 
             return Utility::apiError(
@@ -89,6 +101,7 @@ class SingleWindowMiddleware
         } catch (JWTException $e) {
             User::where('active_jwt', $token)->update([
                 'active_jwt' => null,
+                'token_expires_at' => null,
             ]);
 
             return Utility::apiError(
