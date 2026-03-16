@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Vendor\Supplier;
 
-use App\Exports\SupplierExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
@@ -101,54 +100,11 @@ class SupplierController extends Controller
     public function getSupplier(Request $request)
     {
         try {
-            // Get page info
+
             $page = max((int) $request->input('page', 1), 1);
             $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
             $search = $request->input('search', '');
 
-            // Get filters
-            $filters = [
-                'owner' => (array) $request->input('owner', []),
-                'branch' => (array) $request->input('branch', []),
-                'principal' => (array) $request->input('principal', []),
-                'source' => (array) $request->input('source', []),
-                'product' => (array) $request->input('product', []),
-                'currency' => (array) $request->input('currency', []),
-                'start_date' => $request->input('start_date'),
-                'end_date' => $request->input('end_date'),
-                'search' => $search,
-            ];
-
-            // If export requested
-            if ($request->boolean('download')) {
-                $columns = [
-                    'product.part_no' => 'Part No',
-                    'product.description' => 'Description',
-                    'principal.type' => 'Principal',
-                    'source.name' => 'Source',
-                    'currency.name' => 'Currency',
-                    'branch.name' => 'Branch',
-                    'rate_fc' => 'Rate FC',
-                    'factor_fc' => 'Factor FC',
-                    'total_cost' => 'Total Cost',
-                    'discount' => 'Discount',
-                    'net_price' => 'Net Price',
-                    'custom_price' => 'Custom Price',
-                    'date' => 'Date',
-                ];
-
-                $filename = 'suppliers_'.now()->format('Ymd_His').'.xlsx';
-
-                (new SupplierExport($filters, $columns, Supplier::class))
-                    ->queue("exports/{$filename}", 'public');
-
-                return Utility::apiSuccess('Export started. You will get a download link soon.', [
-                    'file' => $filename,
-                    'url' => url("storage/exports/{$filename}"),
-                ]);
-            }
-
-            // Base query
             $query = Supplier::query()
                 ->with([
                     'product:id,part_no,description',
@@ -157,37 +113,52 @@ class SupplierController extends Controller
                     'currency:id,name',
                     'branch:id,name',
                 ])
-                ->whereNull('suppliers.deleted_at');
+                ->whereNull('suppliers.deleted_at')
+                ->whereHas('product', function ($q) {
+                    $q->whereNotNull('part_no')
+                        ->where('part_no', '!=', '');
+                });
 
-            // Apply filters
+            /*
+            |--------------------------------------------------------------------------
+            | FILTERS
+            |--------------------------------------------------------------------------
+            */
 
-            if ($filters['branch']) {
-                $query->where('suppliers.branch_id', $filters['branch']);
-            }
-            if ($filters['principal']) {
-                $query->where('suppliers.principal_id', $filters['principal']);
-            }
-            if ($filters['product']) {
-                $query->where('suppliers.product_id', $filters['product']);
-            }
-            if ($filters['source']) {
-                $query->where('suppliers.source_id', $filters['source']);
-            }
-            if ($filters['currency']) {
-                $query->where('suppliers.currency_id', $filters['currency']);
-            }
-            if (! empty($filters['start_date']) && ! empty($filters['end_date'])) {
-                $query->whereBetween('suppliers.date', [$filters['start_date'], $filters['end_date']]);
-            } elseif (! empty($filters['start_date'])) {
-                $query->whereDate('suppliers.date', '>=', $filters['start_date']);
-            } elseif (! empty($filters['end_date'])) {
-                $query->whereDate('suppliers.date', '<=', $filters['end_date']);
+            if ($request->branch) {
+                $query->whereIn('suppliers.branch_id', (array) $request->branch);
             }
 
-            // Search filter
-            if ($filters['search'] !== '') {
-                $query->where(function ($q) use ($filters) {
-                    $search = $filters['search'];
+            if ($request->principal) {
+                $query->whereIn('suppliers.principal_id', (array) $request->principal);
+            }
+
+            if ($request->product) {
+                $query->whereIn('suppliers.product_id', (array) $request->product);
+            }
+
+            if ($request->source) {
+                $query->whereIn('suppliers.source_id', (array) $request->source);
+            }
+
+            if ($request->currency) {
+                $query->whereIn('suppliers.currency_id', (array) $request->currency);
+            }
+
+            if ($request->start_date && $request->end_date) {
+                $query->whereBetween('suppliers.date', [$request->start_date, $request->end_date]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | SEARCH
+            |--------------------------------------------------------------------------
+            */
+
+            if ($search !== '') {
+
+                $query->where(function ($q) use ($search) {
+
                     $q->whereHas('product', function ($q2) use ($search) {
                         $q2->where('part_no', 'like', "%$search%")
                             ->orWhere('description', 'like', "%$search%");
@@ -205,25 +176,54 @@ class SupplierController extends Controller
                 });
             }
 
-            // Normal grouped + paginated response
-            $suppliers = $query->orderByDesc('id')->get()->groupBy(fn ($item) => $item->product->part_no);
+            /*
+            |--------------------------------------------------------------------------
+            | FETCH DATA
+            |--------------------------------------------------------------------------
+            */
+
+            $suppliers = $query
+                ->orderByDesc('suppliers.id')
+                ->get()
+                ->groupBy('product.part_no');
+
+            /*
+            |--------------------------------------------------------------------------
+            | PAGINATION ON GROUPS
+            |--------------------------------------------------------------------------
+            */
 
             $totalGroups = $suppliers->count();
-            $paged = $suppliers->forPage($page, $perPage);
 
-            // Return response
-            return Utility::apiSuccess('Supplier list grouped by part_no', [
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'total' => $totalGroups,
-                'last_page' => ceil($totalGroups / $perPage),
-                'data' => $paged,
-            ], 200);
+            $pagedData = $suppliers
+                ->slice(($page - 1) * $perPage, $perPage);
+
+            /*
+            |--------------------------------------------------------------------------
+            | RESPONSE
+            |--------------------------------------------------------------------------
+            */
+
+            return Utility::apiSuccess(
+                'Supplier list grouped by part_no',
+                [
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $totalGroups,
+                    'last_page' => ceil($totalGroups / $perPage),
+                    'data' => $pagedData,
+                ],
+                200
+            );
 
         } catch (Exception $ex) {
+
             Log::error($ex);
 
-            return Utility::apiError('Error fetching supplier list', ['exception' => $ex->getMessage()]);
+            return Utility::apiError(
+                'Error fetching supplier list',
+                ['exception' => $ex->getMessage()]
+            );
         }
     }
 
