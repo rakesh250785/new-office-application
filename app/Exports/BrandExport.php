@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -9,6 +10,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Illuminate\Support\Facades\Auth;
 
 class BrandExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
@@ -43,6 +45,10 @@ class BrandExport implements FromCollection, ShouldQueue, WithChunkReading, With
 
         if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
+        }
+
+        if (Utility::checkViewPermission('brand')) {
+            $query->where('user_id', Auth::id());
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

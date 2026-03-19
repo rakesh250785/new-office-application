@@ -174,6 +174,10 @@ class UspController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('usp')) {
+                $query->where('user_id', Auth::id());
+            }
+
             // Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $uspData = $query->orderByDesc('id')->paginate($perPage);

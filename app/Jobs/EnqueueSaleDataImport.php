@@ -22,12 +22,15 @@ class EnqueueSaleDataImport implements ShouldQueue
     public array $headers;
     public ?string $tmpDir;
 
-    public function __construct(string $filePath, int $jobId, array $headers = [], ?string $tmpDir = null)
+    public int $userId;
+
+    public function __construct(string $filePath, int $jobId, array $headers = [], ?string $tmpDir = null, int $userId)
     {
         $this->filePath = $filePath;
         $this->jobId = $jobId;
         $this->headers = $headers;
         $this->tmpDir = $tmpDir;
+        $this->userId = $userId;
     }
 
     public function handle()
@@ -41,7 +44,7 @@ class EnqueueSaleDataImport implements ShouldQueue
 
             // Run the import synchronously inside this job.
             // SaleUploadImport must NOT implement ShouldQueue.
-            $import = new SaleUploadImport($this->jobId, $this->headers, $this->tmpDir);
+            $import = new SaleUploadImport($this->jobId, $this->headers, $this->tmpDir, $this->userId);
 
             Excel::import($import, $this->filePath);
 

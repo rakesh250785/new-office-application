@@ -124,6 +124,10 @@ class BrandController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('brand')) {
+                $query->where('user_id', Auth::id());
+            }
+
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $brands = $query->orderByDesc('id')->paginate($perPage);
 

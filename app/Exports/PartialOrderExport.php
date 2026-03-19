@@ -2,9 +2,11 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use App\Models\PartialOrder;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -56,19 +58,19 @@ class PartialOrderExport implements FromQuery, ShouldQueue, WithChunkReading, Wi
             ]);
 
         if (! empty($this->filters['branch_list'])) {
-            $q->where('branch_id',  $this->filters['branch_list']);
+            $q->where('branch_id', $this->filters['branch_list']);
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->where('owner_id',  $this->filters['owner_list']);
+            $q->where('owner_id', $this->filters['owner_list']);
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->where('currency_id',  $this->filters['currency_list']);
+            $q->where('currency_id', $this->filters['currency_list']);
         }
 
         if (! empty($this->filters['principal_list'])) {
-            $q->whereHas('orderDetails', fn ($d) => $d->where('principal_id',  $this->filters['principal_list']));
+            $q->whereHas('orderDetails', fn ($d) => $d->where('principal_id', $this->filters['principal_list']));
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
@@ -76,6 +78,10 @@ class PartialOrderExport implements FromQuery, ShouldQueue, WithChunkReading, Wi
                 Carbon::parse($this->filters['start_date'])->startOfDay(),
                 Carbon::parse($this->filters['end_date'])->endOfDay(),
             ]);
+        }
+
+        if (Utility::checkViewPermission('partial_order')) {
+            $q->where('user_id', Auth::id());
         }
 
         if (! empty($this->filters['search'])) {

@@ -24,7 +24,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Log;
-use Response;
 use View;
 
 class FullOrderController extends Controller
@@ -554,6 +553,7 @@ class FullOrderController extends Controller
                 'overdue_no',
                 'courier_id',
                 'is_order_closed',
+                'user_id',
             ])
                 ->with([
                     'orderDetails',
@@ -596,6 +596,10 @@ class FullOrderController extends Controller
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
+            }
+
+            if (Utility::checkViewPermission('order')) {
+                $query->where('user_id', Auth::id());
             }
 
             // Search filter - mirror getQuotation searching behaviour

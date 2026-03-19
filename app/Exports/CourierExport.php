@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use App\Models\Courier;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -9,7 +10,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-
+use Illuminate\Support\Facades\Auth;
 class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
 {
     use Exportable;
@@ -32,6 +33,10 @@ class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkRe
 
         if (!empty($this->filters['courier_name'])) {
             $query->where('name', 'like', '%' . $this->filters['courier_name'] . '%');
+        }
+
+        if (Utility::checkViewPermission('courier')) {
+            $query->where('user_id', Auth::id());
         }
 
         if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {

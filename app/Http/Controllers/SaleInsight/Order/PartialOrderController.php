@@ -417,6 +417,7 @@ class PartialOrderController extends Controller
                 'customer_order_no',
                 'courier_id',
                 'invoice_id',
+                'user_id',
             ])
                 ->with([
                     'orderDetails',
@@ -450,6 +451,11 @@ class PartialOrderController extends Controller
                         Carbon::parse($data['end_date'])->endOfDay(),
                     ]);
                 })
+                ->when(
+                    ! empty(Utility::checkViewPermission('partial_order')),
+                    fn ($q) => $q->where('user_id', Auth::id()),
+                )
+
                 ->when(! empty($data['search']), function ($q) use ($data) {
                     $term = $data['search'];
                     $q->where(function ($sub) use ($term) {

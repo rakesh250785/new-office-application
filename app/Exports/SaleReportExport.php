@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use App\Models\SaleReport;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -41,6 +43,10 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping
 
         if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
+        }
+
+        if (Utility::checkViewPermission('financial_report')) {
+            $query->where('user_id', Auth::id());
         }
 
         return $query->orderBy('invoice_date', 'desc')->get();

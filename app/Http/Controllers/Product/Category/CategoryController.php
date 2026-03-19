@@ -155,6 +155,10 @@ class CategoryController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('category')) {
+                $query->where('user_id', Auth::id());
+            }
+
             // Paginated API response
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $paginator = $query->orderByDesc('id')->paginate($perPage);

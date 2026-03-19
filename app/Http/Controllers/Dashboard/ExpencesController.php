@@ -598,6 +598,7 @@ class ExpencesController extends Controller
             ];
 
             $query = ExpansesCompanyDetail::with($with)
+                ->when(Utility::checkViewPermission('expenses'), fn ($q) => $q->where('user_id', Auth::id()))
                 ->when(isset($data['id']) && $data['id'] !== '', function ($q) use ($data) {
                     $q->where('id', intval($data['id']));
                 });
@@ -643,6 +644,10 @@ class ExpencesController extends Controller
                         ->orWhereHas('user', fn ($u) => $u->where('user_name', 'like', "%$search%"))
                         ->orWhereHas('linkOrder', fn ($b) => $b->where('purpose_order_no', 'like', "%$search%"));
                 });
+            }
+
+            if (Utility::checkViewPermission('expenses')) {
+                $query->where('user_id', Auth::id());
             }
 
             if (! empty($data['branch_list'])) {

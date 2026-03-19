@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -36,6 +38,9 @@ class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadin
                 $q->where('branch_id', (array) $this->filters['branch_list']);
             })
 
+            ->when(Utility::checkViewPermission('user'), function ($q) {
+                $q->where('user_id', Auth::id());
+            })
             ->when(! empty($this->filters['search']), function ($q) {
                 $search = $this->filters['search'];
 

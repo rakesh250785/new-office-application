@@ -2,12 +2,14 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Illuminate\Support\Facades\Auth;
 
 class QuotationFormatExport implements FromQuery, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
 {
@@ -44,6 +46,10 @@ class QuotationFormatExport implements FromQuery, WithMapping, WithHeadings, Wit
 
         if (!empty($this->filters['branch_list'])) {
             $query->where('branch_id', (array) $this->filters['branch_list']);
+        }
+
+        if (Utility::checkViewPermission('quotation_format')) {
+            $query->where('user_id', Auth::id());
         }
 
         if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {

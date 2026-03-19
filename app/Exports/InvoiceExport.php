@@ -2,9 +2,11 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use App\Models\Invoice;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -62,6 +64,10 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
 
         if (! empty($this->filters['principal_list'])) {
             $q->whereHas('partialOrder.orderDetails', fn ($qq) => $qq->where('principal_id', $this->filters['principal_list']));
+        }
+
+        if (Utility::checkViewPermission('invoice')) {
+            $q->where('user_id', Auth::id());
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

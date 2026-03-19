@@ -2,8 +2,10 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -37,6 +39,10 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
                 'currency:id,name',
                 'branch:id,name',
             ])
+            ->whereHas('product', function ($q) {
+                $q->whereNotNull('part_no')
+                    ->where('part_no', '!=', '');
+            })
             ->whereNull('suppliers.deleted_at');
         // Apply same filters as controller
         if (! empty($this->filters['owner'])) {
@@ -59,6 +65,9 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
         }
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('suppliers.date', [$this->filters['start_date'], $this->filters['end_date']]);
+        }
+        if (Utility::checkViewPermission('supplier')) {
+            $query->where('user_id', Auth::id());
         }
         if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];

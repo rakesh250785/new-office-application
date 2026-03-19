@@ -62,6 +62,7 @@ class CourierController extends Controller
             $addUpdate = [
                 'name' => $data['courier_name'],
                 'branch_id' => $branchId,
+                'user_id' => Auth::id(),
             ];
 
             // Decide condition
@@ -152,6 +153,10 @@ class CourierController extends Controller
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
+            }
+
+            if (Utility::checkViewPermission('courier')) {
+                $query->where('user_id', Auth::id());
             }
 
             // Paginated records

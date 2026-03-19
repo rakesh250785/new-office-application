@@ -107,7 +107,7 @@ class InvoiceController extends Controller
             if (! empty($data['download'])) {
                 $columns = [
                     'invoice_no' => 'Invoice No',
-                    'invoice_date' => 'Invoice Date',
+                    'created_at' => 'Invoice Date',
                     'partial_order_no' => 'Partial Order No',
                     'customer_order_no' => 'Customer Order No',
                     'customer' => 'Customer',
@@ -123,18 +123,11 @@ class InvoiceController extends Controller
                     'url' => $fileUrl,
                 ]);
             }
-
-            $authUser = Auth::user();
-
             // Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
 
-            // ->when(Auth::user()?->role?->name == 'branches', function ($query) use ($authUser) {
-            //     $query->where('branch_id', $authUser->branch_id)
-            //         ->where('user_id', $authUser->id);
-            // });
             // Apply filters (arrays are expected from frontend; cast to array to be safe)
             if (! empty($data['branch_list'])) {
                 $query->where('branch_id', (array) $data['branch_list']);
@@ -156,6 +149,10 @@ class InvoiceController extends Controller
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
                     $q->where('principal_id', (array) $data['principal_list']);
                 });
+            }
+
+            if (Utility::checkViewPermission('invoice')) {
+                $query->where('user_id', Auth::id());
             }
 
             // Date range handling:

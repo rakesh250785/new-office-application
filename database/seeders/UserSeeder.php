@@ -103,8 +103,8 @@ class UserSeeder extends Seeder
                 ['email' => $user['email']],
                 [
                     'name' => $user['name'],
-                    'last_name' => '',
-                    'user_name' => $user['email'],
+                    'last_name' => '',  
+                    'user_name' => $user['email'],  
                     'email' => $user['email'],
                     'cc_email' => $user['email'],
                     'password' => Hash::make($user['password']),

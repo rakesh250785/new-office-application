@@ -78,6 +78,9 @@ class OrderReportController extends Controller
                     $q->where('principal_id', $params['principal_list']);
                 });
             }
+            if (Utility::checkViewPermission('order_report')) {
+                $query->where('user_id', Auth::id());
+            }
 
             # Date range handling:
             if (!empty($params['start_date']) && !empty($params['end_date'])) {

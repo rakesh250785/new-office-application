@@ -23,8 +23,8 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
     protected int $readChunkSize = 2000;
 
     protected int $upsertChunkSize = 1500;
-
-    public function __construct(int $jobId, array $updateCols, ?string $tmpDir = null)
+    public $userId;
+    public function __construct(int $jobId, array $updateCols, ?string $tmpDir = null, $userId)
     {
         $this->jobId = $jobId;
 
@@ -35,6 +35,8 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
         ];
 
         $this->updateCols = array_values(array_intersect($allowed, array_map('strtolower', $updateCols)));
+
+        $this->userId = $userId;
     }
 
     public function collection(Collection $rows)
@@ -91,6 +93,7 @@ class SaleUploadImport implements ToCollection, WithChunkReading, WithHeadingRow
                 'amount' => $amount,
                 'created_at' => $now,
                 'updated_at' => $now,
+                'user_id'=> $this->userId,
             ];
 
             $validRowCount++;

@@ -129,6 +129,10 @@ class ReasonController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('reason')) {
+                $query->where('user_id', Auth::id());
+            }
+
             // Paginate
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $reasonData = $query->orderByDesc('id')->paginate($perPage);

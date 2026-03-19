@@ -2,9 +2,11 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -42,6 +44,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
             'customer_order_no',
             'courier_id',
             'is_order_closed',
+            'user_id',
         ];
 
         $q = Order::query()
@@ -79,6 +82,10 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                 Carbon::parse($this->filters['start_date'])->startOfDay(),
                 Carbon::parse($this->filters['end_date'])->endOfDay(),
             ]);
+        }
+
+        if (Utility::checkViewPermission('order_report')) {
+            $q->where('user_id', Auth::id());
         }
 
         if (! empty($this->filters['search'])) {
@@ -159,7 +166,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                     break;
             }
         }
-
+        
         return $mapped;
     }
 

@@ -29,6 +29,7 @@ class SaleReport extends Model
         'qty',
         'amount',
         'status',
+        'user_id',
     ];
 
     protected $casts = [

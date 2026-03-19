@@ -94,7 +94,7 @@ class QuotationDetailController extends Controller
 
                 'shipping_address' => 'required|string',
                 'shipping_city' => 'required|string|max:255',
-                'shipping_state_id' => 'required|integer|exists:states,id',
+                'shipping_state_id' => 'sometimes|nullable|integer|exists:states,id',
                 'shipping_pin_code' => 'required|string|max:10',
                 'shipping_mobile' => 'required|string|max:15',
                 'shipping_email' => 'required|email|max:255',
@@ -482,6 +482,9 @@ class QuotationDetailController extends Controller
                     });
                 })
                 ->orderByDesc('id');
+            if (Utility::checkViewPermission('quotation_detail')) {
+                $query->where('user_id', Auth::id());
+            }
 
             $quotationData = $query->paginate($perPage);
 

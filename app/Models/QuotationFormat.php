@@ -14,6 +14,7 @@ class QuotationFormat extends Model
         'billing_address',
         'branch_address',
         'branch_id',
+        'user_id',
         'email',
         'mobile',
         'notes',

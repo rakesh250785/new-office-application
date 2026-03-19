@@ -8,6 +8,7 @@ use App\Models\Quotation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Exception;
 class QuotationReportController extends Controller
 {
@@ -107,6 +108,11 @@ class QuotationReportController extends Controller
                     });
                 })
                 ->orderByDesc('id');
+
+                if (Utility::checkViewPermission('quotation_report')) {
+                    $query->where('user_id', Auth::id());
+                }
+    
 
             $quotationData = $query->paginate($perPage);
 

@@ -67,8 +67,6 @@ class ExpansesFullExport implements FromCollection, WithEvents
 
         // Data rows
         foreach ($this->rows as $rec) {
-            logger('ckckckckck');
-            logger($rec);
             $t = $rec['travel_expanses'] ?? [];
             $p = $rec['link_order'] ?? [];
 

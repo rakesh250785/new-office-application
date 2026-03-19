@@ -16,6 +16,7 @@ use App\Models\SaleReport;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -92,7 +93,8 @@ class PerformanceSummaryController extends Controller
                 ->when($data['branch'] ?? null, fn ($q, $v) => $q->where('branch', $v))
                 ->when($data['principal'] ?? null, fn ($q, $v) => $q->where('principal_name', $v))
                 ->when($data['category'] ?? null, fn ($q, $v) => $q->where('category', $v))
-                ->when($data['authorised'] ?? null, fn ($q, $v) => $q->where('authorised', $v));
+                ->when($data['authorised'] ?? null, fn ($q, $v) => $q->where('authorised', $v))
+                ->when(Utility::checkViewPermission('financial_report'), fn ($q) => $q->where('user_id', Auth::id()));
 
             if (! empty($data['date_from'])) {
                 $query->whereDate('invoice_date', '>=', $data['date_from']);
@@ -233,7 +235,7 @@ class PerformanceSummaryController extends Controller
             ]);
 
             // pass headers as-is; worker should stream/process rows (avoid loading here)
-            EnqueueSaleDataImport::dispatch($fullPath, $job->id, $headersNormalized);
+            EnqueueSaleDataImport::dispatch($fullPath, $job->id, $headersNormalized, null, Auth::id());
 
             return Utility::apiSuccess('File uploaded and queued for processing.', ['job_id' => $job->id]);
         } catch (Throwable $ex) {
@@ -247,7 +249,7 @@ class PerformanceSummaryController extends Controller
     {
         try {
             $filters = $request->only(['q', 'date_from', 'date_to', 'branch_list']);
-            $fileName = 'performance_reports_'.now()->format('Ymd_His').'.xlsx';
+            $fileName = 'financial_report_'.now()->format('Ymd_His').'.xlsx';
 
             return Excel::download(new SaleReportExport($filters), $fileName);
         } catch (Exception $ex) {
@@ -445,6 +447,10 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
+            if (Utility::checkViewPermission('performance_report')) {
+                $query->where('user_id', Auth::id());
+            }
+
             $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('branch')
@@ -498,8 +504,6 @@ class PerformanceSummaryController extends Controller
             */
             if ($download) {
 
-                logger($rows);
-
                 $filename = 'branch_summary_'.now()->format('Ymd_His').'.xlsx';
                 (new BranchSummaryExport($headers, $rows, $totals))
                     ->queue("exports/{$filename}", 'public');
@@ -524,7 +528,7 @@ class PerformanceSummaryController extends Controller
                 'total' => $totals,
             ], 200);
 
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
 
             Log::error($ex);
 
@@ -676,6 +680,10 @@ class PerformanceSummaryController extends Controller
                 $query->where('month', $monthNames[(int) $month]);
             } elseif ($quarter && ! empty($quarterMonths)) {
                 $query->whereIn('month', $quarterMonths);
+            }
+
+            if (Utility::checkViewPermission('performance_report')) {
+                $query->where('user_id', Auth::id());
             }
 
             $baseQuery = (clone $query)
@@ -899,6 +907,9 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
+            if (Utility::checkViewPermission('performance_report')) {
+                $query->where('user_id', Auth::id());
+            }
             $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('customer_name')
@@ -1116,6 +1127,10 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
+            if (Utility::checkViewPermission('performance_report')) {
+                $query->where('user_id', Auth::id());
+            }
+
             $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('category')
@@ -1330,6 +1345,9 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
+            if (Utility::checkViewPermission('performance_report')) {
+                $query->where('user_id', Auth::id());
+            }
             $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
                 ->groupBy('authorised')

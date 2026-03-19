@@ -2,20 +2,24 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class UspExport implements FromCollection, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+class UspExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
     use Exportable;
 
     protected $filters;
+
     protected $columns;
+
     protected $modelClass;
 
     public function __construct(array $filters, array $columns, string $modelClass)
@@ -34,43 +38,47 @@ class UspExport implements FromCollection, WithMapping, WithHeadings, WithChunkR
             ->with(['branch:id,name', 'principal:id,type', 'category:id,name'])
             ->whereNull('deleted_at');
 
-        # Apply search
-        if (!empty($this->filters['search'])) {
+        // Apply search
+        if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('usp_type', 'like', "%$search%")
                     ->orWhere('packing_details', 'like', "%$search%")
                     ->orWhere('usp_brand', 'like', "%$search%")
-                    ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"))
-                    ->orWhereHas('principal', fn($b) => $b->where('type', 'like', "%$search%"))
-                    ->orWhereHas('categoryType', fn($b) => $b->where('name', 'like', "%$search%"));
+                    ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%$search%"))
+                    ->orWhereHas('principal', fn ($b) => $b->where('type', 'like', "%$search%"))
+                    ->orWhereHas('categoryType', fn ($b) => $b->where('name', 'like', "%$search%"));
             });
         }
 
-        # Branch filter
-        if (!empty($this->filters['branch_list'])) {
+        // Branch filter
+        if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        # Principal filter
-        if (!empty($this->filters['principal_list'])) {
+        // Principal filter
+        if (! empty($this->filters['principal_list'])) {
             $query->where('principal_id', $this->filters['principal_list']);
         }
 
-        # Category filter
-        if (!empty($this->filters['category_list'])) {
+        // Category filter
+        if (! empty($this->filters['category_list'])) {
             $query->where('category_id', $this->filters['category_list']);
         }
 
-        # Date range filter
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (Utility::checkViewPermission('usp')) {
+            $query->where('user_id', Auth::id());
+        }
+
+        // Date range filter
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('created_at', [
-                $this->filters['start_date'] . ' 00:00:00',
-                $this->filters['end_date'] . ' 23:59:59',
+                $this->filters['start_date'].' 00:00:00',
+                $this->filters['end_date'].' 23:59:59',
             ]);
         }
 
-        # Collect data in chunks
+        // Collect data in chunks
         $all = collect();
         $query->orderBy('id')->chunk(5000, function ($rows) use (&$all) {
             foreach ($rows as $row) {
@@ -88,7 +96,7 @@ class UspExport implements FromCollection, WithMapping, WithHeadings, WithChunkR
     {
         return collect($this->columns)
             ->keys()
-            ->map(fn($key) => data_get($row, $key, ''))
+            ->map(fn ($key) => data_get($row, $key, ''))
             ->toArray();
     }
 

@@ -2,6 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
 class Utility
 {
     public static function apiSuccess($message = 'Success', $data = [], $code = 200)
@@ -30,5 +33,18 @@ class Utility
         $words = ucfirst($f->format($amount));
 
         return $words.' '.$currency.'  only ';
+    }
+
+    public static function checkViewPermission($moduleName)
+    {
+        $authUserId = Auth::id();
+
+        return User::whereKey($authUserId)
+            ->whereHas('role.permissions', function ($query) use ($moduleName) {
+                $query->whereIn('name', [
+                    'view_own_'.$moduleName,
+                ]);
+            })
+            ->exists();
     }
 }

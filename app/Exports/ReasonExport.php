@@ -2,20 +2,24 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class ReasonExport implements FromCollection, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+class ReasonExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
     use Exportable;
 
     protected array $filters;
+
     protected array $columns;
+
     protected string $modelClass;
 
     public function __construct(array $filters, array $columns, string $modelClass)
@@ -31,23 +35,27 @@ class ReasonExport implements FromCollection, WithMapping, WithHeadings, WithChu
             ->with('branch:id,name')
             ->whereNull('deleted_at');
 
-        # Apply filters
-        if (!empty($this->filters['search'])) {
+        // Apply filters
+        if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                    ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
+                    ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%$search%"));
             });
         }
 
-        if (!empty($this->filters['branch_list'])) {
+        if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (Utility::checkViewPermission('reason')) {
+            $query->where('user_id', Auth::id());
+        }
+
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('created_at', [
-                $this->filters['start_date'] . ' 00:00:00',
-                $this->filters['end_date'] . ' 23:59:59',
+                $this->filters['start_date'].' 00:00:00',
+                $this->filters['end_date'].' 23:59:59',
             ]);
         }
 
@@ -64,7 +72,7 @@ class ReasonExport implements FromCollection, WithMapping, WithHeadings, WithChu
     public function map($row): array
     {
         return collect(array_keys($this->columns))
-            ->map(fn($key) => data_get($row, $key, ''))
+            ->map(fn ($key) => data_get($row, $key, ''))
             ->toArray();
     }
 

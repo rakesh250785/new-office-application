@@ -139,6 +139,10 @@ class PrincipalController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('principal')) {
+                $query->where('user_id', Auth::id());
+            }
+
             // Pagination
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $PrincipalData = $query->orderByDesc('id')->paginate($perPage);

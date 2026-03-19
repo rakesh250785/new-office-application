@@ -2,22 +2,27 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
+use App\Models\Parameter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use App\Models\Parameter;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class CategoryExport implements FromCollection, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+class CategoryExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
     use Exportable;
 
     protected array $filters;
+
     protected array $columns;
+
     protected string $modelClass;
+
     protected array $paramMap = [];
 
     public function __construct(array $filters, array $columns, string $modelClass)
@@ -34,7 +39,7 @@ class CategoryExport implements FromCollection, WithMapping, WithHeadings, WithC
             ->whereNull('deleted_at');
 
         //  Search filter (including parameter names)
-        if (!empty($this->filters['search'])) {
+        if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
             $paramIds = Parameter::where('parameter_name', 'like', "%$search%")
                 ->pluck('id')
@@ -43,32 +48,36 @@ class CategoryExport implements FromCollection, WithMapping, WithHeadings, WithC
             $query->where(function ($q) use ($search, $paramIds) {
                 $q->where('name', 'like', "%$search%")
                     ->orWhere('description', 'like', "%$search%")
-                    ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
+                    ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%$search%"));
 
-                if (!empty($paramIds)) {
+                if (! empty($paramIds)) {
                     foreach ($paramIds as $id) {
-                        $q->orWhereRaw("FIND_IN_SET(?, parameter_field)", [$id]);
+                        $q->orWhereRaw('FIND_IN_SET(?, parameter_field)', [$id]);
                     }
                 }
             });
         }
 
+        if (Utility::checkViewPermission('category')) {
+            $query->where('user_id', Auth::id());
+        }
+
         //  Branch filter
-        if (!empty($this->filters['branch_list'])) {
+        if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
         //  Date range filter
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('created_at', [
-                $this->filters['start_date'] . ' 00:00:00',
-                $this->filters['end_date'] . ' 23:59:59',
+                $this->filters['start_date'].' 00:00:00',
+                $this->filters['end_date'].' 23:59:59',
             ]);
         }
 
         //  Fetch parameter map once (for all IDs)
         $allParamIds = $query->pluck('parameter_field')
-            ->flatMap(fn($field) => explode(',', $field ?? ''))
+            ->flatMap(fn ($field) => explode(',', $field ?? ''))
             ->filter()
             ->unique()
             ->toArray();
@@ -84,7 +93,7 @@ class CategoryExport implements FromCollection, WithMapping, WithHeadings, WithC
                 // Attach parameter_fields dynamically
                 $ids = array_filter(array_map('intval', explode(',', $row->parameter_field ?? '')));
                 $row->parameter_fields = collect($ids)
-                    ->map(fn($id) => $this->paramMap[$id] ?? null)
+                    ->map(fn ($id) => $this->paramMap[$id] ?? null)
                     ->filter()
                     ->implode(', ');
 

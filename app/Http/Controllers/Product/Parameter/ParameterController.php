@@ -156,6 +156,10 @@ class ParameterController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('parameter')) {    
+                $query->where('user_id', Auth::id());
+            }
+
             // Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $parameterData = $query->orderByDesc('id')->paginate($perPage);

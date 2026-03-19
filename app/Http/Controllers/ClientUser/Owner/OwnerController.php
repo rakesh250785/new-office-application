@@ -140,6 +140,10 @@ class OwnerController extends Controller
                 ]);
             }
 
+            if (Utility::checkViewPermission('owner')) {
+                $query->where('user_id', Auth::id());
+            }
+
             // Paginate results
             $perPage = $data['per_page'] ?? config('constant.per_page', 15);
             $notificationData = $query->orderByDesc('id')->paginate($perPage);

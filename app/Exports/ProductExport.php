@@ -2,10 +2,12 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -104,6 +106,9 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
         }
         if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
+        }
+        if (Utility::checkViewPermission('product')) {
+            $query->where('user_id', Auth::id());
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

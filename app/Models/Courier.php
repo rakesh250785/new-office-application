@@ -11,6 +11,7 @@ class Courier extends Model
         'name',
         'code',
         'branch_id',
+        'user_id',
         'created_at',
         'updated_at',
         'deleted_at',

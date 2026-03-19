@@ -11,6 +11,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Log;
@@ -71,7 +72,7 @@ class UserController extends Controller
 
             // Make payload
             $userPayload = [
-                'team_type' => $data['team_type'],
+                'team_type' => $data['team_type'] ?? null,
                 'name' => $data['name'],
                 'last_name' => $data['last_name'],
                 'user_name' => $data['user_name'],
@@ -79,6 +80,7 @@ class UserController extends Controller
                 'cc_email' => $data['cc_email'],
                 'branch_id' => $data['branch_id'],
                 'role_id' => $data['role_id'],
+                'user_id' => Auth::id(),
             ];
 
             // Bcrypt password
@@ -125,7 +127,7 @@ class UserController extends Controller
             // Return response
             return Utility::apiSuccess($message, [], 200);
         } catch (Exception $ex) {
-            Log::error('addOrUpdateUser Error: '.$ex->getMessage());
+            Log::error('addOrUpdateUser Error: '.$ex);
 
             return Utility::apiError('Something went wrong.', ['exception' => $ex->getMessage()], 500);
         }
@@ -188,6 +190,10 @@ class UserController extends Controller
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
+            }
+
+            if (Utility::checkViewPermission('user')) {
+                $query->where('user_id', Auth::id());
             }
 
             // Get paginated result

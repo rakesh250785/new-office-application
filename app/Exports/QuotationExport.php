@@ -2,9 +2,11 @@
 
 namespace App\Exports;
 
+use App\Helpers\Utility;
 use App\Models\QuotationDetail;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -45,27 +47,31 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
         /* ---------------- FILTERS ---------------- */
 
         if (! empty($this->filters['branch_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('branch_id',  $this->filters['branch_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('branch_id', $this->filters['branch_list'])
             );
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('owner_id',  $this->filters['owner_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('owner_id', $this->filters['owner_list'])
             );
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('currency_id',  $this->filters['currency_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('currency_id', $this->filters['currency_list'])
             );
         }
 
         if (! empty($this->filters['status_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('is_order_pending',  $this->filters['status_list'])
+            $q->whereHas('quotation', fn ($s) => $s->where('is_order_pending', $this->filters['status_list'])
             );
         }
 
         if (! empty($this->filters['principal_list'])) {
-            $q->where('principal_id',  $this->filters['principal_list']);
+            $q->where('principal_id', $this->filters['principal_list']);
+        }
+
+        if (Utility::checkViewPermission('quotation_report')) {
+            $q->where('user_id', Auth::id());
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

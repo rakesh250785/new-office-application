@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Vendor\Supplier;
 
+use App\Exports\SupplierExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
@@ -18,7 +19,6 @@ class SupplierController extends Controller
     public function addUpdateSupplier(Request $request)
     {
         try {
-
             $data = $request->only([
                 'product_id',
                 'date',
@@ -104,6 +104,35 @@ class SupplierController extends Controller
             $page = max((int) $request->input('page', 1), 1);
             $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
             $search = $request->input('search', '');
+            $data = $request->only(['search', 'download', 'column', 'per_page', 'start_date', 'end_date', 'principal', 'brand_list', 'source', 'currency']);
+
+            if (! empty($data['download'])) {
+                $columns = [
+                    'principal.type' => 'Principal',
+                    'product.part_no' => 'Part No.',
+                    'product.description' => 'Description',
+                    'source.name' => 'Source',
+                    'currency.name' => 'Currency',
+                    'rate_fc' => 'Rate FC',
+                    'factor_fc' => 'Factor FC',
+                    'total_cost' => 'Total Cost',
+                    'discount' => 'Discount',
+                    'net_price' => 'Net Price',
+                    'profit' => 'Profit',
+                    'custom_price' => 'custom_price',
+                    'created_at' => 'Date',
+                ];
+
+                $filename = 'supplier_'.now()->format('Ymd_His').'.xlsx';
+
+                (new SupplierExport($data, $columns, Supplier::class))
+                    ->queue("exports/{$filename}", 'public');
+
+                return Utility::apiSuccess('Export started. You will get a download link soon.', [
+                    'file' => $filename,
+                    'url' => url("storage/exports/{$filename}"),
+                ]);
+            }
 
             $query = Supplier::query()
                 ->with([
@@ -147,6 +176,10 @@ class SupplierController extends Controller
 
             if ($request->start_date && $request->end_date) {
                 $query->whereBetween('suppliers.date', [$request->start_date, $request->end_date]);
+            }
+
+            if (Utility::checkViewPermission('supplier')) {
+                $query->where('suppliers.user_id', Auth::id());
             }
 
             /*

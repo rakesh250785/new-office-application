@@ -27,6 +27,7 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
         'token',
         'role_id',
+        'user_id',
         'profile_image',
         'team_type',
         'active_jwt'

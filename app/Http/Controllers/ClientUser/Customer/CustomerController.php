@@ -108,7 +108,7 @@ class CustomerController extends Controller
                     'other_state' => $data['other_state'] ?? null,
                     'email_id' => $data['email_id'] ?? null,
                     'branch_id' => Auth::user()['branch_id'],
-                    'user_id' => Auth::user()['id'],
+                    'user_id' => Auth::id(),
                 ]
             );
 
@@ -206,6 +206,10 @@ class CustomerController extends Controller
             // Apply owner filter
             if (! empty($data['owner_list'])) {
                 $query->where('owner_id', $data['owner_list']);
+            }
+
+            if (Utility::checkViewPermission('customer')) {
+                $query->where('user_id', Auth::id());
             }
 
             // Search across fields & relations

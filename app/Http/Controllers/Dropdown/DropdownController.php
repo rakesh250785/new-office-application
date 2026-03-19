@@ -320,6 +320,91 @@ class DropdownController extends Controller
     public function getCompanyDD(Request $request)
     {
         try {
+            $query = Customer::whereNull('deleted_at')
+                ->select(
+                    'id',
+                    'customer_name',
+                    'company_name',
+                    'address',
+                    'owner_id',
+                    'state_id',
+                    'other_state',
+                    'city',
+                    'email_id',
+                    'pin_code',
+                    'mobile_no',
+                    'landline_no',
+                    'country_id',
+                    'gst_number',
+                    'classification_id'
+                )
+                ->with([
+                    'owner:id,name',
+                    'state:id,name',
+                    'country:id,name',
+                ])
+                ->orderBy('id');
+
+            return response()->stream(function () use ($query) {
+                echo '{"status":true,"code":200,"message":"DD getCompanyDD","data":[';
+
+                $first = true;
+
+                $query->chunk(300, function ($rows) use (&$first) {
+
+                    foreach ($rows as $row) {
+
+                        if (! $first) {
+                            echo ',';
+                        }
+
+                        echo json_encode([
+                            'id' => $row->id,
+                            'customer_name' => $row->customer_name,
+                            'company_name' => $row->company_name,
+                            'address' => $row->address,
+                            'owner_id' => $row->owner_id,
+                            'state_id' => $row->state_id,
+                            'other_state' => $row->other_state,
+                            'city' => $row->city,
+                            'email_id' => $row->email_id,
+                            'pin_code' => $row->pin_code,
+                            'mobile_no' => $row->mobile_no,
+                            'landline_no' => $row->landline_no,
+                            'country_id' => $row->country_id,
+                            'gst_number' => $row->gst_number,
+                            'classification_id' => $row->classification_id,
+                            'owner' => $row->owner,
+                            'state' => $row->state,
+                            'country' => $row->country,
+                        ]);
+
+                        $first = false;
+                    }
+                    ob_flush();
+                    flush();
+                });
+                echo ']}';
+
+            }, 200, [
+                'Content-Type' => 'application/json',
+                'Cache-Control' => 'no-cache',
+                'X-Accel-Buffering' => 'no',
+            ]);
+
+        } catch (Exception $ex) {
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Something went wrong',
+                'error' => $ex->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getCompanyDDOld(Request $request)
+    {
+        try {
             $search = trim((string) $request->input('search', ''));
             $authUser = Auth::user();
             $query = Customer::whereNull('deleted_at')
@@ -336,7 +421,7 @@ class DropdownController extends Controller
                     'pin_code',
                     'mobile_no',
                     'landline_no',
-                    'country_id',   
+                    'country_id',
                     'gst_number',
                     'classification_id'
                 )

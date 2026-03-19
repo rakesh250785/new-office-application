@@ -333,16 +333,17 @@ class ProductController extends Controller
             if (! empty($data['brand_list'])) {
                 $query->where('brand_id', $data['brand_list']);
             }
-            if (! empty($data['branch_list'])) {
-                $query->where('branch_id', $data['branch_list']);
-            }
-
+           
             // Date filter
             if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay(),
                 ]);
+            }
+
+            if (Utility::checkViewPermission('product')) {
+                $query->where('user_id', Auth::id());
             }
 
             $perPage = (int) ($data['per_page'] ?? 15);

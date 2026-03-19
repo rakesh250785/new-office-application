@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use DB;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class QuotationSummaryController extends Controller
@@ -38,8 +39,9 @@ class QuotationSummaryController extends Controller
             if (! empty($validated['branch_id'])) {
                 $q->where('branch_id', $validated['branch_id']);
             }
-            if (! empty($validated['user_id'])) {
-                $q->where('user_id', $validated['user_id']);
+
+            if (Utility::checkViewPermission('quotation_summary')) {
+                $q->where('user_id', Auth::id());
             }
 
             // Aggregate query (single hit)
@@ -149,6 +151,10 @@ class QuotationSummaryController extends Controller
             $query->whereDate('q.created_at', '<=', $to);
         }
 
+        if (Utility::checkViewPermission('quotation_summary')) {
+            $query->where('q.user_id', Auth::id());
+        }
+
         $rows = $query->get();
 
         // Chart-ready response
@@ -215,6 +221,10 @@ class QuotationSummaryController extends Controller
                     }
                     if ($branchId) {
                         $q->where('branch_id', $branchId);
+                    }
+
+                    if (Utility::checkViewPermission('quotation_summary')) {
+                        $q->where('user_id', Auth::id());
                     }
                 },
             ], 'total_amount')
@@ -308,6 +318,11 @@ class QuotationSummaryController extends Controller
                 ->when(! empty($data['branch_id']), function ($q) use ($branchId) {
                     $q->where('quotation_details.branch_id', $branchId);
                 })
+
+                ->when(Utility::checkViewPermission('quotation_summary'), function ($q) {
+                    $q->where('quotation_details.user_id', Auth::id());
+                })
+
                 ->selectRaw("DATE_FORMAT(quotation_details.created_at, '%Y-%m') as ym")
                 ->selectRaw('SUM(quotation_details.total) as total_amount')
                 ->selectRaw('pt.type as ptype')
@@ -435,21 +450,4 @@ class QuotationSummaryController extends Controller
 
         return 10 * $base;
     }
-
-    // public function filterQuotationSummary(Request $request)
-    // {
-    //     try {
-    //         $this->quotationStatusReport(Request::createFrom($request));
-    //         $this->quotationBranchReport(Request::createFrom($request));
-    //         $this->quotationOwnerReport(Request::createFrom($request));
-    //         $this->quotationPrincipalDealerReport(Request::createFrom($request));
-
-    //         return Utility::apiSuccess('Quotation summary', [], 200);
-
-    //     } catch (Exception $ex) {
-    //         Log::error($ex);
-
-    //         return Utility::apiError('Error filterQuotationSummary', ['exception' => $ex->getMessage()]);
-    //     }
-    // }
 }

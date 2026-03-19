@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->double('total_amount');
             $table->unsignedBigInteger('branch_id');
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger(column: 'reason_status_id');
+            $table->unsignedBigInteger('reason_status_id');
             $table->softDeletes();
             $table->timestamps();
         });
