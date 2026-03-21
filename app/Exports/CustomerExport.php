@@ -5,13 +5,13 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Illuminate\Support\Facades\Auth;
 
 class CustomerExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
 {
@@ -63,8 +63,21 @@ class CustomerExport implements FromCollection, ShouldQueue, WithChunkReading, W
             $query->where('owner_id', $this->filters['owner_list']);
         }
 
-        if (Utility::checkViewPermission('customer')) {
-            $query->where('user_id', Auth::id());
+        if (
+            Utility::checkViewPermission('customer') ||
+            Utility::checkBranchesViewPermission('customer')
+        ) {
+
+            $query->where(function ($q) {
+
+                if (Utility::checkViewPermission('customer')) {
+                    $q->orWhere('user_id', Auth::id());
+                }
+
+                if (Utility::checkBranchesViewPermission('customer')) {
+                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                }
+            });
         }
 
         // search across fields & relations

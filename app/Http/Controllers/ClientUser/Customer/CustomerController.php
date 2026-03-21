@@ -208,8 +208,22 @@ class CustomerController extends Controller
                 $query->where('owner_id', $data['owner_list']);
             }
 
-            if (Utility::checkViewPermission('customer')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('customer') ||
+                Utility::checkBranchesViewPermission('customer')
+            ) {
+            
+                $query->where(function ($q) {
+            
+                    if (Utility::checkViewPermission('customer')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+            
+                    if (Utility::checkBranchesViewPermission('customer')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+            
+                });
             }
 
             // Search across fields & relations

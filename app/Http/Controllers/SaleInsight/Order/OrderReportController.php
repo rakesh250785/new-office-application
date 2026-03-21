@@ -78,8 +78,22 @@ class OrderReportController extends Controller
                     $q->where('principal_id', $params['principal_list']);
                 });
             }
-            if (Utility::checkViewPermission('order_report')) {
-                $query->where('user_id', Auth::id());
+            
+            if (
+                Utility::checkViewPermission('order_report') ||
+                Utility::checkBranchesViewPermission('order_report')
+            ) {
+    
+                $query->where(function ($q) {
+    
+                    if (Utility::checkViewPermission('order_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+    
+                    if (Utility::checkBranchesViewPermission('order_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+                });
             }
 
             # Date range handling:

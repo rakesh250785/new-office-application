@@ -372,6 +372,9 @@ class PartialOrderController extends Controller
                 ]);
             }
 
+            $canView = Utility::checkViewPermission('partial_order');
+            $canBranch = Utility::checkBranchesViewPermission('partial_order');
+
             $query = PartialOrder::select([
                 'id',
                 'unique_order_no',
@@ -450,10 +453,21 @@ class PartialOrderController extends Controller
                         Carbon::parse($data['start_date'])->startOfDay(),
                         Carbon::parse($data['end_date'])->endOfDay(),
                     ]);
-                })
-                ->when(
-                    ! empty(Utility::checkViewPermission('partial_order')),
-                    fn ($q) => $q->where('user_id', Auth::id()),
+                })->when(
+                    $canView || $canBranch,
+                    function ($q) use ($canView, $canBranch) {
+                        $q->where(function ($q) use ($canView, $canBranch) {
+
+                            if ($canView) {
+                                $q->orWhere('user_id', Auth::id());
+                            }
+
+                            if ($canBranch) {
+                                $q->orWhere('branch_id', Auth::user()->branch_id);
+                            }
+
+                        });
+                    }
                 )
 
                 ->when(! empty($data['search']), function ($q) use ($data) {

@@ -66,8 +66,20 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
             $q->whereHas('partialOrder.orderDetails', fn ($qq) => $qq->where('principal_id', $this->filters['principal_list']));
         }
 
-        if (Utility::checkViewPermission('invoice')) {
-            $q->where('user_id', Auth::id());
+        if (
+            Utility::checkViewPermission('invoice') ||
+            Utility::checkBranchesViewPermission('invoice')
+        ) {
+            $q->where(function ($q) {
+
+                if (Utility::checkViewPermission('invoice')) {
+                    $q->orWhere('user_id', Auth::id());
+                }
+
+                if (Utility::checkBranchesViewPermission('invoice')) {
+                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                }
+            });
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

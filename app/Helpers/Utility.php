@@ -47,4 +47,17 @@ class Utility
             })
             ->exists();
     }
+
+    public static function checkBranchesViewPermission($moduleName)
+    {
+        $authUserId = Auth::id();
+
+        return User::whereKey($authUserId)
+            ->whereHas('role.permissions', function ($query) use ($moduleName) {
+                $query->whereIn('name', [
+                    'view_branches_'.$moduleName,
+                ]);
+            })
+            ->exists();
+    }
 }

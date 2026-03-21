@@ -482,8 +482,22 @@ class QuotationDetailController extends Controller
                     });
                 })
                 ->orderByDesc('id');
-            if (Utility::checkViewPermission('quotation_detail')) {
-                $query->where('user_id', Auth::id());
+
+            if (
+                Utility::checkViewPermission('quotation_detail') ||
+                Utility::checkBranchesViewPermission('quotation_detail')
+            ) {
+    
+                $query->where(function ($q) {
+    
+                    if (Utility::checkViewPermission('quotation_detail')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+    
+                    if (Utility::checkBranchesViewPermission('quotation_detail')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+                });
             }
 
             $quotationData = $query->paginate($perPage);

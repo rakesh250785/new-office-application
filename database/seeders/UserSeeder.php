@@ -112,6 +112,7 @@ class UserSeeder extends Seeder
                     'role_id' => $roleId,
                     'created_at' => now(),
                     'updated_at' => now(),
+                    'user_id'=> 1,
                 ]
             );
         }

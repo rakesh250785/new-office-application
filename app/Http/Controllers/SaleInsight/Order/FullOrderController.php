@@ -598,8 +598,21 @@ class FullOrderController extends Controller
                 ]);
             }
 
-            if (Utility::checkViewPermission('order')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('order') ||
+                Utility::checkBranchesViewPermission('order')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('order')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('order')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+                });
             }
 
             // Search filter - mirror getQuotation searching behaviour

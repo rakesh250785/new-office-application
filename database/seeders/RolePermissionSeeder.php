@@ -24,6 +24,7 @@ class RolePermissionSeeder extends Seeder
             'quotation_summary' => ['view_own_quotation_summary', 'view_quotation_summary'],
             'quotation_detail' => [
                 'view_own_quotation_detail',
+                'view_branches_quotation_detail',
                 'view_quotation_detail',
                 'add_quotation_detail',
                 'export_quotation_detail',
@@ -34,9 +35,10 @@ class RolePermissionSeeder extends Seeder
                 'edit_quotation_detail',
                 'delete_quotation_detail',
             ],
-            'quotation_report' => ['view_own_quotation_report', 'view_quotation_report', 'export_quotation_report'],
+            'quotation_report' => ['view_own_quotation_report', 'view_branches_quotation_report', 'view_quotation_report', 'export_quotation_report'],
             'order' => [
                 'view_own_order',
+                'view_branches_order',
                 'view_order',
                 'export_order',
                 'add_order',
@@ -49,6 +51,7 @@ class RolePermissionSeeder extends Seeder
             ],
             'partial_order' => [
                 'view_own_partial_order',
+                'view_branches_partial_order',
                 'view_partial_order',
                 'edit_partial_order',
                 'delete_partial_order',
@@ -57,12 +60,13 @@ class RolePermissionSeeder extends Seeder
             ],
             'order_report' => [
                 'view_own_order_report',
+                'view_branches_order_report',
                 'view_order_report',
                 'export_order_report',
             ],
-            'invoice' => ['view_own_invoice', 'view_invoice', 'export_invoice', 'view_pod_doc', 'upload_pod_doc'],
+            'invoice' => ['view_own_invoice', 'view_branches_invoice' ,'view_invoice', 'export_invoice', 'view_pod_doc', 'upload_pod_doc'],
             'owner' => ['view_own_owner', 'view_owner', 'export_owner', 'edit_owner', 'delete_owner', 'add_owner'],
-            'customer' => ['view_own_customer', 'view_customer', 'export_customer', 'edit_customer', 'delete_customer', 'add_customer'],
+            'customer' => ['view_own_customer', 'view_branches_customer' ,'view_customer', 'export_customer', 'edit_customer', 'delete_customer', 'add_customer'],
             'user' => ['view_own_user', 'view_user', 'export_user', 'edit_user', 'delete_user', 'add_user'],
             'role_access' => ['view_role_access', 'edit_role_access', 'delete_role_access', 'add_role_access'],
             'product' => [

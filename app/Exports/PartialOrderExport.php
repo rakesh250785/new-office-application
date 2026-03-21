@@ -80,8 +80,20 @@ class PartialOrderExport implements FromQuery, ShouldQueue, WithChunkReading, Wi
             ]);
         }
 
-        if (Utility::checkViewPermission('partial_order')) {
-            $q->where('user_id', Auth::id());
+        if (
+            Utility::checkViewPermission('partial_order') ||
+            Utility::checkBranchesViewPermission('partial_order')
+        ) {
+            $q->where(function ($q) {
+
+                if (Utility::checkViewPermission('partial_order')) {
+                    $q->orWhere('user_id', Auth::id());
+                }
+
+                if (Utility::checkBranchesViewPermission('partial_order')) {
+                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                }
+            });
         }
 
         if (! empty($this->filters['search'])) {

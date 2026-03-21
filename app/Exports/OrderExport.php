@@ -84,8 +84,21 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
             ]);
         }
 
-        if (Utility::checkViewPermission('order_report')) {
-            $q->where('user_id', Auth::id());
+        if (
+            Utility::checkViewPermission('order_report') ||
+            Utility::checkBranchesViewPermission('order_report')
+        ) {
+
+            $q->where(function ($q) {
+
+                if (Utility::checkViewPermission('order_report')) {
+                    $q->orWhere('user_id', Auth::id());
+                }
+
+                if (Utility::checkBranchesViewPermission('order_report')) {
+                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                }
+            });
         }
 
         if (! empty($this->filters['search'])) {
@@ -166,7 +179,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                     break;
             }
         }
-        
+
         return $mapped;
     }
 

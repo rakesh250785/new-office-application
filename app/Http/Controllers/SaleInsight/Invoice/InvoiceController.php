@@ -155,6 +155,22 @@ class InvoiceController extends Controller
                 $query->where('user_id', Auth::id());
             }
 
+            if (
+                Utility::checkViewPermission('invoice') ||
+                Utility::checkBranchesViewPermission('invoice')
+            ) {
+                $query->where(function ($q) {
+    
+                    if (Utility::checkViewPermission('invoice')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+    
+                    if (Utility::checkBranchesViewPermission('invoice')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+                });
+            }
+
             // Date range handling:
             if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [

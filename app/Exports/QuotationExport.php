@@ -74,6 +74,23 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->where('user_id', Auth::id());
         }
 
+        if (
+            Utility::checkViewPermission('quotation_detail') ||
+            Utility::checkBranchesViewPermission('quotation_detail')
+        ) {
+
+            $q->where(function ($q) {
+
+                if (Utility::checkViewPermission('quotation_detail')) {
+                    $q->orWhere('user_id', Auth::id());
+                }
+
+                if (Utility::checkBranchesViewPermission('quotation_detail')) {
+                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                }
+            });
+        }
+
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $q->whereHas('quotation', fn ($s) => $s->whereBetween('created_at', [
                 Carbon::parse($this->filters['start_date'])->startOfDay(),
