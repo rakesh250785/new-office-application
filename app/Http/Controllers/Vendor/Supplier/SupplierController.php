@@ -154,15 +154,15 @@ class SupplierController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $temp = $request->supplierId['current'] ?? null;
+            $temp = $request->partId['current'] ?? null;
 
             if ($temp) {
-                $query->where('id', $temp);
+                $query->where('suppliers.product_id', $temp);
             }
 
             if ($request->branch) {
                 $query->whereIn('suppliers.branch_id', (array) $request->branch);
-            }
+            }   
 
             if ($request->principal) {
                 $query->whereIn('suppliers.principal_id', (array) $request->principal);
