@@ -176,8 +176,8 @@ class LandingDshboardController extends Controller
                 ->join('orders', 'order_details.order_id', '=', 'orders.id')
                 ->whereBetween('orders.created_at', [$yesterdayStart, $yesterdayEnd])
                 ->when(Auth::user()?->role?->name != 'admin', function ($query) use ($authUser) {
-                    $query->where('branch_id', $authUser->branch_id)
-                        ->where('user_id', $authUser->id);
+                    $query->where('orders.branch_id', $authUser->branch_id)
+                        ->where('orders.user_id', $authUser->id);
                 })
                 ->distinct()
                 ->count('order_details.principal_id');
