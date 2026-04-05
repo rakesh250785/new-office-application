@@ -343,7 +343,24 @@ class DropdownController extends Controller
                     'state:id,name',
                     'country:id,name',
                 ])
-                ->orderBy('id');
+                ->orderByRaw('LOWER(customer_name) ASC');
+
+            if (
+                Utility::checkViewPermission('customer') ||
+                Utility::checkBranchesViewPermission('customer')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('customer')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('customer')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+                });
+            }
 
             return response()->stream(function () use ($query) {
                 echo '{"status":true,"code":200,"message":"DD getCompanyDD","data":[';
