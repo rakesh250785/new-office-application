@@ -104,7 +104,7 @@ class SupplierController extends Controller
             $page = max((int) $request->input('page', 1), 1);
             $perPage = max((int) $request->input('per_page', config('constant.per_page', 15)), 1);
             $search = $request->input('search', '');
-            $data = $request->only(['search', 'download', 'column', 'per_page', 'start_date', 'end_date', 'principal', 'brand_list', 'source', 'currency']);
+            $data = $request->only(['search', 'download', 'column', 'per_page', 'start_date', 'end_date', 'principal', 'brand_list', 'source', 'currency', 'supplierId']);
 
             if (! empty($data['download'])) {
                 $columns = [
@@ -153,6 +153,12 @@ class SupplierController extends Controller
             | FILTERS
             |--------------------------------------------------------------------------
             */
+
+            $temp = $request->supplierId['current'] ?? null;
+
+            if ($temp) {
+                $query->where('id', $temp);
+            }
 
             if ($request->branch) {
                 $query->whereIn('suppliers.branch_id', (array) $request->branch);
