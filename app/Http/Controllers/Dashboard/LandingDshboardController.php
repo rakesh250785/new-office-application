@@ -165,8 +165,8 @@ class LandingDshboardController extends Controller
                 ->join('orders', 'order_details.order_id', '=', 'orders.id')
                 ->whereBetween('orders.created_at', [$todayStart, $todayEnd])
                 ->when(Auth::user()?->role?->name != 'admin', function ($query) use ($authUser) {
-                    $query->where('branch_id', $authUser->branch_id)
-                        ->where('user_id', $authUser->id);
+                    $query->where('orders.branch_id', $authUser->branch_id)
+                        ->where('orders.user_id', $authUser->id);
                 })
                 ->distinct()
                 ->count('order_details.principal_id');
@@ -422,8 +422,8 @@ class LandingDshboardController extends Controller
                     ->join('orders', 'order_details.order_id', '=', 'orders.id')
                     ->leftJoin('principals', 'order_details.principal_id', '=', 'principals.id')
                     ->when(Auth::user()?->role?->name != 'admin', function ($query) use ($authUser) {
-                        $query->where('branch_id', $authUser->branch_id)
-                            ->where('user_id', $authUser->id);
+                        $query->where('orders.branch_id', $authUser->branch_id)
+                            ->where('orders.user_id', $authUser->id);
                     })
                     ->select(
                         'order_details.principal_id',
@@ -487,8 +487,8 @@ class LandingDshboardController extends Controller
                 ->whereYear('orders.created_at', $year)
                 ->whereMonth('orders.created_at', $month)
                 ->when(Auth::user()?->role?->name != 'admin', function ($query) use ($authUser) {
-                    $query->where('branch_id', $authUser->branch_id)
-                        ->where('user_id', $authUser->id);
+                    $query->where('orders.branch_id', $authUser->branch_id)
+                        ->where('orders.user_id', $authUser->id);
                 })
                 ->groupBy('order_details.product_id')
                 ->orderByDesc('total')
