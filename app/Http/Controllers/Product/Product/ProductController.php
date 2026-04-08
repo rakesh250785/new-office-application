@@ -76,7 +76,9 @@ class ProductController extends Controller
                 'part_no' => [
                     'required',
                     'string',
-                    Rule::unique('products', 'part_no')->ignore($data['product_id'] ?? null),
+                    Rule::unique('products', 'part_no')
+                        ->whereNull('deleted_at')
+                        ->ignore($data['product_id'] ?? null),
                 ],
                 'hsn_no' => 'required|string',
                 'principal_id' => 'required',
@@ -105,6 +107,9 @@ class ProductController extends Controller
             if (! empty($allowedDynamicColumns)) {
                 foreach ($allowedDynamicColumns as $col) {
                     $dynamicRules[$col] = 'required';
+                    if ($col === 'str_usp_phase') {
+                        $dynamicRules[$col] = 'sometimes|nullable';
+                    }
                 }
             }
             $fileRules = array_merge($rules, $fileRules, $dynamicRules);
@@ -333,7 +338,7 @@ class ProductController extends Controller
             if (! empty($data['brand_list'])) {
                 $query->where('brand_id', $data['brand_list']);
             }
-           
+
             // Date filter
             if (! empty($data['start_date']) && ! empty($data['end_date'])) {
                 $query->whereBetween('created_at', [
