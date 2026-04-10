@@ -475,6 +475,7 @@ class QuotationDetailController extends Controller
                             ->orWhereHas('ownerDetails', fn ($o) => $o->where('name', 'like', "%{$term}%"))
                             ->orWhereHas('currencyDetails', fn ($c) => $c->where('code', 'like', "%{$term}%"))
                             ->orWhereHas('companyDetails', fn ($c) => $c->where('customer_name', 'like', "%{$term}%"))
+                            ->orWhereHas('companyDetails', fn ($c) => $c->where('company_name', 'like', "%{$term}%"))
                             ->orWhereHas('quotationDetails', function ($d) use ($term) {
                                 $d->where('part_no', 'like', "%{$term}%")
                                     ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"));

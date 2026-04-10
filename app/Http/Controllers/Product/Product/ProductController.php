@@ -84,7 +84,7 @@ class ProductController extends Controller
                 'principal_id' => 'required',
                 'category_id' => 'required',
                 'brand_id' => 'required',
-                'price' => 'required|numeric|gt:0',
+                'price' => 'required|numeric|gte:0',
                 'uom' => 'required',
                 'igst_rate' => 'required|numeric',
                 'discount' => 'required|numeric',
