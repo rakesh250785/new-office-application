@@ -10,6 +10,7 @@ class Quotation extends Model
     protected $table = 'quotations';
 
     protected $primaryKey = 'id';
+
     protected $appends = ['base_pdf_url'];
 
     protected $fillable = [
@@ -44,7 +45,7 @@ class Quotation extends Model
         'branch_id',
         'pdf_name',
         'enq_ref',
-        'currency_id',      
+        'currency_id',
         'company_id',
         'delivery_date_id',
         'delivery_date_custom',
@@ -54,7 +55,6 @@ class Quotation extends Model
         'status',
         'pdf_status',
     ];
-    
 
     protected $casts = [
         'created_at' => 'datetime',

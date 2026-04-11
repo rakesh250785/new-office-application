@@ -5,17 +5,21 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use App\Models\Courier;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Illuminate\Support\Facades\Auth;
-class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+
+class CourierExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
     protected array $filters;
+
     protected array $columns;
 
     public function __construct(array $filters, array $columns)
@@ -27,38 +31,48 @@ class CourierExport implements FromQuery, WithMapping, WithHeadings, WithChunkRe
     public function query()
     {
         $query = Courier::query()->whereNull('deleted_at');
-        if (!empty($this->filters['branch_list'])) {
+        if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (!empty($this->filters['courier_name'])) {
-            $query->where('name', 'like', '%' . $this->filters['courier_name'] . '%');
+        if (! empty($this->filters['courier_name'])) {
+            $query->where('name', 'like', '%'.$this->filters['courier_name'].'%');
         }
 
         if (Utility::checkViewPermission('courier')) {
             $query->where('user_id', Auth::id());
         }
 
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('created_at', [
-                $this->filters['start_date'] . ' 00:00:00',
-                $this->filters['end_date'] . ' 23:59:59',
+                $this->filters['start_date'].' 00:00:00',
+                $this->filters['end_date'].' 23:59:59',
             ]);
         }
 
         return $query->select(array_keys($this->columns));
     }
 
-   public function map($row): array
+    public function map($row): array
     {
         return collect(array_keys($this->columns))
-            ->map(fn($key) => data_get($row, $key, ''))
+            ->map(fn ($key) => data_get($row, $key, ''))
             ->toArray();
     }
 
     public function headings(): array
     {
         return array_values($this->columns);
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
+        ];
     }
 
     public function chunkSize(): int

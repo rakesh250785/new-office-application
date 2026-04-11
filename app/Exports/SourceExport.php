@@ -12,8 +12,10 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class SourceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
+class SourceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -73,6 +75,16 @@ class SourceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHead
     public function headings(): array
     {
         return array_values($this->columns);
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
+        ];
     }
 
     public function chunkSize(): int

@@ -5,18 +5,23 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Illuminate\Support\Facades\Auth;
-class OwnerExport implements FromCollection, WithMapping, WithHeadings, WithChunkReading, ShouldQueue
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+
+class OwnerExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
     protected $filters;
+
     protected $columns;
+
     protected $modelClass;
 
     public function __construct(array $filters, array $columns, string $modelClass)
@@ -32,15 +37,15 @@ class OwnerExport implements FromCollection, WithMapping, WithHeadings, WithChun
             ->with('branch:id,name')
             ->whereNull('deleted_at');
 
-        if (!empty($this->filters['search'])) {
+        if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                    ->orWhereHas('branch', fn($b) => $b->where('name', 'like', "%$search%"));
+                    ->orWhereHas('branch', fn ($b) => $b->where('name', 'like', "%$search%"));
             });
         }
 
-        if (!empty($this->filters['branch_list'])) {
+        if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
@@ -48,10 +53,10 @@ class OwnerExport implements FromCollection, WithMapping, WithHeadings, WithChun
             $query->where('user_id', Auth::id());
         }
 
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('created_at', [
-                $this->filters['start_date'] . ' 00:00:00',
-                $this->filters['end_date'] . ' 23:59:59',
+                $this->filters['start_date'].' 00:00:00',
+                $this->filters['end_date'].' 23:59:59',
             ]);
         }
 
@@ -69,13 +74,23 @@ class OwnerExport implements FromCollection, WithMapping, WithHeadings, WithChun
     {
         return collect($this->columns)
             ->keys()
-            ->map(fn($key) => data_get($row, $key, ''))
+            ->map(fn ($key) => data_get($row, $key, ''))
             ->toArray();
     }
 
     public function headings(): array
     {
         return array_values($this->columns);
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
+        ];
     }
 
     public function chunkSize(): int

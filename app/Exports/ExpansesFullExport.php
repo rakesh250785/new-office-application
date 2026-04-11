@@ -6,9 +6,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ExpansesFullExport implements FromCollection, WithEvents
+class ExpansesFullExport implements FromCollection, WithEvents, WithStyles
 {
     protected Collection $rows;
 
@@ -240,6 +242,16 @@ class ExpansesFullExport implements FromCollection, WithEvents
                     // ignore merge failures in rare edge cases
                 }
             },
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
         ];
     }
 }

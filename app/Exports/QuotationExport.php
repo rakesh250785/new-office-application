@@ -12,8 +12,10 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
+class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -34,13 +36,14 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
     {
         $q = QuotationDetail::query()
             ->with([
-                'principal:id,type',
                 'quotation:id,unique_quotation_no,date,created_at,branch_id,owner_id,currency_id,company_id,is_order_pending,total_amount,product_description,lead_from',
                 'quotation.branchDetails:id,name',
                 'quotation.ownerDetails:id,name',
                 'quotation.currencyDetails:id,code',
                 'quotation.companyDetails:id,company_name,customer_name,mobile_no,landline_no,email_id',
                 'quotation.pendingQuotationDetails',
+                'principal',
+
             ])
             ->whereHas('quotation', fn ($q) => $q->whereNull('deleted_at'));
 
@@ -104,8 +107,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->where(function ($s) use ($term) {
                 $s->where('part_no', 'like', "%{$term}%")
                     ->orWhere('description', 'like', "%{$term}%")
-                    ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%")
-                    )
+                    ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"))
                     ->orWhereHas('quotation', fn ($q) => $q->where('unique_quotation_no', 'like', "%{$term}%")
                     );
             });
@@ -146,7 +148,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             // Line item
             $d->part_no ?? '',
             $d->description ?? '',
-            $q->principal->type ?? '',
+            $d->principal ?? '',
             $d->price ?? 0,
             $d->quantity ?? 0,
             $d->discount ?? 0,
@@ -190,6 +192,16 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             'Lead From',
             'Status',
             'Reason',
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
         ];
     }
 

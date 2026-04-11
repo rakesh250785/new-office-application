@@ -14,9 +14,11 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Schema;
 
-class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping
+class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -160,6 +162,16 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
     public function headings(): array
     {
         return array_values($this->columns);
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
+        ];
     }
 
     /**

@@ -446,7 +446,6 @@ class QuotationDetailController extends Controller
 
             $query = QuotationAdd::with([
                 'quotationDetails',
-                // 'quotationDetails.principal:id,type',
                 'companyDetails:id,company_name,email_id,gst_number,state_id,country_id',
                 'branchDetails:id,name',
                 'currencyDetails:id,code',

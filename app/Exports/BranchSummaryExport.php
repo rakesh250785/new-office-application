@@ -11,13 +11,15 @@ use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class BranchSummaryExport extends DefaultValueBinder implements FromCollection, ShouldQueue, WithChunkReading, WithColumnFormatting, WithCustomValueBinder, WithHeadings, WithMapping
+class BranchSummaryExport extends DefaultValueBinder implements FromCollection, ShouldQueue, WithChunkReading, WithColumnFormatting, WithCustomValueBinder, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -111,6 +113,16 @@ class BranchSummaryExport extends DefaultValueBinder implements FromCollection, 
     public function headings(): array
     {
         return $this->headers;
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
+        ];
     }
 
     /*

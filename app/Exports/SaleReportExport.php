@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class SaleReportExport implements FromCollection, WithHeadings, WithMapping
+class SaleReportExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected $filters;
 
@@ -70,6 +72,16 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping
             'authorised',
             'qty',
             'amount',
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => ['bold' => true],
+                'alignment' => ['horizontal' => 'center'],
+            ],
         ];
     }
 
