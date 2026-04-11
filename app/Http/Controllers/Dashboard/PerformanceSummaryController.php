@@ -93,8 +93,7 @@ class PerformanceSummaryController extends Controller
                 ->when($data['branch'] ?? null, fn ($q, $v) => $q->where('branch', $v))
                 ->when($data['principal'] ?? null, fn ($q, $v) => $q->where('principal_name', $v))
                 ->when($data['category'] ?? null, fn ($q, $v) => $q->where('category', $v))
-                ->when($data['authorised'] ?? null, fn ($q, $v) => $q->where('authorised', $v))
-                ->when(Utility::checkViewPermission('financial_report'), fn ($q) => $q->where('user_id', Auth::id()));
+                ->when($data['authorised'] ?? null, fn ($q, $v) => $q->where('authorised', $v));
 
             if (! empty($data['date_from'])) {
                 $query->whereDate('invoice_date', '>=', $data['date_from']);
@@ -105,6 +104,24 @@ class PerformanceSummaryController extends Controller
 
             if ($branchId) {
                 $query->where('branch_id', $branchId);
+            }
+
+            if (
+                Utility::checkViewPermission('financial_report') ||
+                Utility::checkBranchesViewPermission('financial_report')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('financial_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('financial_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+
+                });
             }
 
             $query->orderBy($sortBy, $sortDir)
