@@ -151,20 +151,16 @@ class InvoiceController extends Controller
                 });
             }
 
-            if (Utility::checkViewPermission('invoice')) {
-                $query->where('user_id', Auth::id());
-            }
-
             if (
                 Utility::checkViewPermission('invoice') ||
                 Utility::checkBranchesViewPermission('invoice')
             ) {
                 $query->where(function ($q) {
-    
+
                     if (Utility::checkViewPermission('invoice')) {
                         $q->orWhere('user_id', Auth::id());
                     }
-    
+
                     if (Utility::checkBranchesViewPermission('invoice')) {
                         $q->orWhere('branch_id', Auth::user()->branch_id);
                     }
@@ -207,8 +203,8 @@ class InvoiceController extends Controller
                         'download_url' => url("/orderinvoicedocs/{$doc}"),
                     ])->values();
 
-                return $invoice;        
-            });     
+                return $invoice;
+            });
 
             // Return response
             return Utility::apiSuccess('list_invoices', $invoiceData, 200);
