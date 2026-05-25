@@ -47,9 +47,22 @@ class CustomerController extends Controller
                     'string',
                     'max:255',
                     Rule::unique('customers', 'company_name')
+                        ->where(function ($query) use ($request) {
+                            return $query->where('branch_id', Auth::user()['branch_id']);
+                        })
                         ->ignore($request->customer_id),
                 ],
-                'customer_name' => 'required|string|max:255',
+
+                'customer_name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('customers', 'customer_name')
+                        ->where(function ($query) use ($request) {
+                            return $query->where('branch_id', Auth::user()['branch_id']);
+                        })
+                        ->ignore($request->customer_id),
+                ],
                 'email_id' => [
                     'required',
                     'email',
@@ -212,17 +225,17 @@ class CustomerController extends Controller
                 Utility::checkViewPermission('customer') ||
                 Utility::checkBranchesViewPermission('customer')
             ) {
-            
+
                 $query->where(function ($q) {
-            
+
                     if (Utility::checkViewPermission('customer')) {
                         $q->orWhere('user_id', Auth::id());
                     }
-            
+
                     if (Utility::checkBranchesViewPermission('customer')) {
                         $q->orWhere('branch_id', Auth::user()->branch_id);
                     }
-            
+
                 });
             }
 
