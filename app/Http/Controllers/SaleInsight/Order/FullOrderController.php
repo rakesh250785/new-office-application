@@ -939,7 +939,8 @@ class FullOrderController extends Controller
             $this->update_shipment_order($orderInfo['in_uniq_order_id']);
 
             // Generate PDF data
-            $pdfFilePath = 'order_'.time().'_'.date('dmy').'.pdf';
+            $pdfFilePath = now()->year.'/order_'.time().'_'.date('dmy').'.pdf';
+
             $jobPayload = [
                 'order_id' => $orderId,
                 'file_path' => $pdfFilePath,

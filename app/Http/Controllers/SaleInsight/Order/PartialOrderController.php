@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SaleInsight\Order;
 use App\Exports\PartialOrderExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessPartialOrder;
 use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Order;
@@ -97,7 +98,7 @@ class PartialOrderController extends Controller
             $adminUserId = Auth::id();
             $branch = Branch::find($branchId);
             $branchInitials = $branch ? substr($branch->name, 0, 3) : 'BR-';
-            $pdfFilePath = 'order_'.time().'_'.date('dmy').'.pdf';
+            $pdfFilePath = now()->year.'/order_'.time().'_'.date('dmy').'.pdf';
 
             // Update customer
             $customerUpdate = Customer::where('id', $data['company_id'])->update([
@@ -293,7 +294,7 @@ class PartialOrderController extends Controller
                         'customer_order_no' => $data['customer_order_no'],
                         'is_order_closed' => '1',
                         'is_shipment_pending' => '0',
-                        'pdf_name' => $pdfFilePath,
+                        // 'pdf_name' => $pdfFilePath,
                     ]);
                 if (! $orderCloseUpdate) {
                     return Utility::apiError('Failed to update order status.', [], 221);
@@ -304,7 +305,7 @@ class PartialOrderController extends Controller
                 Order::where('id', $data['order_id'])->update([
                     'customer_order_no' => $data['customer_order_no'],
                     'is_shipment_pending' => '1',
-                    'pdf_name' => $pdfFilePath,
+                    // 'pdf_name' => $pdfFilePath,
                 ]);
             }
             $responsePayload = array_merge($data, [
@@ -315,6 +316,10 @@ class PartialOrderController extends Controller
                 ],
                 'totalcalc' => $grandTotal,
             ]);
+
+            // ProcessPartialOrder::dispatch($responsePayload)
+            // ->onQueue('order_pdf')
+            // ->delay(0);
 
             // return message depends on whether it was update or create
             $message = ! empty($data['partial_order_id']) ? 'updated successfully.' : 'generated successfully.';
