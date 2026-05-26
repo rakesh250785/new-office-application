@@ -392,6 +392,8 @@ class QuotationDetailController extends Controller
     public function getQuotation(Request $request)
     {
         try {
+
+            ini_set('max_execution_time', 60); // 1 minute
             $data = $request->only([
                 'per_page',
                 'branch_list',
