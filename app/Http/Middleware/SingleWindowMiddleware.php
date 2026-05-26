@@ -46,7 +46,7 @@ class SingleWindowMiddleware
                 );
             }
 
-            $moduleName = str_replace('-', '_', $request->header('X-Page-URL'));
+            $moduleName = str_replace('-', '_', $request->header('X-Page-URL') ?? '');
             $authUserId = Auth::id();
 
             if (! $authUserId) {

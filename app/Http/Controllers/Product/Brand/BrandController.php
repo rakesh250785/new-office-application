@@ -20,6 +20,7 @@ class BrandController extends Controller
     public function addUpdateBrand(Request $request)
     {
         try {
+            
             // Extract and validate input
             $data = $request->only([
                 'name',

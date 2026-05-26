@@ -57,6 +57,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                 'ownerDetails:id,name',
                 'currencyDetails:id,code',
                 'companyDetails:id,company_name',
+                'orderDetails',
             ]);
 
         if (! empty($this->filters['branch_list'])) {
@@ -131,58 +132,101 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
 
     public function map($order): array
     {
-        $mapped = [];
+        $rows = [];
 
-        foreach (array_keys($this->columns) as $key) {
-            switch ($key) {
-                case 'unique_order_no':
-                    $mapped[] = $order->unique_order_no;
-                    break;
-                case 'unique_quotation_no':
-                    $mapped[] = $order->unique_quotation_no;
-                    break;
-                case 'date':
-                    $mapped[] = $order->date ? Carbon::parse($order->date)->format('Y-m-d') : optional($order->created_at)->format('Y-m-d');
-                    break;
-                case 'created_at':
-                    $mapped[] = optional($order->created_at)->format('Y-m-d H:i:s');
-                    break;
-                case 'lead_from':
-                    $mapped[] = $order->lead_from;
-                    break;
-                case 'branch':
-                case 'branch_name':
-                    $mapped[] = $order->branchDetails->name ?? '';
-                    break;
-                case 'owner':
-                case 'owner_name':
-                    $mapped[] = $order->ownerDetails->name ?? '';
-                    break;
-                case 'currency':
-                case 'currency_code':
-                    $mapped[] = $order->currencyDetails->code ?? '';
-                    break;
-                case 'company':
-                case 'company_name':
-                    $mapped[] = $order->companyDetails->company_name ?? '';
-                    break;
-                case 'total_amount':
-                    $mapped[] = $order->total_amount;
-                    break;
-                case 'customer_order_no':
-                    $mapped[] = $order->customer_order_no;
-                    break;
-                case 'status':
-                case 'is_order_closed':
-                    $mapped[] = $order->is_order_closed ? 'Closed' : 'Open';
-                    break;
-                default:
-                    $mapped[] = data_get($order, $key, '');
-                    break;
+        foreach ($order->orderDetails as $detail) {
+
+            $mapped = [];
+
+            foreach (array_keys($this->columns) as $key) {
+
+                switch ($key) {
+
+                    case 'unique_order_no':
+                        $mapped[] = $order->unique_order_no;
+                        break;
+
+                    case 'unique_quotation_no':
+                        $mapped[] = $order->unique_quotation_no;
+                        break;
+
+                    case 'date':
+                        $mapped[] = $order->date
+                            ? Carbon::parse($order->date)->format('Y-m-d')
+                            : optional($order->created_at)->format('Y-m-d');
+                        break;
+
+                    case 'created_at':
+                        $mapped[] = optional($order->created_at)->format('Y-m-d H:i:s');
+                        break;
+
+                    case 'lead_from':
+                        $mapped[] = $order->lead_from;
+                        break;
+
+                    case 'branch':
+                    case 'branch_name':
+                        $mapped[] = $order->branchDetails->name ?? '';
+                        break;
+
+                    case 'owner':
+                    case 'owner_name':
+                        $mapped[] = $order->ownerDetails->name ?? '';
+                        break;
+
+                    case 'currency':
+                    case 'currency_code':
+                        $mapped[] = $order->currencyDetails->code ?? '';
+                        break;
+
+                    case 'company':
+                    case 'company_name':
+                        $mapped[] = $order->companyDetails->company_name ?? '';
+                        break;
+
+                    case 'customer_order_no':
+                        $mapped[] = $order->customer_order_no;
+                        break;
+
+                    case 'total_amount':
+                        $mapped[] = $order->total_amount;
+                        break;
+
+                    case 'part_no':
+                        $mapped[] = $detail->part_no;
+                        break;
+
+                    case 'description':
+                        $mapped[] = $detail->description;
+                        break;
+
+                    case 'quantity':
+                        $mapped[] = $detail->quantity;
+                        break;
+
+                    case 'price':
+                        $mapped[] = $detail->price;
+                        break;
+
+                    case 'net_price':
+                        $mapped[] = $detail->net_price;
+                        break;
+
+                    case 'status':
+                    case 'is_order_closed':
+                        $mapped[] = $order->is_order_closed ? 'Closed' : 'Open';
+                        break;
+
+                    default:
+                        $mapped[] = data_get($order, $key, '');
+                        break;
+                }
             }
+
+            $rows[] = $mapped;
         }
 
-        return $mapped;
+        return $rows;
     }
 
     public function styles(Worksheet $sheet)

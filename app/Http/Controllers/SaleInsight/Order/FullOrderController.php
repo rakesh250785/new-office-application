@@ -490,6 +490,8 @@ class FullOrderController extends Controller
                 $columns = [
                     'unique_order_no' => 'Order No',
                     'unique_quotation_no' => 'Quotation No',
+                    'part_no' => 'Part NO.',
+                    'description' => 'Description',
                     'date' => 'Date',
                     'branch' => 'Branch',
                     'owner' => 'Owner',
