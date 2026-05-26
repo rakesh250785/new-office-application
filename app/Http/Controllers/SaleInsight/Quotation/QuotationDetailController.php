@@ -446,7 +446,7 @@ class QuotationDetailController extends Controller
 
             $query = QuotationAdd::with([
                 'quotationDetails',
-                'companyDetails:id,company_name,email_id,gst_number,state_id,country_id',
+                'companyDetails:id,company_name,customer_name,email_id,gst_number,state_id,country_id',
                 'branchDetails:id,name',
                 'currencyDetails:id,code',
                 'ownerDetails:id,name',
@@ -473,8 +473,8 @@ class QuotationDetailController extends Controller
                             ->orWhere('total_amount', 'like', "%{$term}%")
                             ->orWhereHas('ownerDetails', fn ($o) => $o->where('name', 'like', "%{$term}%"))
                             ->orWhereHas('currencyDetails', fn ($c) => $c->where('code', 'like', "%{$term}%"))
-                            ->orWhereHas('companyDetails', fn ($c) => $c->where('customer_name', 'like', "%{$term}%"))
                             ->orWhereHas('companyDetails', fn ($c) => $c->where('company_name', 'like', "%{$term}%"))
+                            ->orWhereHas('companyDetails', fn ($c) => $c->where('customer_name', 'like', "%{$term}%"))
                             ->orWhereHas('quotationDetails', function ($d) use ($term) {
                                 $d->where('part_no', 'like', "%{$term}%")
                                     ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"));
@@ -487,13 +487,13 @@ class QuotationDetailController extends Controller
                 Utility::checkViewPermission('quotation_detail') ||
                 Utility::checkBranchesViewPermission('quotation_detail')
             ) {
-    
+
                 $query->where(function ($q) {
-    
+
                     if (Utility::checkViewPermission('quotation_detail')) {
                         $q->orWhere('user_id', Auth::id());
                     }
-    
+
                     if (Utility::checkBranchesViewPermission('quotation_detail')) {
                         $q->orWhere('branch_id', Auth::user()->branch_id);
                     }
