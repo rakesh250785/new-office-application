@@ -74,7 +74,7 @@ class DropdownController extends Controller
     {
         try {
             // Get source
-            $source = Source::pluck('name', 'id')->toArray();
+            $source = Source::whereNull('deleted_at')->pluck('name', 'id')->toArray();
 
             // Return response
             return Utility::apiSuccess('DD source', $source, 200);
@@ -248,7 +248,7 @@ class DropdownController extends Controller
             $filter = $request->only(['category_id', 'brand_id']);
 
             // Default dropdown
-            $principal = Principal::pluck('type', 'id')->toArray();
+            $principal = Principal::whereNull('deleted_at')->pluck('type', 'id')->toArray();
 
             // Apply filters if any exist
             if (! empty($filter['category_id']) || ! empty($filter['brand_id'])) {
@@ -572,7 +572,7 @@ class DropdownController extends Controller
             $filter = $request->only(['category_id', 'principal_id']);
 
             // Default dropdown
-            $brand = Brand::pluck('name', 'id')->toArray();
+            $brand = Brand::whereNull('deleted_at')->pluck('name', 'id')->toArray();
 
             // Apply dynamic filters
             if (! empty($filter['category_id']) || ! empty($filter['principal_id'])) {
@@ -615,7 +615,7 @@ class DropdownController extends Controller
             $filter = $request->only(['category_id', 'brand_id', 'principal_id']);
 
             // Default dropdown
-            $category = Category::pluck('name', 'id')->toArray();
+            $category = Category::whereNull('deleted_at')->pluck('name', 'id')->toArray();
 
             // Apply dynamic filters
             if (! empty($filter['brand_id']) || ! empty($filter['principal_id'])) {
@@ -717,7 +717,7 @@ class DropdownController extends Controller
             //     ->pluck('name', 'id')
             //     ->toArray();
 
-            $type = Category::pluck('name', 'id')
+            $type = Category::whereNull('deleted_at')->pluck('name', 'id')
                 ->toArray();
 
             // Return response
@@ -732,7 +732,7 @@ class DropdownController extends Controller
 
     public function getUspDD(Request $request)
     {
-        $query = Usp::query()->whereNull('deleted_at');
+        $query = Usp::whereNull('deleted_at')->query()->whereNull('deleted_at');
 
         if ($request->category_id) {
             $query->where('category_id', $request->category_id);
