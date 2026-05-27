@@ -104,7 +104,15 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
     public function map($row): array
     {
         return collect(array_keys($this->columns))
-            ->map(fn ($key) => data_get($row, $key, ''))
+            ->map(function ($key) use ($row) {
+                $value = data_get($row, $key, '');
+                \Log::info($key);
+                if ($key == 'product.part_no') {
+                    return ' '.(string) $value;
+                }
+
+                return $value;
+            })
             ->toArray();
     }
 
@@ -116,12 +124,13 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => [ 
+            1 => [
                 'font' => ['bold' => true],
                 'alignment' => ['horizontal' => 'center'],
             ],
         ];
     }
+
     public function chunkSize(): int
     {
         return 5000;

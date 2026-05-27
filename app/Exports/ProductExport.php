@@ -140,12 +140,14 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
         foreach (array_keys($this->columns) as $key) {
             $val = $this->valueFor($row, $key);
 
-            // Friendly date formatting for *_at or *date keys
+            if ($key == 'product.part_no' || $key == 'part_no') {
+                $val = ' '.(string) $val;
+            }
+
             if ($this->looksLikeDateKey($key)) {
                 $val = $this->formatDate($val);
             }
 
-            // Clean HTML from long text fields
             if (is_string($val) && $this->looksLikeHtmlyKey($key)) {
                 $val = $this->cleanText($val);
             }

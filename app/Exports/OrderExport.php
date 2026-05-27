@@ -135,7 +135,6 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
         $rows = [];
 
         foreach ($order->orderDetails as $detail) {
-
             $mapped = [];
 
             foreach (array_keys($this->columns) as $key) {
@@ -193,7 +192,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                         break;
 
                     case 'part_no':
-                        $mapped[] = $detail->part_no;
+                        $mapped[] = ' ' . (string) $detail->part_no;
                         break;
 
                     case 'description':
