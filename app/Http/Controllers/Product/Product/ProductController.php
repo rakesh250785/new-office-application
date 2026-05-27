@@ -139,7 +139,9 @@ class ProductController extends Controller
                 'hsn_no' => $data['hsn_no'] ?? null,
                 'uom' => $data['uom'] ?? null,
                 'brand_id' => $data['brand_id'] ?? null,
-                'price' => $data['price'] ?? null,
+                'price' => isset($data['price'])
+    ? number_format(round((float) $data['price'], 2), 2, '.', '')
+    : null,
                 'igst_rate' => $data['igst_rate'] ?? null,
                 'discount' => $data['discount'] ?? null,
                 'quantity' => $data['quantity'] ?? null,
