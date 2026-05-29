@@ -6,6 +6,7 @@ use App\Exports\InvoiceExport;
 use App\Helpers\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\PartialOrder;
 use Carbon\Carbon;
 use Exception;
@@ -51,6 +52,10 @@ class InvoiceController extends Controller
                 }
             }
 
+            // getBranch from order table
+            $pOrders = PartialOrder::where('id', $data['partial_order_id'])->first();
+            $orderBranch = Order::where('id', $pOrders->unique_order_no)->first();
+
             // Update or create invoice
             $invoice = Invoice::updateOrCreate(
                 ['partial_order_id' => $data['partial_order_id'] ?? null],
@@ -61,7 +66,7 @@ class InvoiceController extends Controller
                     'invoice_no' => $data['invoice_no'] ?? null,
                     'docket_no' => $data['docket_no'] ?? null,
                     'invoice_docs' => implode(',', $docs),
-                    'branch_id' => Auth::user()->branch_id,
+                    'branch_id' => $orderBranch?->branch_id,
                     'user_id' => Auth::id(),
                 ]
             );
@@ -111,6 +116,7 @@ class InvoiceController extends Controller
                     'partial_order_no' => 'Partial Order No',
                     'customer_order_no' => 'Customer Order No',
                     'customer' => 'Customer',
+                    'courier' => 'Courier',
                 ];
 
                 $filename = 'invoice_'.now()->format('Ymd_His').'.xlsx';
@@ -125,6 +131,7 @@ class InvoiceController extends Controller
             }
             // Get invoice data
             $query = Invoice::with(['partialOrder', 'customerDetails'])
+                ->whereHas('customerDetails')
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'DESC');
 
@@ -180,10 +187,14 @@ class InvoiceController extends Controller
                 $search = $data['search'];
                 $query->where(function ($q) use ($search) {
                     $q->whereHas('customerDetails', function ($q2) use ($search) {
-                        $q2->where('company_name', 'like', "%$search%");
+                        $q2->where('company_name', 'like', "%{$search}%")
+                            ->orWhere('customer_name', 'like', "%{$search}%");
                     })
                         ->orWhereHas('partialOrder', function ($q2) use ($search) {
-                            $q2->where('customer_order_no', 'like', "%$search%");
+                            $q2->where('customer_order_no', 'like', "%$search%")
+                                ->orWhere('unique_partial_order_no', 'like', "%{$search}%")
+                                ->orWhere('unique_order_no', 'like', "%{$search}%")
+                                ->orWhere('unique_quotation_no', 'like', "%{$search}%");
                         })
                         ->orWhere('invoice_no', 'like', "%$search%");
                 });

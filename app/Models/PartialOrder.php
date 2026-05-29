@@ -116,6 +116,6 @@ class PartialOrder extends Model
 
     public function courier()
     {
-        return $this->belongsTo(Courier::class, 'courier_id', 'id');
+        return $this->belongsTo(Courier::class, 'courier_id');
     }
 }

@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+
 class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
@@ -46,9 +47,9 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
             ->whereNull('deleted_at')
             ->select($select)
             ->with([
-                'partialOrder:id,unique_partial_order_no,customer_order_no,company_id',
+                'partialOrder:id,unique_partial_order_no,customer_order_no,company_id,courier_id',
                 'partialOrder.companyDetails:id,company_name',
-                'customerDetails:id,company_name',
+                'partialOrder.courier:id,name',
             ]);
 
         if (! empty($this->filters['branch_list'])) {
@@ -95,7 +96,8 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
             $q->where(function ($sub) use ($term) {
                 $sub->where('invoice_no', 'like', "%{$term}%")
                     ->orWhereHas('customerDetails', fn ($c) => $c->where('company_name', 'like', "%{$term}%"))
-                    ->orWhereHas('partialOrder', fn ($p) => $p->where('customer_order_no', 'like', "%{$term}%"));
+                    ->orWhereHas('partialOrder', fn ($p) => $p->where('customer_order_no', 'like', "%{$term}%"))
+                    ->orWhereHas('courier', fn ($p) => $p->where('name', 'like', "%{$term}%"));
             });
         }
 
@@ -127,6 +129,9 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
                     break;
                 case 'customer':
                     $mapped[] = $invoice->customerDetails->company_name ?? $invoice->partialOrder->companyDetails->company_name ?? '';
+                    break;
+                case 'courier':
+                    $mapped[] = $invoice->partialOrder->courier->name ?? $invoice->partialOrder->courier->name ?? '';
                     break;
                 case 'branch':
                     $mapped[] = data_get($invoice, 'branchDetails.name', ''); // branchDetails may not be loaded here
