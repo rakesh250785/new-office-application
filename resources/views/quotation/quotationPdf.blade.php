@@ -524,7 +524,7 @@
             </tr>
             <tr>
                 <th>Contact Person</th>
-                <td>{{ $shipping['contact_person'] }}</td>
+                <td colSpan="1">{{ $shipping['contact_person'] }}</td>
                 <th>Email</th>
                 <td colSpan="2">{{ $shipping['email'] }}</td>
                 <th>Landline</th>
