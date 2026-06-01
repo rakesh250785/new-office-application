@@ -228,11 +228,12 @@
             border-collapse: collapse;
         }
 
-        .ship th,
         .ship td {
             font-size: 11px;
             padding: 0 4px;
             vertical-align: middle;
+            word-break: normal;
+            overflow-wrap: break-word;
         }
 
         .ship tr,
