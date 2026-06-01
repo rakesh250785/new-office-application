@@ -246,6 +246,7 @@
             color: #004f6e;
             white-space: nowrap;
             text-align: left;
+            padding-left: 4px;
         }
 
         /* ================= ITEMS ================= */
@@ -287,13 +288,13 @@
         .items td.money {
             white-space: nowrap;
             text-align: left;
-            padding: 2px;
+            padding: 4px;
         }
 
         .items th.money {
             white-space: nowrap;
             text-align: left;
-            padding: 2px;
+            padding: 4px;
             font-size: 11px;
         }
 
@@ -301,13 +302,13 @@
         .items td.money-real {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
         }
 
         .items th.money-real {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
             font-size: 11px;
         }
 
@@ -315,7 +316,7 @@
         .items td.money-real {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
         }
 
         /* ================= HTML CONTENT RESET ================= */
@@ -598,10 +599,10 @@
 
 
                             <tr class="item-row {{ $rowClass }}" style="background-color: {{ 
-                                                                                                                    $isGW == 'GW'
+                                                                                                                                $isGW == 'GW'
                     ? ($loop->index % 2 === 0 ? '#C1D9BF' : '#D9E9D6')
                     : ($loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6')
-                                                                                                                }};">
+                                                                                                                            }};">
 
                                 <td>{{ $i + 1 }}</td>
                                 <td class="money">{{ $it['part_no'] }}</td>
@@ -609,7 +610,8 @@
 
                                 @if($isGW)
                                     <td class="money">{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
-                                    <td class="money">{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
+                                    <td class="money">
+                                        {{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
                                 @endif
 
                                 <td class="money">{{ $it['hsn_code'] }}</td>
