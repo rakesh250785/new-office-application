@@ -187,6 +187,7 @@
         .ship th {
             font-size: 12px;
             color: #004f6e;
+            white-space: nowrap;
         }
 
         .ship td {
@@ -419,7 +420,7 @@
         .items th.money,
         .items td.money {
             white-space: nowrap;
-            text-align: left;
+            text-align: right;
             padding: 2px;
         }
 

@@ -265,6 +265,7 @@ class FullOrderController extends Controller
                 $quantity = $item['quantity'] ?? 0;
                 $discount = $item['discount'] ?? 0;
                 $igst = $item['igst'] ?? 0;
+                
 
                 $baseAmount = $price * $quantity;
                 $discountAmount = ($baseAmount * $discount) / 100;
@@ -275,7 +276,7 @@ class FullOrderController extends Controller
                 $grandTotal += $totalAmount;
                 $subUnitTotal += $price;
                 $subNetTotal += $afterDiscount;
-                $totalIgstTotal += $totalAmount;
+                $totalIgstTotal += $gstAmount;
 
                 $productList[] = [
                     'order_id' => $orderId,
@@ -347,6 +348,7 @@ class FullOrderController extends Controller
             $updateQuotationStatus = Quotation::where($quotationFilter)->first();
             if ($updateQuotationStatus) {
                 $updateQuotationStatus->is_order_pending = '0';
+                
                 $updateQuotationStatus->save();
             }
 
