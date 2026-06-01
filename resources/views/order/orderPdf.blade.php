@@ -346,7 +346,7 @@
             word-break: keep-all !important;
             overflow-wrap: normal !important;
             text-align: center;
-            padding: 2px !important;
+            padding: 4px !important;
             font-variant-numeric: tabular-nums;
         }
 
@@ -390,7 +390,7 @@
             word-break: keep-all !important;
             overflow-wrap: normal !important;
             text-align: center;
-            padding: 2px !important;
+            padding: 4px !important;
             font-variant-numeric: tabular-nums;
         }
 
@@ -413,7 +413,7 @@
         }
 
         .html-content li {
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
 
@@ -421,13 +421,13 @@
         .items td.money {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
         }
 
         .items th.money {
             white-space: nowrap;
             text-align: left;
-            padding: 2px;
+            padding: 4px;
             font-size: 11px;
         }
 
@@ -435,13 +435,13 @@
         .items td.money-real {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
         }
 
         .items th.money-real {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
             font-size: 11px;
         }
 
@@ -449,7 +449,7 @@
         .items td.money-real {
             white-space: nowrap;
             text-align: right;
-            padding: 2px;
+            padding: 4px;
         }
 
 
