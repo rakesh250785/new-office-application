@@ -76,7 +76,7 @@ class OrderSummaryController extends Controller
 
             // Build eloquent query
             $query = OrderDetails::query()
-                ->selectRaw('customers.id as customer_id, customers.customer_name')
+                ->selectRaw('customers.id as customer_id, customers.customer_name, customers.company_name')
                 ->selectRaw('COALESCE(SUM(order_details.total),0) as total')
                 ->selectRaw('COUNT(order_details.id) as orders_count')
                 ->join('orders', 'orders.id', '=', 'order_details.order_id')

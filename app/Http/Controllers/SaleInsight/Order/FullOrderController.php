@@ -491,6 +491,7 @@ class FullOrderController extends Controller
                     'unique_order_no' => 'Order No',
                     'unique_quotation_no' => 'Quotation No',
                     'part_no' => 'Part NO.',
+                    'quantity' => 'Quantity',
                     'description' => 'Description',
                     'date' => 'Date',
                     'branch' => 'Branch',

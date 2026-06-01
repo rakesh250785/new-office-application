@@ -212,7 +212,6 @@
 
         .ship tr.shipping th,
         td {
-            font-weight: 700;
             border: 0.4px solid #9AA3A8;
         }
 
@@ -791,11 +790,11 @@
 
 
                             <tr class="item-row {{ $rowClass }}" style="background-color: {{ 
-                                                                                                                                                                                $isGW == 'GW'
+                                                                                                                                                                                            $isGW == 'GW'
                     ? ($loop->index % 2 === 0 ? '#C1D9BF' : '#D9E9D6')
                     : ($loop->index % 2 === 0 ? '#faeff0' : '#f1d3d6')
 
-                                                                                                        }};">
+                                                                                                                    }};">
 
                                 <td>{{ $i + 1 }}</td>
                                 <td class="money">{{ $it['part_no'] }}</td>
@@ -803,7 +802,8 @@
 
                                 @if($isGW)
                                     <td class="money">{{ $it['principal']['type'] ?? $it['principal'] ?? '' }}</td>
-                                    <td class="money">{{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
+                                    <td class="money">
+                                        {{ is_array($it['uom'] ?? null) ? ($it['uom']['uom'] ?? '') : ($it['uom'] ?? '') }}</td>
                                 @endif
 
                                 <td class="money">{{ $it['hsn_code'] }}</td>
