@@ -140,7 +140,7 @@ class RolePermissionController extends Controller
                 return [
                     'id' => $role->id,
                     'name' => $role->name,
-                    'created_at' => $role?->created_at?->format('d-m-Y'),
+                    'created_at' => $role?->created_at?->format('d/m/Y'),
                     'permissions' => $groupedPermissions,
                 ];
             });

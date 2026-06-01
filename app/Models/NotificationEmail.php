@@ -18,15 +18,13 @@ class NotificationEmail extends Model
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     
-
     public function getCreatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
     public function branch()
     {

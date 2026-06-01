@@ -63,7 +63,7 @@ class Quotation extends Model
 
     public function getCreatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     public function getLastUpdatedAtAttribute($value)

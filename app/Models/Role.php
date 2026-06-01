@@ -9,7 +9,7 @@ class Role extends Model
 {
     public function getCreatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     protected function casts(): array

@@ -28,16 +28,16 @@ class Supplier extends Model
         'created_at' => 'date',
         'updated_at' => 'date',
         'date' => 'date',
-    ];
+    ];  
 
     public function getCreatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     public function getDateAttribute($value)
     {
-        return Carbon::parse($value)->format('Y-m-d');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     public function branch()

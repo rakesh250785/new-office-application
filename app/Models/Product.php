@@ -31,17 +31,17 @@ class Product extends Model
 
     public function getCreatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     public function getPriceUpdatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     public function getQuantityUpdatedAtAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return Carbon::parse($value)->format('d/m/Y');
     }
 
     protected function casts(): array

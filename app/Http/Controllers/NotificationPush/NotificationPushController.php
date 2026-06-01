@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\NotificationPush;
 
 use App\Helpers\Utility;
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Controller;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Auth;
 use Log;
+
 class NotificationPushController extends Controller
 {
     public function notifications(Request $request)
@@ -33,6 +34,7 @@ class NotificationPushController extends Controller
             ]);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Fail at statusQuotationChange server error', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -45,7 +47,7 @@ class NotificationPushController extends Controller
             $notification = DatabaseNotification::where('id', $id)
                 ->first();
 
-            if (!$notification) {
+            if (! $notification) {
                 return Utility::apiError('Notification not found', 404);
             }
 
@@ -55,18 +57,20 @@ class NotificationPushController extends Controller
 
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Fail at markRead server error', ['exception' => $ex->getMessage()], 500);
         }
     }
-
 
     public function markAllRead(Request $request)
     {
         try {
             $request->user()->unreadNotifications->markAsRead();
+
             return Utility::apiSuccess('Read all status updated', [], 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Fail at markRead server error', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -100,14 +104,14 @@ class NotificationPushController extends Controller
             $start = null;
             $end = null;
             try {
-                if (!empty($startDate)) {
+                if (! empty($startDate)) {
                     $start = Carbon::parse($startDate)->startOfDay();
                 }
             } catch (\Throwable $e) {
                 $start = null;
             }
             try {
-                if (!empty($endDate)) {
+                if (! empty($endDate)) {
                     $end = Carbon::parse($endDate)->endOfDay();
                 }
             } catch (\Throwable $e) {
@@ -134,12 +138,12 @@ class NotificationPushController extends Controller
             }
 
             // # Filter by entity_type stored inside JSON `data`
-            if (!empty($entityType)) {
+            if (! empty($entityType)) {
                 $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.entity_type')) = ?", [$entityType]);
             }
 
             if ($search !== '') {
-                $like = '%' . str_replace('%', '\\%', $search) . '%';
+                $like = '%'.str_replace('%', '\\%', $search).'%';
 
                 $query->leftJoin('users', function ($join) {
                     $join->on('users.id', '=', 'notifications.notifiable_id')
@@ -189,13 +193,14 @@ class NotificationPushController extends Controller
                     'message' => $data['message'] ?? ($data['meta']['message'] ?? null),
                     'meta' => $data['meta'] ?? null,
                     'read_at' => $item->read_at ? $item->read_at->toDateTimeString() : null,
-                    'created_at' => $item->created_at ? $item->created_at->toDateTimeString() : null,
+                    'created_at' => $item->created_at ? $item->created_at->format('d/m/Y') : null,
                 ];
             });
 
             return Utility::apiSuccess('Notifications fetched successfully.', $paginator, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to fetch notifications.', ['exception' => $ex->getMessage()], 500);
         }
     }
@@ -218,6 +223,7 @@ class NotificationPushController extends Controller
             return Utility::apiSuccess('Entity types fetched successfully.', $result, 200);
         } catch (Exception $ex) {
             Log::error($ex);
+
             return Utility::apiError('Failed to fetch notifications.', ['exception' => $ex->getMessage()], 500);
         }
     }
