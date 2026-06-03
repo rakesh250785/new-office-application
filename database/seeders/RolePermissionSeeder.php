@@ -19,7 +19,7 @@ class RolePermissionSeeder extends Seeder
             'website_dashboard' => ['view_website_dashboard', 'edit_website_dashboard'],
             'expenses' => ['view_own_expanses', 'view_expenses', 'add_new_expenses', 'view_history', 'export_expenses', 'edit_expenses', 'delete_expenses', 'download_expenses_bill', 'sale_team', 'service_team'],
             'financial_report' => ['view_own_financial_report', 'view_branches_financial_report', 'view_financial_report', 'export_financial_report', 'financial_approved_action'],
-            'performance_report' => ['view_own_performance_report', 'view_performance_report', 'export_performance_report'],
+            'performance_report' => ['view_own_performance_report', 'view_branches_performance_report', 'view_performance_report', 'export_performance_report'],
             'order_summary' => ['view_own_order_summary', 'view_order_summary'],
             'quotation_summary' => ['view_own_quotation_summary', 'view_quotation_summary'],
             'quotation_detail' => [
@@ -110,7 +110,15 @@ class RolePermissionSeeder extends Seeder
         }
 
         // Create default admin role
-        $adminRole = Role::firstOrCreate(['name' => 'admin', 'branch_id' => 1]);
+        $adminRole = Role::firstOrCreate(
+            [
+                'name' => 'admin',
+                'guard_name' => 'api'
+            ],
+            [
+                'branch_id' => 1
+            ]
+        );
 
         // Assign all permissions to admin role
         $allPermissions = Permission::all();

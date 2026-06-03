@@ -148,7 +148,7 @@ class InvoiceController extends Controller
 
             if (! empty($data['currency_list'])) {
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
-                    $q->where('currency_id', (array) $data['currency_list']);
+                    $q->where('currency_id', (array) $data['currency_list']);   
                 });
             }
 

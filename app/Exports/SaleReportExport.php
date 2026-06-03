@@ -47,8 +47,22 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping, Wit
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('financial_report')) {
-            $query->where('user_id', Auth::id());
+        if (
+            Utility::checkViewPermission('financial_report') ||
+            Utility::checkBranchesViewPermission('financial_report')
+        ) {
+
+            $query->where(function ($q) {
+
+                if (Utility::checkViewPermission('financial_report')) {
+                    $q->orWhere('user_id', Auth::id());
+                }
+
+                if (Utility::checkBranchesViewPermission('financial_report')) {
+                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                }
+
+            });
         }
 
         return $query->orderBy('invoice_date', 'desc')->get();

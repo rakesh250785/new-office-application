@@ -464,8 +464,22 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
-            if (Utility::checkViewPermission('performance_report')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('performance_report') ||
+                Utility::checkBranchesViewPermission('performance_report')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('performance_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('performance_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+
+                });
             }
 
             $baseQuery = (clone $query)
@@ -699,8 +713,22 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
-            if (Utility::checkViewPermission('performance_report')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('performance_report') ||
+                Utility::checkBranchesViewPermission('performance_report')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('performance_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('performance_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+
+                });
             }
 
             $baseQuery = (clone $query)
@@ -924,8 +952,22 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
-            if (Utility::checkViewPermission('performance_report')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('performance_report') ||
+                Utility::checkBranchesViewPermission('performance_report')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('performance_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('performance_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+
+                });
             }
             $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
@@ -1144,8 +1186,22 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
-            if (Utility::checkViewPermission('performance_report')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('performance_report') ||
+                Utility::checkBranchesViewPermission('performance_report')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('performance_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('performance_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+
+                });
             }
 
             $baseQuery = (clone $query)
@@ -1362,8 +1418,22 @@ class PerformanceSummaryController extends Controller
                 $query->whereIn('month', $quarterMonths);
             }
 
-            if (Utility::checkViewPermission('performance_report')) {
-                $query->where('user_id', Auth::id());
+            if (
+                Utility::checkViewPermission('performance_report') ||
+                Utility::checkBranchesViewPermission('performance_report')
+            ) {
+
+                $query->where(function ($q) {
+
+                    if (Utility::checkViewPermission('performance_report')) {
+                        $q->orWhere('user_id', Auth::id());
+                    }
+
+                    if (Utility::checkBranchesViewPermission('performance_report')) {
+                        $q->orWhere('branch_id', Auth::user()->branch_id);
+                    }
+
+                });
             }
             $baseQuery = (clone $query)
                 ->selectRaw(implode(', ', $selects))
