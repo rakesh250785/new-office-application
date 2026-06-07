@@ -73,6 +73,7 @@ class QuotationDetailController extends Controller
                 'country',
                 'quotation_type',
                 'company_details',
+                'show_note',
             ]);
 
             // Validation rule
@@ -195,6 +196,7 @@ class QuotationDetailController extends Controller
                 'user_id' => $adminId,
                 'total_amount' => $data['total_amount'] ?? null,
                 'pdf_status' => 'processing',
+                'show_note' => $data['show_note'],
             ];
 
             // Update customer info
@@ -202,7 +204,7 @@ class QuotationDetailController extends Controller
                 'address' => $data['billing_address'],
                 'city' => $data['billing_city'],
                 'pin_code' => $data['billing_pin_code'] ?? null,
-                'state_id' => $data['billing_state_id'] ?? null,
+                'state_id' => $data['billing_state_id'] ?? null,    
                 'other_state' => $data['other_state'] ?? null,
                 'mobile_no' => $data['billing_mobile'] ?? null,
                 'email_id' => $data['billing_email'] ?? null,
@@ -372,6 +374,7 @@ class QuotationDetailController extends Controller
                 ],
                 'terms' => $data['payment_term_condition'],
                 'product_description' => $data['product_description'],
+                'show_note' => $data['show_note'],
             ];
 
             // Dispatch for pdf

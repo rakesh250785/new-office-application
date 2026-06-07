@@ -54,6 +54,7 @@ class Quotation extends Model
         'user_id',
         'status',
         'pdf_status',
+        'show_note'
     ];
 
     protected $casts = [

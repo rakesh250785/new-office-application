@@ -721,29 +721,30 @@
             <!-- TERMS + SIGNATORY -->
             <tr style="border:0;">
                 <!-- LEFT : TERMS -->
-                <td width="72%" valign="top" style="
-            padding:2px 2px;
-            line-height:1.25;
-            background: transparent;
-            border:0;
-        ">
 
+                @if($show_note)
+                <td width="72%" valign="top" style="
+                    padding:2px 2px;
+                    line-height:1.25;
+                    background: transparent;
+                    border:0;
+                ">
                     <div style="
-                
-                color:#004f6e;
-                margin-bottom:2px;
-                font-weight: 700;
-                font-size:12px;
-            ">
+                        color:#004f6e;
+                        margin-bottom:2px;
+                        font-weight:700;
+                        font-size:12px;
+                    ">
                         Terms & Conditions:
                     </div>
-
-                    <div style="line-height:1.5; border:0; margin-left:  -22px; margin-bottom: 5px; margin-top: -8px;">
-                        <div class="terms" style="border:0; font-weight: 700;">
+                
+                    <div style="line-height:1.5; border:0; margin-left:-22px; margin-bottom:5px; margin-top:-8px;">
+                        <div class="terms" style="border:0; font-weight:700;">
                             {!! $terms !!}
                         </div>
                     </div>
                 </td>
+                @endif
 
                 <!-- RIGHT : SIGNATORY -->
                 <td width="28%" valign="top" style="
