@@ -296,9 +296,9 @@ class PartialOrderController extends Controller
                         'is_shipment_pending' => '0',
                         // 'pdf_name' => $pdfFilePath,
                     ]);
-                if (! $orderCloseUpdate) {
-                    return Utility::apiError('Failed to update order status.', [], 221);
-                }
+                // if (! $orderCloseUpdate) {
+                //     return Utility::apiError('Failed to update order status.', [], 221);
+                // }
 
             }
             if (! empty($data['order_id']) && empty($data['unique_order_no'])) {
