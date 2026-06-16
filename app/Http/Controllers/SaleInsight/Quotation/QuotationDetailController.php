@@ -89,7 +89,7 @@ class QuotationDetailController extends Controller
                 'billing_state_id' => 'sometimes|nullable|integer|exists:states,id',
                 'billing_mobile' => 'sometimes|nullable|string|max:11',
                 'billing_email' => 'sometimes|nullable|email|max:255',
-                'billing_landline' => 'sometimes|nullable|string|max:1',
+                'billing_landline' => 'sometimes|nullable|string|max:11',
                 'billing_pin_code' => 'required|string|max:10',
                 'contact_person' => 'required|string|max:255',
 
