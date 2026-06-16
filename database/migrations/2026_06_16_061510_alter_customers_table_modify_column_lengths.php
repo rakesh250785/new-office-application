@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->string('email_id')->change();
             $table->string('mobile_no')->change();
             $table->string('landline_no')->change();
             $table->string('city')->change();
@@ -20,7 +19,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->string('email_id', 50)->change();
             $table->string('mobile_no', 11)->change();
             $table->string('landline_no', 12)->change();
             $table->string('city', 50)->change();
