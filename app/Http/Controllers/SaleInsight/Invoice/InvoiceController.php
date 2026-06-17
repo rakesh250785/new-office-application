@@ -53,9 +53,9 @@ class InvoiceController extends Controller
             }
 
             // getBranch from order table
+          
             $pOrders = PartialOrder::where('id', $data['partial_order_id'])->first();
-            $orderBranch = Order::where('id', $pOrders->unique_order_no)->first();
-
+            $orderBranch = Order::where('id', $pOrders->order_id)->first();
             // Update or create invoice
             $invoice = Invoice::updateOrCreate(
                 ['partial_order_id' => $data['partial_order_id'] ?? null],
