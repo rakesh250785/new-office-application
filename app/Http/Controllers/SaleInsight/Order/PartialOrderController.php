@@ -131,6 +131,9 @@ class PartialOrderController extends Controller
                 return Utility::apiError('Failed to update order total.', [], 221);
             }
 
+            // Get branch id for the particular order
+            $getOrder = Order::where('id', $data['order_id'])->first();
+
             $dateStr = Carbon::now()->format('dmY');
             $partialCount = PartialOrder::where('branch_id', $branchId)
                 ->whereDate('created_at', Carbon::today())
@@ -170,7 +173,7 @@ class PartialOrderController extends Controller
                 'date' => Carbon::now()->toDateString(),
                 'enq_ref' => $data['enq_ref'] ?? null,
                 'prepard_by' => $data['prepard_by'] ?? null,
-                'branch_id' => $branchId ?? null,
+                'branch_id' => $getOrder?->branch_id ?? null,
                 'pdf_name' => $pdfFilePath ?? null,
                 'currency_id' => $data['currency_id'] ?? null,
                 'tin_number' => '27700707469',
