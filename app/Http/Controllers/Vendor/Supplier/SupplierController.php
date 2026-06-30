@@ -52,12 +52,22 @@ class SupplierController extends Controller
             $branchId = Auth::user()->branch_id;
             $userId = Auth::id();
 
+            // Get all source IDs from request
+            $sourceIds = collect($data['product_list'])->pluck('id')->toArray();
+
+            if ($data['update_status']) {
+                Supplier::where('product_id', $data['product_id'])
+                    ->where('principal_id', $data['principal_id'])
+                    ->whereNotIn('id', $sourceIds)
+                    ->delete();
+            }
+
             foreach ($data['product_list'] as $item) {
 
                 // Decide date
                 $productDate = $data['update_status']
-                                ? $item['date']      // edit case
-                                : $data['date'];     // add case
+                    ? $item['date']      // edit case
+                    : $data['date'];     // add case
 
                 Supplier::updateOrCreate(
                     [
@@ -162,7 +172,7 @@ class SupplierController extends Controller
 
             if ($request->branch) {
                 $query->whereIn('suppliers.branch_id', (array) $request->branch);
-            }   
+            }
 
             if ($request->principal) {
                 $query->whereIn('suppliers.principal_id', (array) $request->principal);
