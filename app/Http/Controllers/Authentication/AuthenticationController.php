@@ -151,7 +151,7 @@ class AuthenticationController extends Controller
                 'email' => $user->email,
             ];
 
-            SendLoginLogoutEmail::dispatch($details);
+            // SendLoginLogoutEmail::dispatch($details);
 
             return Utility::apiSuccess('Login successful', [
                 'token' => $token,
@@ -216,7 +216,7 @@ class AuthenticationController extends Controller
                 }
             }
 
-            SendLoginLogoutEmail::dispatch($details)->onQueue('emails');
+            // SendLoginLogoutEmail::dispatch($details)->onQueue('emails');
 
             return Utility::apiSuccess('Logout successful', [], 200);
 
