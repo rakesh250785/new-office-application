@@ -216,11 +216,13 @@ class CategoryController extends Controller
                 $paramsIdArray = explode(',', $paramsId);
                 $params = Parameter::select('id', 'parameter_name', 'column_name')
                     ->whereIn('id', $paramsIdArray)
+                    ->whereNull('deleted_at')
                     ->orderByRaw('FIELD(id,'.implode(',', $paramsIdArray).')')
                     ->get();
 
                 $usp = Usp::select('id', 'usp_type', 'category_id')
                     ->where('category_id', $data['category_id'])
+                    ->whereNull('deleted_at')
                     ->orderBy('usp_type')
                     ->get();
 
