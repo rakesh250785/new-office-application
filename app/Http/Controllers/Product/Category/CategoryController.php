@@ -223,7 +223,7 @@ class CategoryController extends Controller
                 $usp = Usp::select('usp_type')
                     ->where('category_id', $data['category_id'])
                     ->whereNull('deleted_at')
-                    ->groupBy('usp_type', 'category_id')
+                    ->distinct()
                     ->orderBy('usp_type')
                     ->get();
 
