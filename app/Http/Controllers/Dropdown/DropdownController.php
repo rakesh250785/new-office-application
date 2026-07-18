@@ -104,7 +104,7 @@ class DropdownController extends Controller
     {
         try {
             // Get source
-            $statusList = ReasonType::pluck('type', 'id');
+            $statusList = ReasonType::orderBy('id')->pluck('type', 'id');
 
             // Return response
             return Utility::apiSuccess('DD StatusDD', $statusList, 200);
