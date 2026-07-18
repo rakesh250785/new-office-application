@@ -220,9 +220,10 @@ class CategoryController extends Controller
                     ->orderByRaw('FIELD(id,'.implode(',', $paramsIdArray).')')
                     ->get();
 
-                $usp = Usp::select('id', 'usp_type', 'category_id')
+                $usp = Usp::select('usp_type')
                     ->where('category_id', $data['category_id'])
                     ->whereNull('deleted_at')
+                    ->groupBy('usp_type', 'category_id')
                     ->orderBy('usp_type')
                     ->get();
 
