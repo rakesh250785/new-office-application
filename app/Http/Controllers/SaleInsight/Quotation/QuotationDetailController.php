@@ -204,7 +204,7 @@ class QuotationDetailController extends Controller
                 'address' => $data['billing_address'],
                 'city' => $data['billing_city'],
                 'pin_code' => $data['billing_pin_code'] ?? null,
-                'state_id' => $data['billing_state_id'] ?? null,    
+                'state_id' => $data['billing_state_id'] ?? null,
                 'other_state' => $data['other_state'] ?? null,
                 'mobile_no' => $data['billing_mobile'] ?? null,
                 'email_id' => $data['billing_email'] ?? null,
@@ -462,7 +462,10 @@ class QuotationDetailController extends Controller
                 ->when(! empty($data['branch_list']), fn ($q) => $q->where('branch_id', $data['branch_list']))
                 ->when(! empty($data['owner_list']), fn ($q) => $q->where('owner_id', $data['owner_list']))
                 ->when(! empty($data['currency_list']), fn ($q) => $q->where('currency_id', $data['currency_list']))
-                ->when(! empty($data['status_list']), fn ($q) => $q->where('is_order_pending', $data['status_list']))
+                // ->when(! empty($data['status_list']), fn ($q) => $q->where('is_order_pending', (int) $data['status_list']))
+
+                ->when(! empty($data['status_list']), fn ($q) => $q->whereHas('pendingQuotationDetails', fn ($d) => $d->where('reason_status_id', $data['status_list'])))
+
                 ->when(! empty($data['principal_list']), fn ($q) => $q->whereHas('quotationDetails', fn ($d) => $d->where('principal_id', $data['principal_list'])))
                 ->when(! empty($data['start_date']) && ! empty($data['end_date']), function ($q) use ($data) {
                     $q->whereBetween('created_at', [

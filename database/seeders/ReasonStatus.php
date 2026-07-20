@@ -11,8 +11,8 @@ class ReasonStatus extends Seeder
     public function run(): void
     {
         $status = [
-            1 => 'Open',
-            3 => 'Win',
+            3 => 'Open',
+            1 => 'Win',
             2 => 'Lose',
             4 => 'Closed',
         ];
