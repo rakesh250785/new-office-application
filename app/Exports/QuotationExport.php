@@ -36,7 +36,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
     {
         $q = QuotationDetail::query()
             ->with([
-                'quotation:id,unique_quotation_no,date,created_at,branch_id,owner_id,currency_id,company_id,is_order_pending,total_amount,product_description,lead_from',
+                'quotation:id,unique_quotation_no,date,created_at,branch_id,owner_id,currency_id,company_id,is_order_pending,total_amount,product_description,lead_from,billing_contact_person',
                 'quotation.branchDetails:id,name',
                 'quotation.ownerDetails:id,name',
                 'quotation.currencyDetails:id,code',
@@ -137,7 +137,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
 
             // Company
             $q->companyDetails->company_name ?? '',
-            $q->companyDetails->customer_name ?? '',
+            $q->billing_contact_person ?? '',
 
             // Owner & contacts
             $q->ownerDetails->name ?? '',

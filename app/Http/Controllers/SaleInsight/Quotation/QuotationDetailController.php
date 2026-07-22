@@ -418,7 +418,7 @@ class QuotationDetailController extends Controller
                     'date' => 'Date',
                     'unique_quotation_no' => 'Quotation No',
                     'company' => 'Company Name',
-                    'customer_name' => 'Customer Name',
+                    'contact_person' => 'Customer Name',
                     'owner' => 'Owner Name',
                     'mobile' => 'Contact Number',
                     'landline' => 'Landline',
