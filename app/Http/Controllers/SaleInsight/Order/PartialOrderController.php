@@ -135,7 +135,7 @@ class PartialOrderController extends Controller
             $getOrder = Order::where('id', $data['order_id'])->first();
 
             $dateStr = Carbon::now()->format('dmY');
-            $partialCount = PartialOrder::where('branch_id', $branchId)
+            $partialCount = PartialOrder::where('branch_id', $getOrder?->branch_id)
                 ->whereDate('created_at', Carbon::today())
                 ->count();
             $uniquePartialNo = $branchInitials.'/'.$dateStr.'/Part-'.($partialCount + 1);
