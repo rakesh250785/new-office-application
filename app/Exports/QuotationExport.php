@@ -42,31 +42,36 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
                 'quotation.currencyDetails:id,code',
                 'quotation.companyDetails:id,company_name,customer_name,mobile_no,landline_no,email_id',
                 'quotation.pendingQuotationDetails',
-                'principal',
-
+                'principal:id,type',
             ])
-            ->whereHas('quotation', fn ($q) => $q->whereNull('deleted_at'));
+            ->whereHas('quotation', function ($query) {
+                $query->whereNull('deleted_at');
+            });
 
         /* ---------------- FILTERS ---------------- */
 
         if (! empty($this->filters['branch_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('branch_id', $this->filters['branch_list'])
-            );
+            $q->whereHas('quotation', function ($query) {
+                $query->where('branch_id', $this->filters['branch_list']);
+            });
         }
 
         if (! empty($this->filters['owner_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('owner_id', $this->filters['owner_list'])
-            );
+            $q->whereHas('quotation', function ($query) {
+                $query->where('owner_id', $this->filters['owner_list']);
+            });
         }
 
         if (! empty($this->filters['currency_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('currency_id', $this->filters['currency_list'])
-            );
+            $q->whereHas('quotation', function ($query) {
+                $query->where('currency_id', $this->filters['currency_list']);
+            });
         }
 
         if (! empty($this->filters['status_list'])) {
-            $q->whereHas('quotation', fn ($s) => $s->where('is_order_pending', $this->filters['status_list'])
-            );
+            $q->whereHas('quotation', function ($query) {
+                $query->where('is_order_pending', $this->filters['status_list']);
+            });
         }
 
         if (! empty($this->filters['principal_list'])) {
@@ -77,39 +82,79 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->where('user_id', Auth::id());
         }
 
+        /* ---------------- SEARCH ---------------- */
+
+        $term = trim($this->filters['search'] ?? '');
+
+        if ($term !== '') {
+
+            $q->where(function ($query) use ($term) {
+
+                // Quotation Detail fields
+                $query->where('part_no', 'LIKE', "%{$term}%");
+
+                // Principal
+                $query->orWhereHas('principal', function ($principal) use ($term) {
+                    $principal->where('type', 'LIKE', "%{$term}%");
+                });
+
+                // Quotation + Related Tables
+                $query->orWhereHas('quotation', function ($quotation) use ($term) {
+
+                    $quotation->where(function ($q) use ($term) {
+                        $q->where('unique_quotation_no', 'LIKE', "%{$term}%")
+                            ->orWhere('lead_from', 'LIKE', "%{$term}%")
+                            ->orWhere('total_amount', 'LIKE', "%{$term}%");
+                    });
+
+                    $quotation->orWhereHas('ownerDetails', function ($owner) use ($term) {
+                        $owner->where('name', 'LIKE', "%{$term}%");
+                    });
+
+                    $quotation->orWhereHas('currencyDetails', function ($currency) use ($term) {
+                        $currency->where('code', 'LIKE', "%{$term}%");
+                    });
+
+                    $quotation->orWhereHas('companyDetails', function ($company) use ($term) {
+                        $company->where(function ($q) use ($term) {
+                            $q->where('company_name', 'LIKE', "%{$term}%")
+                                ->orWhere('customer_name', 'LIKE', "%{$term}%");
+                        });
+                    });
+                });
+            });
+        }
+
+        /* ---------------- PERMISSIONS ---------------- */
+
         if (
             Utility::checkViewPermission('quotation_detail') ||
             Utility::checkBranchesViewPermission('quotation_detail')
         ) {
 
-            $q->where(function ($q) {
+            $q->where(function ($query) {
 
                 if (Utility::checkViewPermission('quotation_detail')) {
-                    $q->orWhere('user_id', Auth::id());
+                    $query->orWhere('user_id', Auth::id());
                 }
 
                 if (Utility::checkBranchesViewPermission('quotation_detail')) {
-                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                    $query->orWhere('branch_id', Auth::user()->branch_id);
                 }
             });
         }
 
-        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
-            $q->whereHas('quotation', fn ($s) => $s->whereBetween('created_at', [
-                Carbon::parse($this->filters['start_date'])->startOfDay(),
-                Carbon::parse($this->filters['end_date'])->endOfDay(),
-            ])
-            );
-        }
+        /* ---------------- DATE FILTER ---------------- */
 
-        if (! empty($this->filters['search'])) {
-            $term = $this->filters['search'];
-            $q->where(function ($s) use ($term) {
-                $s->where('part_no', 'like', "%{$term}%")
-                    ->orWhere('description', 'like', "%{$term}%")
-                    ->orWhereHas('principal', fn ($p) => $p->where('type', 'like', "%{$term}%"))
-                    ->orWhereHas('quotation', fn ($q) => $q->where('unique_quotation_no', 'like', "%{$term}%")
-                    );
+        if (
+            ! empty($this->filters['start_date']) &&
+            ! empty($this->filters['end_date'])
+        ) {
+            $q->whereHas('quotation', function ($query) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($this->filters['start_date'])->startOfDay(),
+                    Carbon::parse($this->filters['end_date'])->endOfDay(),
+                ]);
             });
         }
 

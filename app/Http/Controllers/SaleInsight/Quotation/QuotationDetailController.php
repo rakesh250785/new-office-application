@@ -489,7 +489,7 @@ class QuotationDetailController extends Controller
                             });
                     });
                 })
-                ->orderByDesc('id');
+            ->orderByDesc('id');
 
             if (
                 Utility::checkViewPermission('quotation_detail') ||
