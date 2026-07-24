@@ -93,10 +93,11 @@ class PartialOrderController extends Controller
                 return Utility::apiError('Validation error', $validator->errors(), 221);
             }
 
-            // Common data
+            // Get branch id for the particular order
+            $getOrder = Order::where('id', $data['order_id'])->first();
             $branchId = Auth::user()['branch_id'];
             $adminUserId = Auth::id();
-            $branch = Branch::find($branchId);
+            $branch = Branch::find($getOrder?->branch_id);
             $branchInitials = $branch ? substr($branch->name, 0, 3) : 'BR-';
             $pdfFilePath = now()->year.'/order_'.time().'_'.date('dmy').'.pdf';
 
@@ -130,9 +131,6 @@ class PartialOrderController extends Controller
             if (! $orderTotalUpdate) {
                 return Utility::apiError('Failed to update order total.', [], 221);
             }
-
-            // Get branch id for the particular order
-            $getOrder = Order::where('id', $data['order_id'])->first();
 
             $dateStr = Carbon::now()->format('dmY');
             $partialCount = PartialOrder::where('branch_id', $getOrder?->branch_id)
