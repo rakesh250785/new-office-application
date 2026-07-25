@@ -95,6 +95,7 @@ class CustomerExport implements FromCollection, ShouldQueue, WithChunkReading, W
                     ->orWhere('pin_code', 'like', $like)
                     ->orWhere('gst_number', 'like', $like)
                     ->orWhere('mobile_no', 'like', $like)
+                    ->orWhere('email_id', 'like', $like)
                     ->orWhere('landline_no', 'like', $like)
                     ->orWhere('other_state', 'like', $like)
                     ->orWhereHas('classification', fn ($b) => $b->where('name', 'like', $like))

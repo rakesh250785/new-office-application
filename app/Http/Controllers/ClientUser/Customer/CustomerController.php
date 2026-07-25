@@ -247,6 +247,7 @@ class CustomerController extends Controller
                         ->orWhere('company_name', 'like', $like)
                         ->orWhere('address', 'like', $like)
                         ->orWhere('city', 'like', $like)
+                        ->orWhere('email_id', 'like', $like)
                         ->orWhere('pin_code', 'like', $like)
                         ->orWhere('gst_number', 'like', $like)
                         ->orWhere('mobile_no', 'like', $like)
