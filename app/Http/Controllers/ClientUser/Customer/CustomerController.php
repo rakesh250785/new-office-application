@@ -47,7 +47,7 @@ class CustomerController extends Controller
                     'string',
                     'max:255',
                     Rule::unique('customers', 'company_name')
-                        ->where(function ($query) use ($request) {
+                        ->where(function ($query) {
                             return $query->where('branch_id', Auth::user()['branch_id']);
                         })
                         ->ignore($request->customer_id),
@@ -58,7 +58,7 @@ class CustomerController extends Controller
                     'string',
                     'max:255',
                     Rule::unique('customers', 'customer_name')
-                        ->where(function ($query) use ($request) {
+                        ->where(function ($query) {
                             return $query->where('branch_id', Auth::user()['branch_id']);
                         })
                         ->ignore($request->customer_id),
@@ -67,8 +67,8 @@ class CustomerController extends Controller
                     'required',
                     'email',
                     'max:255',
-                    Rule::unique('customers', 'email_id')
-                        ->ignore($request->customer_id),
+                    // Rule::unique('customers', 'email_id')
+                    //     ->ignore($request->customer_id),
                 ],
                 'mobile_no' => 'sometimes|nullable|digits_between:10,11',
                 'landline_no' => 'sometimes|nullable|digits_between:6,11',
