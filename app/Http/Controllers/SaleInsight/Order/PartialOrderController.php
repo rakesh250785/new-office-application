@@ -133,10 +133,16 @@ class PartialOrderController extends Controller
             }
 
             $dateStr = Carbon::now()->format('dmY');
-            $partialCount = PartialOrder::where('branch_id', $getOrder?->branch_id)
-                ->whereDate('created_at', Carbon::today())
-                ->count();
-            $uniquePartialNo = $branchInitials.'/'.$dateStr.'/Part-'.($partialCount + 1);
+            // $partialCount = PartialOrder::where('branch_id', $getOrder?->branch_id)
+            //     ->whereDate('created_at', Carbon::today())
+            //     ->count();
+
+            $uniquePartialNo = $this->generatePartialOrderNumber(
+                $branchInitials,
+                $getOrder->branch_id
+            );
+
+            // $uniquePartialNo = $branchInitials.'/'.$dateStr.'/Part-'.($partialCount + 1);
 
             // create new partial placeholder
             $partial = PartialOrder::create([
@@ -512,6 +518,56 @@ class PartialOrderController extends Controller
             Log::error($ex);
 
             return Utility::apiError('Failed getQuotation server error', ['exception' => $ex->getMessage()], 500);
+        }
+    }
+
+    public function generatePartialOrderNumber(
+        string $branchName,
+        int $branchId,
+        ?int $sequence = null
+    ): ?string {
+        try {
+            $branchCode = ucfirst(strtolower(substr(trim($branchName), 0, 3)));
+            $date = Carbon::today();
+            $formattedDate = $date->format('dmY');
+
+            // Get starting sequence on first call
+            if ($sequence === null) {
+                $latestPartialOrder = PartialOrder::where('branch_id', $branchId)
+                    ->whereNull('deleted_at')
+                    ->whereDate('created_at', $date)
+                    ->orderByDesc('id')
+                    ->first();
+
+                $sequence = 1;
+
+                if ($latestPartialOrder && ! empty($latestPartialOrder->unique_partial_order_no)) {
+                    if (preg_match('/Part-(\d+)$/i', $latestPartialOrder->unique_partial_order_no, $matches)) {
+                        $sequence = (int) $matches[1] + 1;
+                    }
+                }
+            }
+
+            $partialOrderNo = "{$branchCode}/{$formattedDate}/Part-{$sequence}";
+
+            $exists = PartialOrder::whereNull('deleted_at')
+                ->where('unique_partial_order_no', $partialOrderNo)
+                ->exists();
+
+            if ($exists) {
+                return $this->generatePartialOrderNumber(
+                    $branchName,
+                    $branchId,
+                    $sequence + 1
+                );
+            }
+
+            return $partialOrderNo;
+
+        } catch (Exception $ex) {
+            Log::error($ex);
+
+            return Utility::apiError('Failed generate partial order number', ['exception' => $ex->getMessage()], 500);
         }
     }
 }

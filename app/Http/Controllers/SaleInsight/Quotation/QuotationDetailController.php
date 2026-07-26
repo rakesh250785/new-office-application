@@ -489,7 +489,7 @@ class QuotationDetailController extends Controller
                             });
                     });
                 })
-            ->orderByDesc('id');
+                ->orderByDesc('id');
 
             if (
                 Utility::checkViewPermission('quotation_detail') ||
@@ -550,40 +550,48 @@ class QuotationDetailController extends Controller
         }
     }
 
-    public function generateQuotationNumber($branchName, $quotationDate, $type = '')
+    public function generateQuotationNumber(string $branchName, string $quotationDate, string $type = ''): ?string
     {
         try {
-            // Branch code (first 3 letters)
-            $branchCode = substr($branchName, 0, 3);
-
-            // Dates
-            $formattedDate = Carbon::parse($quotationDate)->format('Y-m-d');
-            $formattedDateForQuote = Carbon::parse($quotationDate)->format('Ymd');
+            $branchCode = ucfirst(strtolower(substr(trim($branchName), 0, 3)));
             $branchId = Auth::user()->branch_id;
 
-            // Get last quote number created on the same day
+            $date = Carbon::parse($quotationDate)->startOfDay();
+            $formattedDate = $date->format('Y-m-d');
+            $formattedDateForQuote = $date->format('Ymd');
+
             $lastQuote = QuotationAdd::whereNull('deleted_at')
                 ->where('branch_id', $branchId)
                 ->whereDate('created_at', $formattedDate)
                 ->orderByDesc('id')
                 ->first();
 
-            // Determine next sequence number
-            if ($lastQuote && isset($lastQuote->unique_quotation_no)) {
+            $sequence = 1;
+
+            if ($lastQuote && ! empty($lastQuote->unique_quotation_no)) {
                 $segments = explode('/', $lastQuote->unique_quotation_no);
-                $lastNumber = (int) ($segments[2] ?? 0);
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
+
+                if (isset($segments[2]) && is_numeric($segments[2])) {
+                    $sequence = (int) $segments[2] + 1;
+                }
             }
 
-            // Final quotation number
-            return "{$branchCode}/{$formattedDateForQuote}/{$nextNumber}";
+            do {
+                $quotationNumber = "{$branchCode}/{$formattedDateForQuote}/{$sequence}";
+
+                $exists = QuotationAdd::whereNull('deleted_at')
+                    ->where('unique_quotation_no', $quotationNumber)
+                    ->exists();
+
+                $sequence++;
+            } while ($exists);
+
+            return $quotationNumber;
 
         } catch (Exception $ex) {
-            Log::error('Failed to generate quotation number: '.$ex->getMessage());
+            Log::error($ex);
 
-            return null;
+            return Utility::apiError('Failed generate quotation number', ['exception' => $ex->getMessage()], 500);
         }
     }
 

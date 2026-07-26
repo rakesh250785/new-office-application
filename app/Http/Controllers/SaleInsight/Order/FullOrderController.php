@@ -265,7 +265,6 @@ class FullOrderController extends Controller
                 $quantity = $item['quantity'] ?? 0;
                 $discount = $item['discount'] ?? 0;
                 $igst = $item['igst'] ?? 0;
-                
 
                 $baseAmount = $price * $quantity;
                 $discountAmount = ($baseAmount * $discount) / 100;
@@ -348,7 +347,7 @@ class FullOrderController extends Controller
             $updateQuotationStatus = Quotation::where($quotationFilter)->first();
             if ($updateQuotationStatus) {
                 $updateQuotationStatus->is_order_pending = '0';
-                
+
                 $updateQuotationStatus->save();
             }
 
@@ -680,35 +679,38 @@ class FullOrderController extends Controller
     public function generateOrderNumber(string $branchName, int $branchId, string $quotationDate): ?string
     {
         try {
-            // Get prefix
-            $prefix = strtoupper(substr(trim($branchName), 0, 3));
+            $prefix = ucfirst(substr(trim($branchName), 0, 3));
             $date = Carbon::parse($quotationDate)->startOfDay();
             $formattedDate = $date->format('Ymd');
 
-            // Get exsting order id
             $latestOrder = Order::where('branch_id', $branchId)
                 ->whereNull('deleted_at')
                 ->whereDate('created_at', $date)
                 ->orderByDesc('id')
                 ->first();
 
-            // Default set
-            $nextNumber = 1;
+            $sequence = 1;
 
-            // If order found
-            if ($latestOrder && ! empty($latestOrder['unique_order_no'])) {
-                $parts = explode('-', $latestOrder['unique_order_no']);
-                if (isset($parts[1]) && is_numeric($parts[1])) {
-                    $nextNumber = (int) $parts[1] + 1;
+            if ($latestOrder && ! empty($latestOrder->unique_order_no)) {
+                if (preg_match('/order-(\d+)$/', $latestOrder->unique_order_no, $matches)) {
+                    $sequence = (int) $matches[1] + 1;
                 }
             }
 
-            // Return order number
-            return "{$prefix}/{$formattedDate}/order-{$nextNumber}";
+            do {
+                $orderNumber = "{$prefix}/{$formattedDate}/order-{$sequence}";
+                $exists = Order::where('unique_order_no', $orderNumber)
+                    ->whereNull('deleted_at')
+                    ->exists();
+
+                $sequence++;
+            } while ($exists);
+
+            return $orderNumber;
         } catch (Exception $ex) {
             Log::error($ex);
 
-            return Utility::apiError('Failed generating order info', ['exception' => $ex->getMessage()]);
+            return Utility::apiError('Failed generate order number', ['exception' => $ex->getMessage()], 500);
         }
     }
 
