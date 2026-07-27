@@ -215,14 +215,16 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                     case 'igst':
                         $mapped[] = $detail->igst;
 
-                    case 'status':
+                        // case 'status':
+                        //     $mapped[] = $detail->status;
+
                     case 'is_order_closed':
                         $mapped[] = $order->is_order_closed ? 'Closed' : 'Open';
                         break;
 
-                    default:
-                        $mapped[] = data_get($order, $key, '');
-                        break;
+                    // default:
+                    //     $mapped[] = data_get($order, $key, '');
+                    //     break;
                 }
             }
 
