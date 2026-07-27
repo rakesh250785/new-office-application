@@ -135,4 +135,8 @@ class Order extends Model
     {
         return url('storage/ordersPdf/');
     }
+    public function courierDetails()
+    {
+        return $this->belongsTo(Courier::class, 'courier_id');
+    }
 }
