@@ -192,7 +192,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                         break;
 
                     case 'part_no':
-                        $mapped[] = ' ' . (string) $detail->part_no;
+                        $mapped[] = ' '.(string) $detail->part_no;
                         break;
 
                     case 'description':
@@ -210,6 +210,10 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                     case 'net_price':
                         $mapped[] = $detail->net_price;
                         break;
+                    case 'discount':
+                        $mapped[] = $detail->discount;
+                    case 'igst':
+                        $mapped[] = $detail->igst;
 
                     case 'status':
                     case 'is_order_closed':

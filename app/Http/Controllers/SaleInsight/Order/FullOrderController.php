@@ -502,6 +502,10 @@ class FullOrderController extends Controller
                     'total_amount' => 'Total Amount',
                     'customer_order_no' => 'Customer Order No',
                     'courier' => 'Courier',
+                    'price' => 'Price',
+                    'net_price' => 'Net Price',
+                    'discount' => 'Discount',
+                    'igst' => 'IGST',
                     'is_order_closed' => 'Status',
                 ];
 
