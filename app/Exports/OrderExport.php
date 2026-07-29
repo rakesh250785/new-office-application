@@ -56,8 +56,9 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                 'branchDetails:id,name',
                 'ownerDetails:id,name',
                 'currencyDetails:id,code',
-                'companyDetails:id,company_name',
+                'companyDetails:id,company_name,city',
                 'orderDetails',
+                'orderDetails.principal',
             ]);
 
         if (! empty($this->filters['branch_list'])) {
@@ -135,6 +136,7 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
         $rows = [];
 
         foreach ($order->orderDetails as $detail) {
+
             $mapped = [];
 
             foreach (array_keys($this->columns) as $key) {
@@ -181,6 +183,14 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
                     case 'company':
                     case 'company_name':
                         $mapped[] = $order->companyDetails->company_name ?? '';
+                        break;
+
+                    case 'city':
+                        $mapped[] = $order->companyDetails->city ?? '';
+                        break;
+
+                    case 'make':
+                        $mapped[] = $detail->principal ?? '';
                         break;
 
                     case 'customer_order_no':

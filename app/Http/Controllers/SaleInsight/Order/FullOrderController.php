@@ -494,6 +494,8 @@ class FullOrderController extends Controller
                     'part_no' => 'Part NO.',
                     'quantity' => 'Quantity',
                     'description' => 'Description',
+                    'city' => 'City',
+                    'make' => 'Make',
                     'date' => 'Date',
                     'branch' => 'Branch',
                     'owner' => 'Owner',
