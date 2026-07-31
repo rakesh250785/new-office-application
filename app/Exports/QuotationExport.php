@@ -78,10 +78,6 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->where('principal_id', $this->filters['principal_list']);
         }
 
-        if (Utility::checkViewPermission('quotation_report')) {
-            $q->where('user_id', Auth::id());
-        }
-
         /* ---------------- DATE FILTER ---------------- */
 
         if (
