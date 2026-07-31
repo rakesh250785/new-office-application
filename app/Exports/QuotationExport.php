@@ -112,7 +112,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
                     }
 
                     if (Utility::checkBranchesViewPermission('quotation_report', $this->userId)) {
-                        $q->orWhere('id', $this->branchId);
+                        $q->orWhere('branch_id', $this->branchId);
                     }
 
                 });
