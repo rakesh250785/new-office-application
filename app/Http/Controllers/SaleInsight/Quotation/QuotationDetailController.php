@@ -439,7 +439,7 @@ class QuotationDetailController extends Controller
 
                 $filename = 'quotation_report_'.now()->format('Ymd_His').'.xlsx';
 
-                (new QuotationExport($data, $columns))->queue("exports/{$filename}", 'public');
+                (new QuotationExport($data, $columns, Auth::id(), Auth::user()->branch_id))->queue("exports/{$filename}", 'public');
 
                 $fileUrl = url("storage/exports/{$filename}");
 

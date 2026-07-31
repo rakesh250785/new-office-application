@@ -119,7 +119,7 @@ class ParameterController extends Controller
                 $filename = 'parameter_'.now()->format('Ymd_His').'.xlsx';
 
                 // Queue async export (safe for big data)
-                (new ParameterExport($data, $columns, Parameter::class))
+                (new ParameterExport($data, $columns, Parameter::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [
@@ -156,7 +156,7 @@ class ParameterController extends Controller
                 ]);
             }
 
-            if (Utility::checkViewPermission('parameter')) {    
+            if (Utility::checkViewPermission('parameter')) {
                 $query->where('user_id', Auth::id());
             }
 

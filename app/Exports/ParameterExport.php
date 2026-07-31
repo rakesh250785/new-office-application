@@ -5,7 +5,6 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -24,11 +23,14 @@ class ParameterExport implements FromCollection, ShouldQueue, WithChunkReading, 
 
     protected $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     /**
@@ -56,7 +58,7 @@ class ParameterExport implements FromCollection, ShouldQueue, WithChunkReading, 
         }
 
         if (Utility::checkViewPermission('parameter')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         // Date range filter

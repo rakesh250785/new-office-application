@@ -269,7 +269,7 @@ class ProductController extends Controller
 
                 $filename = 'product_'.now()->format('Ymd_His').'.xlsx';
 
-                (new ProductExport($data, $columns, Product::class))
+                (new ProductExport($data, $columns, Product::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

@@ -95,7 +95,7 @@ class ReasonController extends Controller
                 $filename = 'reason_'.now()->format('Ymd_His').'.xlsx';
 
                 // Queue async export (no PDO serialization issues)
-                (new ReasonExport($data, $columns, Reason::class))
+                (new ReasonExport($data, $columns, Reason::class,  Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

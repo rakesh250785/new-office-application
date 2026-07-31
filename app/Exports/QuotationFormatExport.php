@@ -23,11 +23,14 @@ class QuotationFormatExport implements FromQuery, ShouldQueue, WithChunkReading,
 
     protected string $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     public function query()
@@ -53,7 +56,7 @@ class QuotationFormatExport implements FromQuery, ShouldQueue, WithChunkReading,
         }
 
         if (Utility::checkViewPermission('quotation_format')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

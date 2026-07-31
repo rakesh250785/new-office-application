@@ -109,7 +109,7 @@ class CategoryController extends Controller
 
                 $filename = 'category_'.now()->format('Ymd_His').'.xlsx';
 
-                (new CategoryExport($data, $columns, Categories::class))
+                (new CategoryExport($data, $columns, Categories::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

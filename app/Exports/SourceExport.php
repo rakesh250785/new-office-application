@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\Source;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -25,11 +24,14 @@ class SourceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHead
 
     protected string $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     public function query(): Builder
@@ -52,7 +54,7 @@ class SourceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHead
         }
 
         if (Utility::checkViewPermission('source')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

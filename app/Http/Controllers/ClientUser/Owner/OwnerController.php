@@ -103,7 +103,7 @@ class OwnerController extends Controller
                 ];
                 $filename = 'owner_'.now()->format('Ymd_His').'.xlsx';
 
-                (new OwnerExport($data, $columns, Owner::class))
+                (new OwnerExport($data, $columns, Owner::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

@@ -135,7 +135,7 @@ class SupplierController extends Controller
 
                 $filename = 'supplier_'.now()->format('Ymd_His').'.xlsx';
 
-                (new SupplierExport($data, $columns, Supplier::class))
+                (new SupplierExport($data, $columns, Supplier::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

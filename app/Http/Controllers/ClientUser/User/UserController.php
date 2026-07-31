@@ -153,7 +153,7 @@ class UserController extends Controller
 
                 $filename = 'user_'.now()->format('Ymd_His').'.xlsx';
 
-                (new UserExport($data, $columns, User::class))
+                (new UserExport($data, $columns, User::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

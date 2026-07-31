@@ -118,7 +118,7 @@ class QuotationFormatController extends Controller
 
                 $filename = 'quotation_format_'.now()->format('Ymd_His').'.xlsx';
 
-                (new QuotationFormatExport($data, $columns, QuotationFormat::class))
+                (new QuotationFormatExport($data, $columns, QuotationFormat::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

@@ -374,7 +374,7 @@ class PartialOrderController extends Controller
                 ];
 
                 $filename = 'partial_order_'.now()->format('Ymd_His').'.xlsx';
-                (new PartialOrderExport($data, $columns))->queue("exports/{$filename}", 'public');
+                (new PartialOrderExport($data, $columns, Auth::id(), Auth::user()->branch_id))->queue("exports/{$filename}", 'public');
 
                 $fileUrl = url("storage/exports/{$filename}");
 

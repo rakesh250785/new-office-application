@@ -117,7 +117,7 @@ class UspController extends Controller
                 $filename = 'usp_'.now()->format('Ymd_His').'.xlsx';
 
                 // Queue async export to avoid timeout/PDO issues
-                (new UspExport($data, $columns, Usp::class))
+                (new UspExport($data, $columns, Usp::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

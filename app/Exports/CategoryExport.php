@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\Parameter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -27,11 +26,14 @@ class CategoryExport implements FromCollection, ShouldQueue, WithChunkReading, W
 
     protected array $paramMap = [];
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     public function collection(): Collection
@@ -61,7 +63,7 @@ class CategoryExport implements FromCollection, ShouldQueue, WithChunkReading, W
         }
 
         if (Utility::checkViewPermission('category')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         //  Branch filter

@@ -101,7 +101,7 @@ class PrincipalController extends Controller
                 $filename = 'principal_'.now()->format('Ymd_His').'.xlsx';
 
                 // Use queued export (async like SourceExport)
-                (new PrincipalExport($data, $columns, Principal::class))
+                (new PrincipalExport($data, $columns, Principal::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

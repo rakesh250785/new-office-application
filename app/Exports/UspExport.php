@@ -24,11 +24,14 @@ class UspExport implements FromCollection, ShouldQueue, WithChunkReading, WithHe
 
     protected $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $$userId;
     }
 
     /**
@@ -69,7 +72,7 @@ class UspExport implements FromCollection, ShouldQueue, WithChunkReading, WithHe
         }
 
         if (Utility::checkViewPermission('usp')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         // Date range filter

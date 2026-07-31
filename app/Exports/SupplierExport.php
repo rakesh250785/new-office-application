@@ -24,11 +24,14 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
 
     protected string $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId  = $userId;
     }
 
     public function collection(): Collection
@@ -69,7 +72,7 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
             $query->whereBetween('suppliers.date', [$this->filters['start_date'], $this->filters['end_date']]);
         }
         if (Utility::checkViewPermission('supplier')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId );
         }
         if (! empty($this->filters['search'])) {
             $search = $this->filters['search'];
@@ -106,7 +109,6 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
         return collect(array_keys($this->columns))
             ->map(function ($key) use ($row) {
                 $value = data_get($row, $key, '');
-                \Log::info($key);
                 if ($key == 'product.part_no') {
                     return ' '.(string) $value;
                 }

@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\QuotationDetail;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -23,10 +22,16 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
 
     protected array $columns;
 
-    public function __construct(array $filters, array $columns)
+    protected int $userId;
+
+    protected int $branchId;
+
+    public function __construct(array $filters, array $columns, int $userId, int $branchId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
+        $this->userId = $userId;
+        $this->branchId = $branchId;
     }
 
     /**
@@ -102,11 +107,11 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->where(function ($query) {
 
                 if (Utility::checkViewPermission('quotation_report')) {
-                    $query->orWhere('user_id', Auth::id());
+                    $query->orWhere('user_id', $this->userId);
                 }
 
                 if (Utility::checkBranchesViewPermission('quotation_report')) {
-                    $query->orWhere('branch_id', Auth::user()->branch_id);
+                    $query->orWhere('branch_id', $this->branchId);
                 }
             });
         }

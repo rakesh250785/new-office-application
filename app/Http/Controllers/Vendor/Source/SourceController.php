@@ -91,7 +91,7 @@ class SourceController extends Controller
 
                 $filename = 'source_'.now()->format('Ymd_His').'.xlsx';
 
-                (new SourceExport($data, $columns, Source::class))
+                (new SourceExport($data, $columns, Source::class, Auth::user()->id))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

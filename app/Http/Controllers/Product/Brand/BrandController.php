@@ -20,7 +20,7 @@ class BrandController extends Controller
     public function addUpdateBrand(Request $request)
     {
         try {
-            
+
             // Extract and validate input
             $data = $request->only([
                 'name',
@@ -94,7 +94,7 @@ class BrandController extends Controller
 
                 $filename = 'brand_'.now()->format('Ymd_His').'.xlsx';
 
-                (new BrandExport($data, $columns, Brand::class))
+                (new BrandExport($data, $columns, Brand::class, Auth::id()))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

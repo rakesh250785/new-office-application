@@ -5,7 +5,6 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -24,11 +23,14 @@ class OwnerExport implements FromCollection, ShouldQueue, WithChunkReading, With
 
     protected $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     public function collection(): Collection
@@ -50,7 +52,7 @@ class OwnerExport implements FromCollection, ShouldQueue, WithChunkReading, With
         }
 
         if (Utility::checkViewPermission('owner')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

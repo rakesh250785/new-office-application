@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -12,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+
 class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
@@ -22,11 +22,14 @@ class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadin
 
     protected $modelClass;
 
-    public function __construct($filters, $columns, $modelClass)
+    protected $userId;
+
+    public function __construct($filters, $columns, $modelClass, $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     public function query()
@@ -40,7 +43,7 @@ class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadin
             })
 
             ->when(Utility::checkViewPermission('user'), function ($q) {
-                $q->where('user_id', Auth::id());
+                $q->where('user_id', $this->userId);
             })
             ->when(! empty($this->filters['search']), function ($q) {
                 $search = $this->filters['search'];
@@ -83,7 +86,7 @@ class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadin
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => [ 
+            1 => [
                 'font' => ['bold' => true],
                 'alignment' => ['horizontal' => 'center'],
             ],

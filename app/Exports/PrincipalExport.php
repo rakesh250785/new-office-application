@@ -5,7 +5,6 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -13,6 +12,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+
 class PrincipalExport implements FromCollection, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
@@ -23,11 +23,14 @@ class PrincipalExport implements FromCollection, ShouldQueue, WithChunkReading, 
 
     protected string $modelClass;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     public function collection(): Collection
@@ -51,7 +54,7 @@ class PrincipalExport implements FromCollection, ShouldQueue, WithChunkReading, 
         }
 
         if (Utility::checkViewPermission('principal')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
@@ -82,6 +85,7 @@ class PrincipalExport implements FromCollection, ShouldQueue, WithChunkReading, 
     {
         return array_values($this->columns);
     }
+
     public function styles(Worksheet $sheet)
     {
         return [

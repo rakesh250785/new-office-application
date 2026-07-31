@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\PartialOrder;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -23,10 +22,16 @@ class PartialOrderExport implements FromQuery, ShouldQueue, WithChunkReading, Wi
 
     protected array $columns;
 
-    public function __construct(array $filters, array $columns)
+    protected int $userId;
+
+    protected int $branchId;
+
+    public function __construct(array $filters, array $columns, int $userId, int $branchId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
+        $this->userId = $userId;
+        $this->branchId = $branchId;
     }
 
     public function query()
@@ -89,11 +94,11 @@ class PartialOrderExport implements FromQuery, ShouldQueue, WithChunkReading, Wi
             $q->where(function ($q) {
 
                 if (Utility::checkViewPermission('partial_order')) {
-                    $q->orWhere('user_id', Auth::id());
+                    $q->orWhere('user_id', $this->userId);
                 }
 
                 if (Utility::checkBranchesViewPermission('partial_order')) {
-                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                    $q->orWhere('branch_id', $this->branchId);
                 }
             });
         }

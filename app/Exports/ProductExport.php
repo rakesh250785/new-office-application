@@ -7,7 +7,6 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -31,16 +30,19 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
     /** @var class-string<\Illuminate\Database\Eloquent\Model> */
     protected string $modelClass;
 
+    protected int $userId;
+
     /**
      * @param  array  $filters  Expect keys: search,start_date,end_date,principal_list,brand_list,category_list,branch_list
      * @param  array  $columns  ['part_no'=>'Part No.', 'category.name'=>'Category', ...]
      * @param  string  $modelClass  Usually \App\Models\Product::class
      */
-    public function __construct(array $filters, array $columns, string $modelClass)
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
     }
 
     /**
@@ -110,7 +112,7 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
             $query->where('branch_id', $this->filters['branch_list']);
         }
         if (Utility::checkViewPermission('product')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

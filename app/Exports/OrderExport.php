@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -23,10 +22,16 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
 
     protected array $columns;
 
-    public function __construct(array $filters, array $columns)
+    protected int $userId;
+
+    protected int $branchId;
+
+    public function __construct(array $filters, array $columns, int $userId, int $branchId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
+        $this->userId = $userId;
+        $this->branchId = $branchId;
     }
 
     public function query()
@@ -96,11 +101,11 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
             $q->where(function ($q) {
 
                 if (Utility::checkViewPermission('order_report')) {
-                    $q->orWhere('user_id', Auth::id());
+                    $q->orWhere('user_id', $this->userId);
                 }
 
                 if (Utility::checkBranchesViewPermission('order_report')) {
-                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                    $q->orWhere('branch_id', $this->branchId);
                 }
             });
         }

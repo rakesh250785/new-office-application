@@ -22,10 +22,13 @@ class CourierExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
 
     protected array $columns;
 
-    public function __construct(array $filters, array $columns)
+    protected int $userId;
+
+    public function __construct(array $filters, array $columns, int $userId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
+        $this->userId = $userId;
     }
 
     public function query()
@@ -40,7 +43,7 @@ class CourierExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
         }
 
         if (Utility::checkViewPermission('courier')) {
-            $query->where('user_id', Auth::id());
+            $query->where('user_id', $this->userId);
         }
 
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {

@@ -185,7 +185,7 @@ class CustomerController extends Controller
                 $filename = 'customer_'.now()->format('Ymd_His').'.xlsx';
 
                 // queue the export (uses same pattern as your Owner example)
-                (new CustomerExport($data, $columns, Customer::class))
+                (new CustomerExport($data, $columns, Customer::class, Auth::id(), Auth::user()->branch_id))
                     ->queue("exports/{$filename}", 'public');
 
                 return Utility::apiSuccess('Export started. You will get a download link soon.', [

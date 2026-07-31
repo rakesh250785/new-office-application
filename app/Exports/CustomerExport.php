@@ -5,7 +5,6 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -25,13 +24,19 @@ class CustomerExport implements FromCollection, ShouldQueue, WithChunkReading, W
 
     protected string $modelClass;
 
+    protected int $userId;
+
+    protected int $branchId;
+
     protected int $chunk = 5000;
 
-    public function __construct(array $filters, array $columns, string $modelClass)
+    public function __construct(array $filters, array $columns, string $modelClass, int $userId, int $branchId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
         $this->modelClass = $modelClass;
+        $this->userId = $userId;
+        $this->branchId = $branchId;
     }
 
     /**
@@ -73,11 +78,11 @@ class CustomerExport implements FromCollection, ShouldQueue, WithChunkReading, W
             $query->where(function ($q) {
 
                 if (Utility::checkViewPermission('customer')) {
-                    $q->orWhere('user_id', Auth::id());
+                    $q->orWhere('user_id', $this->userId);
                 }
 
                 if (Utility::checkBranchesViewPermission('customer')) {
-                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                    $q->orWhere('branch_id', $this->branchId);
                 }
             });
         }

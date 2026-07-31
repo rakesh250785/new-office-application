@@ -6,7 +6,6 @@ use App\Helpers\Utility;
 use App\Models\Invoice;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -23,14 +22,20 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
 
     protected array $columns;
 
+    protected int $userId;
+
+    protected int $branchId;
+
     /**
      * $filters: same shape as controller (branch_list, owner_list, currency_list, principal_list, start_date, end_date, search)
      * $columns: associative array key => heading
      */
-    public function __construct(array $filters, array $columns)
+    public function __construct(array $filters, array $columns, int $userId, int $branchId)
     {
         $this->filters = $filters;
         $this->columns = $columns;
+        $this->userId = $userId;
+        $this->branchId = $branchId;
     }
 
     public function query()
@@ -75,11 +80,11 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
             $q->where(function ($q) {
 
                 if (Utility::checkViewPermission('invoice')) {
-                    $q->orWhere('user_id', Auth::id());
+                    $q->orWhere('user_id', $this->userId);
                 }
 
                 if (Utility::checkBranchesViewPermission('invoice')) {
-                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                    $q->orWhere('branch_id', $this->branchId);
                 }
             });
         }

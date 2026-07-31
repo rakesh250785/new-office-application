@@ -120,7 +120,7 @@ class InvoiceController extends Controller
                 ];
 
                 $filename = 'invoice_'.now()->format('Ymd_His').'.xlsx';
-                (new InvoiceExport($data, $columns))->queue("exports/{$filename}", 'public');
+                (new InvoiceExport($data, $columns, Auth::id(), Auth::user()->branch_id))->queue("exports/{$filename}", 'public');
 
                 $fileUrl = url("storage/exports/{$filename}");
 

@@ -511,7 +511,7 @@ class FullOrderController extends Controller
                 ];
 
                 $filename = 'order_'.now()->format('Ymd_His').'.xlsx';
-                (new OrderExport($data, $columns))->queue("exports/{$filename}", 'public');
+                (new OrderExport($data, $columns, Auth::id(), Auth::user()->branch_id))->queue("exports/{$filename}", 'public');
 
                 $fileUrl = url("storage/exports/{$filename}");
 
