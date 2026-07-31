@@ -82,6 +82,20 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->where('user_id', Auth::id());
         }
 
+        /* ---------------- DATE FILTER ---------------- */
+
+        if (
+            ! empty($this->filters['start_date']) &&
+            ! empty($this->filters['end_date'])
+        ) {
+            $q->whereHas('quotation', function ($query) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($this->filters['start_date'])->startOfDay(),
+                    Carbon::parse($this->filters['end_date'])->endOfDay(),
+                ]);
+            });
+        }
+
         /* ---------------- PERMISSIONS ---------------- */
 
         if (
@@ -144,21 +158,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             });
         }
 
-        /* ---------------- DATE FILTER ---------------- */
-
-        if (
-            ! empty($this->filters['start_date']) &&
-            ! empty($this->filters['end_date'])
-        ) {
-            $q->whereHas('quotation', function ($query) {
-                $query->whereBetween('created_at', [
-                    Carbon::parse($this->filters['start_date'])->startOfDay(),
-                    Carbon::parse($this->filters['end_date'])->endOfDay(),
-                ]);
-            });
-        }
-
-        return $q->orderBy('quotation_details.id');
+        return $q->orderBy('id');
     }
 
     /**
