@@ -35,9 +35,9 @@ class Utility
         return $words.' '.$currency.'  only ';
     }
 
-    public static function checkViewPermission($moduleName)
+    public static function checkViewPermission($moduleName, $userId = '')
     {
-        $authUserId = Auth::id();
+        $authUserId = Auth::id() ?? $userId;
 
         return User::whereKey($authUserId)
             ->whereHas('role.permissions', function ($query) use ($moduleName) {
@@ -48,9 +48,9 @@ class Utility
             ->exists();
     }
 
-    public static function checkBranchesViewPermission($moduleName)
+    public static function checkBranchesViewPermission($moduleName, $userId = '')
     {
-        $authUserId = Auth::id();
+        $authUserId = Auth::id() ?? $userId;
 
         return User::whereKey($authUserId)
             ->whereHas('role.permissions', function ($query) use ($moduleName) {

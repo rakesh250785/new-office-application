@@ -51,7 +51,7 @@ class BrandExport implements FromCollection, ShouldQueue, WithChunkReading, With
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('brand')) {
+        if (Utility::checkViewPermission('brand', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

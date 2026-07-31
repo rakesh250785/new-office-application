@@ -71,7 +71,7 @@ class SupplierExport implements FromCollection, ShouldQueue, WithChunkReading, W
         if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $query->whereBetween('suppliers.date', [$this->filters['start_date'], $this->filters['end_date']]);
         }
-        if (Utility::checkViewPermission('supplier')) {
+        if (Utility::checkViewPermission('supplier', $this->userId)) {
             $query->where('user_id', $this->userId );
         }
         if (! empty($this->filters['search'])) {

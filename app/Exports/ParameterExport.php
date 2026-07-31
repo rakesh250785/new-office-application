@@ -57,7 +57,7 @@ class ParameterExport implements FromCollection, ShouldQueue, WithChunkReading, 
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('parameter')) {
+        if (Utility::checkViewPermission('parameter', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

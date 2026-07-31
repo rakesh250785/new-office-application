@@ -111,7 +111,7 @@ class ProductExport implements FromCollection, ShouldQueue, WithChunkReading, Wi
         if (! empty($this->filters['branch_list'])) {
             $query->where('branch_id', $this->filters['branch_list']);
         }
-        if (Utility::checkViewPermission('product')) {
+        if (Utility::checkViewPermission('product', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

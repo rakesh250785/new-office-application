@@ -51,7 +51,7 @@ class OwnerExport implements FromCollection, ShouldQueue, WithChunkReading, With
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('owner')) {
+        if (Utility::checkViewPermission('owner',$this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

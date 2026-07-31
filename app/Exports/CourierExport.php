@@ -42,7 +42,7 @@ class CourierExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
             $query->where('name', 'like', '%'.$this->filters['courier_name'].'%');
         }
 
-        if (Utility::checkViewPermission('courier')) {
+        if (Utility::checkViewPermission('courier', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

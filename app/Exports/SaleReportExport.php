@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Helpers\Utility;
 use App\Models\SaleReport;
-use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -15,9 +14,14 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping, Wit
 {
     protected $filters;
 
-    public function __construct(array $filters = [])
+    protected $userId;
+
+    protected $branchId;
+    public function __construct(array $filters, int $userId, int $branchId)
     {
         $this->filters = $filters;
+        $this->userId = $userId;
+        $this->branchId = $branchId;
     }
 
     public function collection()
@@ -48,18 +52,18 @@ class SaleReportExport implements FromCollection, WithHeadings, WithMapping, Wit
         }
 
         if (
-            Utility::checkViewPermission('financial_report') ||
-            Utility::checkBranchesViewPermission('financial_report')
+            Utility::checkViewPermission('financial_report', $this->userId) ||
+            Utility::checkBranchesViewPermission('financial_report', $this->userId)
         ) {
 
             $query->where(function ($q) {
 
-                if (Utility::checkViewPermission('financial_report')) {
-                    $q->orWhere('user_id', Auth::id());
+                if (Utility::checkViewPermission('financial_report', $this->userId)) {
+                    $q->orWhere('user_id', $this->userId);
                 }
 
-                if (Utility::checkBranchesViewPermission('financial_report')) {
-                    $q->orWhere('branch_id', Auth::user()->branch_id);
+                if (Utility::checkBranchesViewPermission('financial_report', $this->userId)) {
+                    $q->orWhere('branch_id', $this->branchId);
                 }
 
             });

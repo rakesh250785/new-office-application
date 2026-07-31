@@ -55,7 +55,7 @@ class QuotationFormatExport implements FromQuery, ShouldQueue, WithChunkReading,
             $query->where('branch_id', (array) $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('quotation_format')) {
+        if (Utility::checkViewPermission('quotation_format', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

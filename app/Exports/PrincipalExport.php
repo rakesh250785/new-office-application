@@ -53,7 +53,7 @@ class PrincipalExport implements FromCollection, ShouldQueue, WithChunkReading, 
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('principal')) {
+        if (Utility::checkViewPermission('principal', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

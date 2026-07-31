@@ -94,17 +94,17 @@ class OrderExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadi
         }
 
         if (
-            Utility::checkViewPermission('order_report') ||
-            Utility::checkBranchesViewPermission('order_report')
+            Utility::checkViewPermission('order_report', $this->userId) ||
+            Utility::checkBranchesViewPermission('order_report', $this->userId)
         ) {
 
             $q->where(function ($q) {
 
-                if (Utility::checkViewPermission('order_report')) {
+                if (Utility::checkViewPermission('order_report', $this->userId)) {
                     $q->orWhere('user_id', $this->userId);
                 }
 
-                if (Utility::checkBranchesViewPermission('order_report')) {
+                if (Utility::checkBranchesViewPermission('order_report', $this->userId)) {
                     $q->orWhere('branch_id', $this->branchId);
                 }
             });

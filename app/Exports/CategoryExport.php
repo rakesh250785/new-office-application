@@ -62,7 +62,7 @@ class CategoryExport implements FromCollection, ShouldQueue, WithChunkReading, W
             });
         }
 
-        if (Utility::checkViewPermission('category')) {
+        if (Utility::checkViewPermission('category', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

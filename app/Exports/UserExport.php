@@ -42,7 +42,7 @@ class UserExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadin
                 $q->where('branch_id', (array) $this->filters['branch_list']);
             })
 
-            ->when(Utility::checkViewPermission('user'), function ($q) {
+            ->when(Utility::checkViewPermission('user', $this->userId), function ($q) {
                 $q->where('user_id', $this->userId);
             })
             ->when(! empty($this->filters['search']), function ($q) {

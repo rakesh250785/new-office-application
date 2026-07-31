@@ -74,16 +74,16 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
         }
 
         if (
-            Utility::checkViewPermission('invoice') ||
-            Utility::checkBranchesViewPermission('invoice')
+            Utility::checkViewPermission('invoice', $this->userId) ||
+            Utility::checkBranchesViewPermission('invoice', $this->userId)
         ) {
             $q->where(function ($q) {
 
-                if (Utility::checkViewPermission('invoice')) {
+                if (Utility::checkViewPermission('invoice', $this->userId)) {
                     $q->orWhere('user_id', $this->userId);
                 }
 
-                if (Utility::checkBranchesViewPermission('invoice')) {
+                if (Utility::checkBranchesViewPermission('invoice', $this->userId)) {
                     $q->orWhere('branch_id', $this->branchId);
                 }
             });

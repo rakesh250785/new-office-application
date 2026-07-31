@@ -53,7 +53,7 @@ class SourceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHead
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('source')) {
+        if (Utility::checkViewPermission('source', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

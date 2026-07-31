@@ -41,7 +41,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
     {
         $q = QuotationDetail::query()
             ->with([
-                'quotation:id,unique_quotation_no,date,created_at,branch_id,owner_id,currency_id,company_id,is_order_pending,total_amount,product_description,lead_from,billing_contact_person',
+                'quotation:id,unique_quotation_no,date,user_id,created_at,branch_id,owner_id,currency_id,company_id,is_order_pending,total_amount,product_description,lead_from,billing_contact_person',
                 'quotation.branchDetails:id,name',
                 'quotation.ownerDetails:id,name',
                 'quotation.currencyDetails:id,code',
@@ -100,19 +100,23 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
         /* ---------------- PERMISSIONS ---------------- */
 
         if (
-            Utility::checkViewPermission('quotation_report') ||
-            Utility::checkBranchesViewPermission('quotation_report')
+            Utility::checkViewPermission('quotation_report', $this->userId) ||
+            Utility::checkBranchesViewPermission('quotation_report', $this->userId)
         ) {
+            $q->whereHas('quotation', function ($query) {
 
-            $q->where(function ($query) {
+                $query->where(function ($q) {
 
-                if (Utility::checkViewPermission('quotation_report')) {
-                    $query->orWhere('user_id', $this->userId);
-                }
+                    if (Utility::checkViewPermission('quotation_report', $this->userId)) {
+                        $q->orWhere('user_id', $this->userId);
+                    }
 
-                if (Utility::checkBranchesViewPermission('quotation_report')) {
-                    $query->orWhere('branch_id', $this->branchId);
-                }
+                    if (Utility::checkBranchesViewPermission('quotation_report', $this->userId)) {
+                        $q->orWhere('id', $this->branchId);
+                    }
+
+                });
+
             });
         }
 
@@ -159,7 +163,7 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             });
         }
 
-        return $q->orderBy('id');
+        return $q->orderByDesc('id');
     }
 
     /**

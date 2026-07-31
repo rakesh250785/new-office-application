@@ -71,7 +71,7 @@ class UspExport implements FromCollection, ShouldQueue, WithChunkReading, WithHe
             $query->where('category_id', $this->filters['category_list']);
         }
 
-        if (Utility::checkViewPermission('usp')) {
+        if (Utility::checkViewPermission('usp', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 

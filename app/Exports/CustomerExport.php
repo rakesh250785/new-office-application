@@ -71,17 +71,17 @@ class CustomerExport implements FromCollection, ShouldQueue, WithChunkReading, W
         }
 
         if (
-            Utility::checkViewPermission('customer') ||
-            Utility::checkBranchesViewPermission('customer')
+            Utility::checkViewPermission('customer', $this->userId) ||
+            Utility::checkBranchesViewPermission('customer', $this->userId)
         ) {
 
             $query->where(function ($q) {
 
-                if (Utility::checkViewPermission('customer')) {
+                if (Utility::checkViewPermission('customer', $this->userId)) {
                     $q->orWhere('user_id', $this->userId);
                 }
 
-                if (Utility::checkBranchesViewPermission('customer')) {
+                if (Utility::checkBranchesViewPermission('customer', $this->userId)) {
                     $q->orWhere('branch_id', $this->branchId);
                 }
             });

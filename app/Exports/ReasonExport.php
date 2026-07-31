@@ -53,7 +53,7 @@ class ReasonExport implements FromCollection, ShouldQueue, WithChunkReading, Wit
             $query->where('branch_id', $this->filters['branch_list']);
         }
 
-        if (Utility::checkViewPermission('reason')) {
+        if (Utility::checkViewPermission('reason', $this->userId)) {
             $query->where('user_id', $this->userId);
         }
 
