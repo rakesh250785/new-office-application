@@ -98,11 +98,19 @@ class InvoiceExport implements FromQuery, ShouldQueue, WithChunkReading, WithHea
 
         if (! empty($this->filters['search'])) {
             $term = $this->filters['search'];
+
             $q->where(function ($sub) use ($term) {
                 $sub->where('invoice_no', 'like', "%{$term}%")
-                    ->orWhereHas('customerDetails', fn ($c) => $c->where('company_name', 'like', "%{$term}%"))
-                    ->orWhereHas('partialOrder', fn ($p) => $p->where('customer_order_no', 'like', "%{$term}%"))
-                    ->orWhereHas('courier', fn ($p) => $p->where('name', 'like', "%{$term}%"));
+                    ->orWhere('docket_no', 'like', "%{$term}%")
+                    ->orWhereHas('customerDetails', function ($c) use ($term) {
+                        $c->where('company_name', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('partialOrder', function ($p) use ($term) {
+                        $p->where('customer_order_no', 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('partialOrder.courier', function ($courier) use ($term) {
+                        $courier->where('name', 'like', "%{$term}%");
+                    });
             });
         }
 

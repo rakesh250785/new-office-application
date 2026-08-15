@@ -53,7 +53,7 @@ class InvoiceController extends Controller
             }
 
             // getBranch from order table
-          
+
             $pOrders = PartialOrder::where('id', $data['partial_order_id'])->first();
             $orderBranch = Order::where('id', $pOrders->order_id)->first();
             // Update or create invoice
@@ -148,7 +148,7 @@ class InvoiceController extends Controller
 
             if (! empty($data['currency_list'])) {
                 $query->whereHas('partialOrder.orderDetails', function ($q) use ($data) {
-                    $q->where('currency_id', (array) $data['currency_list']);   
+                    $q->where('currency_id', (array) $data['currency_list']);
                 });
             }
 
@@ -196,7 +196,8 @@ class InvoiceController extends Controller
                                 ->orWhere('unique_order_no', 'like', "%{$search}%")
                                 ->orWhere('unique_quotation_no', 'like', "%{$search}%");
                         })
-                        ->orWhere('invoice_no', 'like', "%$search%");
+                        ->orWhere('invoice_no', 'like', "%$search%")
+                        ->OrWhere('docket_no', 'like', "%$search%");
                 });
             }
 

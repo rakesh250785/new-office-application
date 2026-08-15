@@ -5,7 +5,6 @@ namespace App\Exports;
 use App\Helpers\Utility;
 use App\Models\QuotationDetail;
 use Carbon\Carbon;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -14,7 +13,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithHeadings, WithMapping, WithStyles
+class QuotationExport implements FromQuery, WithChunkReading, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -211,10 +210,11 @@ class QuotationExport implements FromQuery, ShouldQueue, WithChunkReading, WithH
             $q->lead_from ?? '',
 
             // Status
-            $q->is_order_pending ? 'Pending' : 'Closed',
+            $q->pendingQuotationDetails->status_code ?? '',
 
             // Reason
-            $q->pendingQuotationDetails->status_code ?? '',
+            $q->pendingQuotationDetails->reason ?? '',
+
         ];
     }
 
