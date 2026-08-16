@@ -73,8 +73,8 @@ class QuotationExport implements FromQuery, WithChunkReading, WithHeadings, With
         }
 
         if (! empty($this->filters['status_list'])) {
-            $q->whereHas('quotation', function ($query) {
-                $query->where('is_order_pending', $this->filters['status_list']);
+            $q->whereHas('quotation.pendingQuotationDetails', function ($query) {
+                $query->where('reason_status_id', $this->filters['status_list']);
             });
         }
 
